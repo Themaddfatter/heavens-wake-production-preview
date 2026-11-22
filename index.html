@@ -362,6 +362,22 @@ function HwpCloudAgent({getLatest}){
       emit("syncing");return;
      }
      window.hwpExpectedSharedDoc=null;
+     if(signature.current===null){
+      // A previously-synced device should not write an identical library
+      // simply because its page was opened or its auth session was restored.
+      const source=remote.workspace,comparable={...source};
+      delete comparable.hwpAppearance;
+      delete comparable.hwpSessionPreferences;
+      const localDoc=JSON.stringify(latest.current),
+       appearance=localStorage.getItem("hwp-appearance")==="light"?"light":"dark",
+       preferences=hwpSharedPrefs(getLatest().session),
+       remotePreferences=source.hwpSessionPreferences?hwpSharedPrefs(source.hwpSessionPreferences):null;
+      if((localDoc===JSON.stringify(source)||localDoc===JSON.stringify(comparable))
+       &&(!source.hwpAppearance||source.hwpAppearance===appearance)
+       &&(!remotePreferences||JSON.stringify(remotePreferences)===JSON.stringify(preferences))){
+       signature.current=JSON.stringify([latest.current,appearance,preferences]);
+      }
+     }
      ready.current=true;
      emit("connected");
      void run.current();
