@@ -120,7 +120,6 @@ jobs:
               && grep -Eq '<link rel="icon" type="image/png" href="/hwp-logo[.]png[?]v=' "$RUNNER_TEMP/hwp-home.html" \
               && curl --fail --silent --show-error --location --max-time 25 "$domain/hwp-logo.png?hwp_verify=$GITHUB_SHA" -o "$RUNNER_TEMP/hwp-logo.png" \
               && test -s "$RUNNER_TEMP/hwp-logo.png" \
-
               && grep -Fq "HWP: presentation appearance boundary." "$RUNNER_TEMP/hwp-style.css" \
               && grep -Fq -- "--text:#f3f1ec" "$RUNNER_TEMP/hwp-style.css" \
               && grep -Fq ".service-row.background-row" "$RUNNER_TEMP/hwp-access.css" \
