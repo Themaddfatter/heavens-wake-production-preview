@@ -97,9 +97,15 @@ jobs:
             echo "Checking production attempt ${attempt}/20"
             if curl --fail --silent --show-error --location --max-time 20 -H "Cache-Control: no-cache" "$domain/?hwp_verify=$GITHUB_SHA" -o "$RUNNER_TEMP/hwp-home.html" \
               && curl --fail --silent --show-error --location --max-time 25 -H "Cache-Control: no-cache" "$domain/hwp-style.css?hwp_verify=$GITHUB_SHA" -o "$RUNNER_TEMP/hwp-style.css" \
+              && curl --fail --silent --show-error --location --max-time 25 -H "Cache-Control: no-cache" "$domain/hwp-access.css?hwp_verify=$GITHUB_SHA" -o "$RUNNER_TEMP/hwp-access.css" \
+              && curl --fail --silent --show-error --location --max-time 25 -H "Cache-Control: no-cache" "$domain/sync-staging/hwp-auth.mjs?hwp_verify=$GITHUB_SHA" -o "$RUNNER_TEMP/hwp-auth.mjs" \
               && grep -Fq "hwp-style.css" "$RUNNER_TEMP/hwp-home.html" \
+              && grep -Fq "hwp-access.css" "$RUNNER_TEMP/hwp-home.html" \
+              && grep -Fq "function HwpAccessGate" "$RUNNER_TEMP/hwp-home.html" \
               && grep -Fq "HWP: presentation appearance boundary." "$RUNNER_TEMP/hwp-style.css" \
-              && grep -Fq -- "--text:#f3f1ec" "$RUNNER_TEMP/hwp-style.css"; then
+              && grep -Fq -- "--text:#f3f1ec" "$RUNNER_TEMP/hwp-style.css" \
+              && grep -Fq ".service-row.background-row" "$RUNNER_TEMP/hwp-access.css" \
+              && grep -Fq "createHwpAuth" "$RUNNER_TEMP/hwp-auth.mjs"; then
                 echo "VERIFIED: HWP theme isolation is live at $domain"
                 verified=1
                 break
