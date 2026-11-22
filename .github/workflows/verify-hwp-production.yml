@@ -1,4 +1,5 @@
 name: Publish and verify HWP production
+run-name: HWP production deployment - ${{ github.sha }}
 
 on:
   push:
