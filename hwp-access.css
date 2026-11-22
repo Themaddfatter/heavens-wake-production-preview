@@ -112,3 +112,7 @@
 .hwp-stage-inspector-body .grid-2 input{width:100%;min-width:0;box-sizing:border-box}
 .hwp-stage-inspector-body .field input[type=range]{accent-color:#e5ad42}
 .hwp-stage-inspector-body select{width:100%;min-width:0}
+
+/* The sign-in form keeps the reference's pale inputs even if the saved operator theme is light. */
+:root[data-hwp-appearance] .hwp-access-input{background:#e8f0ff!important;color:#102630!important;border-color:#9ebcb5!important}
+:root[data-hwp-appearance] .hwp-access-input::placeholder{color:#62798a!important}
