@@ -121,3 +121,60 @@
 .hwp-stage-object .hwp-stage-rotate{position:absolute;left:50%;top:-26px;transform:translateX(-50%);width:13px;height:13px;border-radius:50%;background:#f0b638;border:2px solid #fff;box-shadow:0 0 0 2px #102e36;cursor:grab;z-index:20;touch-action:none}
 .hwp-stage-object .hwp-stage-rotate:active{cursor:grabbing}
 .hwp-stage-object .hwp-stage-resize{z-index:20;touch-action:none}
+
+
+/* HWS-matched login controls and logo scale (2026-11-22). */
+/* Match the reference's larger top-left logo while retaining room for the login card. */
+.hwp-access-header{height:186px;padding-top:10px}
+.hwp-access-header img{width:clamp(246px,21.5vw,328px);max-height:174px}
+.hwp-access-main{padding-top:12px}
+.hwp-access-card{max-height:calc(100dvh - 207px)}
+
+/* Outline email and padlock icons: 22px, the same visual scale as HWS. */
+.hwp-access-glyph{
+  display:inline-flex;align-items:center;justify-content:center;flex:0 0 22px;
+  width:22px;height:22px;font-size:0!important;line-height:0;
+}
+.hwp-access-glyph::after{
+  content:"";display:block;flex:none;width:22px;height:22px;
+  background:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23f5bf3b%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Crect%20x%3D%222.8%22%20y%3D%225%22%20width%3D%2218.4%22%20height%3D%2214%22%20rx%3D%221.5%22%2F%3E%3Cpath%20d%3D%22m3.4%206.5%208.6%206.6%208.6-6.6%22%2F%3E%3C%2Fsvg%3E") center/contain no-repeat;
+}
+.hwp-access-field:has(.hwp-password-wrap) .hwp-access-glyph::after,
+.hwp-access-form>.hwp-access-field:nth-child(2) .hwp-access-glyph::after{
+  background-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23f5bf3b%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Crect%20x%3D%225%22%20y%3D%2210%22%20width%3D%2214%22%20height%3D%2211%22%20rx%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M8%2010V7a4%204%200%200%201%208%200v3%22%2F%3E%3Ccircle%20cx%3D%2212%22%20cy%3D%2215%22%20r%3D%221%22%20fill%3D%22%23f5bf3b%22%20stroke%3D%22none%22%2F%3E%3C%2Fsvg%3E");
+}
+.hwp-access-field>span{gap:12px}
+
+/* Keep the existing working password-visibility action; render its label as a
+   properly sized eye (or crossed-out eye while the password is visible). */
+.hwp-password-toggle{
+  display:flex;align-items:center;justify-content:center;
+  width:48px;min-width:48px;height:100%;padding:0;
+  font-size:0!important;line-height:0;color:transparent;
+  border-radius:8px;touch-action:manipulation;
+}
+.hwp-password-toggle::before{
+  content:"";display:block;width:23px;height:23px;flex:none;
+  background:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23385f7e%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M2%2012s3.7-6.5%2010-6.5S22%2012%2022%2012s-3.7%206.5-10%206.5S2%2012%202%2012Z%22%2F%3E%3Ccircle%20cx%3D%2212%22%20cy%3D%2212%22%20r%3D%223%22%2F%3E%3C%2Fsvg%3E") center/contain no-repeat;
+}
+.hwp-password-wrap:has(input[type="text"]) .hwp-password-toggle::before{
+  background-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23385f7e%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M3%203l18%2018M10.6%205.6A10.5%2010.5%200%200%201%2012%205.5c6.3%200%2010%206.5%2010%206.5a15%2015%200%200%201-3.2%203.9M6.2%206.9C3.5%208.6%202%2012%202%2012s3.7%206.5%2010%206.5c1.2%200%202.3-.2%203.3-.7M10%2010a3%203%200%200%200%204%204%22%2F%3E%3C%2Fsvg%3E");
+}
+.hwp-password-toggle:hover{background:#d6e2f278}
+.hwp-password-toggle:focus-visible{outline:2px solid #d6a32e;outline-offset:-3px}
+
+/* The short-screen and phone layouts must still show the whole form. */
+@media(max-height:790px){
+  .hwp-access-header{height:140px;padding-top:6px}
+  .hwp-access-header img{width:min(262px,25vw);max-height:132px}
+  .hwp-access-main{padding-top:8px}
+  .hwp-access-card{max-height:calc(100dvh - 151px)}
+}
+@media(max-width:700px){
+  .hwp-access-header{height:126px;padding:8px 15px}
+  .hwp-access-header img{width:160px;max-height:116px}
+  .hwp-access-card{max-height:calc(100dvh - 144px)}
+}
+@media(max-width:380px){
+  .hwp-access-header img{width:140px}
+}
