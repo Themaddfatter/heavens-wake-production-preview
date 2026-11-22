@@ -7,6 +7,8 @@ on:
     paths:
       - index.html
       - hwp-style.css
+      - hwp-access.css
+      - sync-staging/**
       - hwp-logo.png
       - hwp-bibles/**
       - CNAME
@@ -39,10 +41,13 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          mkdir -p _pages_output/hwp-bibles
-          cp index.html hwp-style.css hwp-logo.png CNAME .nojekyll _pages_output/
+          mkdir -p _pages_output/hwp-bibles _pages_output/sync-staging
+          cp index.html hwp-style.css hwp-access.css hwp-logo.png CNAME .nojekyll _pages_output/
           cp hwp-bibles/*.js _pages_output/hwp-bibles/
+          cp sync-staging/*.mjs _pages_output/sync-staging/
           test -s _pages_output/index.html
+          test -s _pages_output/sync-staging/hwp-auth.mjs
+          grep -Fq 'function HwpAccessGate' _pages_output/index.html
           grep -Fq 'HWP: presentation appearance boundary.' _pages_output/hwp-style.css
           grep -Fq -- '--text:#f3f1ec' _pages_output/hwp-style.css
 
