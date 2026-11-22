@@ -116,3 +116,8 @@
 /* The sign-in form keeps the reference's pale inputs even if the saved operator theme is light. */
 :root[data-hwp-appearance] .hwp-access-input{background:#e8f0ff!important;color:#102630!important;border-color:#9ebcb5!important}
 :root[data-hwp-appearance] .hwp-access-input::placeholder{color:#62798a!important}
+
+/* Separate stage edit handles, matching the slide editor's direct manipulation. */
+.hwp-stage-object .hwp-stage-rotate{position:absolute;left:50%;top:-26px;transform:translateX(-50%);width:13px;height:13px;border-radius:50%;background:#f0b638;border:2px solid #fff;box-shadow:0 0 0 2px #102e36;cursor:grab;z-index:20;touch-action:none}
+.hwp-stage-object .hwp-stage-rotate:active{cursor:grabbing}
+.hwp-stage-object .hwp-stage-resize{z-index:20;touch-action:none}
