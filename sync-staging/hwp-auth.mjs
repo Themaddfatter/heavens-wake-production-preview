@@ -13,6 +13,7 @@ export async function createHwpAuth({loadConfig,loadSdk}) {
   observe:callback=>sdk.onAuthStateChanged(auth,callback),
   async signIn(email,password){return sdk.signInWithEmailAndPassword(auth,email.trim(),password)},
   async signOut(){return sdk.signOut(auth)},
+  async resetPassword(email){return sdk.sendPasswordResetEmail(auth,String(email||'').trim())},
   async workspace(data){return (await workspace(data)).data},
   async media(data){return (await media(data)).data}
  };
