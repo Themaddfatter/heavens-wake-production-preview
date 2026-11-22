@@ -202,3 +202,208 @@
 
 .hwp-media-frame-actions{display:grid;gap:8px;margin:10px 0}
 .hwp-media-frame-actions .btn{width:100%;text-align:center;white-space:normal;line-height:1.35;padding:8px 12px}
+
+/* HWP light-mode accessibility pass — November 22, 2026. */
+/* Operator UI only. Never apply these rules to projected slides, slide thumbnails,
+   stage artboards, presentation banners or authored content. */
+:root[data-hwp-appearance="light"] {
+  --faint:#486781; /* Small labels must have readable contrast on pale surfaces. */
+}
+:root[data-hwp-appearance="light"] :is(
+  .library,.slides,.preview,.bin,.inspector,.editor,.film,
+  .reflow,.bible,.bible-side,.bible-books,.lookup,
+  .modal,.menu,.popover,.templates-panel,.toast,
+  .hwp-library-window,.hwp-search-window,.hwp-stage-sidebar,
+  .hwp-stage-inspector,.hwp-stage-toolbar,.settings-pane
+) {
+  color:var(--text);
+}
+/* Header, mode switcher and toolbar actions. Keep icon and label contrast
+   consistent on the light toolbar instead of retaining pale dark-mode text. */
+:root[data-hwp-appearance="light"] .toolbar .brand-name {
+  color:#143b5d;
+}
+:root[data-hwp-appearance="light"] .toolbar :is(.brand,.modes button,.textbtn,.iconbtn,.screen-btn) {
+  color:#244764;
+}
+:root[data-hwp-appearance="light"] .toolbar :is(.brand,.modes button,.textbtn,.iconbtn,.screen-btn):hover:not(:disabled) {
+  color:#103959;background:#d9eaf7;border-color:#9bbdd6;
+}
+:root[data-hwp-appearance="light"] .toolbar :is(.modes button,.textbtn,.iconbtn).active {
+  color:#fff;background:#15548c;border-color:#15548c;
+}
+:root[data-hwp-appearance="light"] .toolbar .screen-btn.on {
+  color:#714700;background:#fff1c7;border-color:#ce9b22;
+}
+:root[data-hwp-appearance="light"] :is(.toolbar,.modal,.settings-modal) :is(button,input,select,textarea):focus-visible,
+:root[data-hwp-appearance="light"] :is(.library,.slides,.editor,.bin,.bible,.hwp-library-window) button:focus-visible {
+  outline:2px solid #135c9b;outline-offset:2px;
+}
+/* Service lists and selected presentations: the old active state used a navy
+   fill while inheriting dark-blue light-theme text. The BG row is exempt. */
+:root[data-hwp-appearance="light"] .service-row:not(.background-row):hover,
+:root[data-hwp-appearance="light"] :is(.outline-item,.pres-row,.layer-row,.folder-col button,.book-list button):hover {
+  color:#123e69;background:#e4f0fa;
+}
+:root[data-hwp-appearance="light"] .service-row:not(.background-row).active,
+:root[data-hwp-appearance="light"] :is(.outline-item,.pres-row,.layer-row,.folder-col button,.book-list button).active {
+  color:#103b61;background:#cfe5f7;
+}
+:root[data-hwp-appearance="light"] :is(.service-row:not(.background-row),.pres-row,.outline-item,.layer-row).active :is(strong,em,small,.service-num) {
+  color:#214d70;
+}
+:root[data-hwp-appearance="light"] .service-row:not(.background-row).active strong {
+  color:#0d3454;
+}
+:root[data-hwp-appearance="light"] :is(.service-row:not(.background-row),.pres-row,.outline-item,.layer-row):focus-visible {
+  outline:2px solid #176ba8;outline-offset:-2px;
+}
+:root[data-hwp-appearance="light"] :is(.pill,.chip,.easy-card) {
+  color:#244764;background:#e8f3fb;border-color:#b8d0e3;
+}
+:root[data-hwp-appearance="light"] .chip.ghost:hover {
+  color:#123e69;background:#d6eaf8;
+}
+/* Inputs across settings, searching, Bible and presentation editors.
+   Do not style editable text *on a slide* (.inline-text) here. */
+:root[data-hwp-appearance="light"] :is(.detail-search,.lookup-field,.settings-search) {
+  color:#163c5d;background:#fff;border-color:#a8c4da;
+}
+:root[data-hwp-appearance="light"] :is(.detail-search input,.lookup-field input,.library .panel-head select,
+  .hwp-lib-toolbar input,.hwp-lib-toolbar select,.label-custom input,
+  .settings-pane input:not([type=checkbox]):not([type=color]):not([type=range]),
+  .settings-pane select,.settings-pane textarea,
+  .hwp-stage-toolbar select,.hwp-stage-inspector select,
+  .hwp-stage-inspector input:not([type=range]):not([type=color]),
+  .hwp-stage-inspector textarea) {
+  background:#fff;color:#102e4c;border-color:#a8c4da;
+}
+:root[data-hwp-appearance="light"] :is(input,textarea)::placeholder {
+  color:#536d85;opacity:1;
+}
+:root[data-hwp-appearance="light"] :is(input,select,textarea):disabled {
+  color:#596f84;opacity:1;background:#edf3f8;
+}
+:root[data-hwp-appearance="light"] .hwp-stage-inspector input[type=range] {
+  accent-color:#1267a1;background:transparent;
+}
+:root[data-hwp-appearance="light"] :is(.hwp-stage-inspector,.settings-pane) input[type=checkbox] {
+  accent-color:#1267a1;
+}
+/* Library folders, media picker, file previews and search-results labels. */
+:root[data-hwp-appearance="light"] :is(.hwp-lib-sidebar,.hwp-media-content nav) {
+  background:#eaf3fa;border-color:#b9d1e4;
+}
+:root[data-hwp-appearance="light"] :is(.hwp-lib-sidebar button,.hwp-media-content nav button) {
+  color:#214763;
+}
+:root[data-hwp-appearance="light"] :is(.hwp-lib-sidebar button,.hwp-media-content nav button):hover,
+:root[data-hwp-appearance="light"] .hwp-lib-item:hover {
+  color:#143b5d;background:#daeafa;
+}
+:root[data-hwp-appearance="light"] :is(.hwp-lib-sidebar button,.hwp-media-content nav button).active,
+:root[data-hwp-appearance="light"] .hwp-lib-item.selected {
+  color:#103b61;background:#cbe3f6;
+}
+:root[data-hwp-appearance="light"] .hwp-lib-preview {
+  color:#102e4c;background:#fff;border-color:#abc7dc;
+}
+:root[data-hwp-appearance="light"] .hwp-lib-preview :is(header,footer) {
+  border-color:#c5d8e9;
+}
+:root[data-hwp-appearance="light"] :is(
+  .hwp-lib-caption,.hwp-lib-item small,.hwp-lib-sidebar small,
+  .hwp-lib-arrow,.hwp-lib-preview header small,.hwp-lib-preview footer span,
+  .hwp-lib-preview-cell small) {
+  color:#486781;
+}
+:root[data-hwp-appearance="light"] .hwp-lib-file-icon {
+  color:#245783;
+}
+:root[data-hwp-appearance="light"] .hwp-lib-item {
+  border-color:#c4d8e9;
+}
+:root[data-hwp-appearance="light"] :is(.hwp-media-card,.media-card,.cue-card,.live-sources button,.hits button) {
+  color:#173e5d;background:#fff;border-color:#bfd4e5;
+}
+:root[data-hwp-appearance="light"] :is(.media-card,.cue-card,.hwp-media-card,.hits button):hover {
+  background:#e8f3fb;
+}
+/* Stage-layout inspector UI only: the artboard stays in its authored colors. */
+:root[data-hwp-appearance="light"] .hwp-stage-workspace {
+  background:#e5f0f9;
+}
+:root[data-hwp-appearance="light"] :is(.hwp-stage-section-head,.hwp-stage-toolbar,
+  .hwp-stage-layout-list button,.hwp-stage-layer-list button,
+  .hwp-stage-inspector-body small,.hwp-stage-inspector-empty,.hwp-stage-hint,
+  .hwp-stage-tabs button) {
+  color:#244764;
+}
+:root[data-hwp-appearance="light"] .hwp-stage-tabs button.active {
+  color:#104f84;border-bottom-color:#98620e;
+}
+:root[data-hwp-appearance="light"] :is(.hwp-stage-layout-list button,.hwp-stage-layer-list button):hover {
+  color:#103b61;background:#dcecf8;
+}
+:root[data-hwp-appearance="light"] :is(.hwp-stage-layout-list button,.hwp-stage-layer-list button).active {
+  color:#103b61;background:#cbe3f6;
+}
+:root[data-hwp-appearance="light"] .hwp-stage-toolbar {
+  background:#e7f2fb;border-color:#bdcfdf;
+}
+/* Settings panels, selection states, Bible annotations and auxiliary tools. */
+:root[data-hwp-appearance="light"] .settings-body nav button {
+  color:#315875;
+}
+:root[data-hwp-appearance="light"] .settings-body nav button:hover {
+  color:#103b61;background:#e1effa;
+}
+:root[data-hwp-appearance="light"] .settings-body nav button.active {
+  color:#103b61;background:#cbe3f6;
+}
+:root[data-hwp-appearance="light"] .settings-nav-heading,
+:root[data-hwp-appearance="light"] :is(.panel-head span,.section-label,.lbl,.popover-label) {
+  color:#466480;
+}
+:root[data-hwp-appearance="light"] .settings-pane .help-grid h3,
+:root[data-hwp-appearance="light"] .bible-read .verses sup {
+  color:#805209;
+}
+:root[data-hwp-appearance="light"] .settings-pane .help-grid section,
+:root[data-hwp-appearance="light"] .settings-pane .service-defaults {
+  background:#fbfdff;border-color:#c4d8e9;
+}
+:root[data-hwp-appearance="light"] :is(.num-spin button,.arr-row button) {
+  color:#244764;background:#e8f3fb;border-color:#abc6d9;
+}
+:root[data-hwp-appearance="light"] :is(.num-spin button,.arr-row button):hover {
+  color:#103b61;background:#d3e8f7;
+}
+:root[data-hwp-appearance="light"] .toggle i {
+  background:#9ab5cb;
+}
+:root[data-hwp-appearance="light"] .toggle i:after {
+  background:#fff;
+}
+:root[data-hwp-appearance="light"] .toggle.on i {
+  background:#1267a1;
+}
+:root[data-hwp-appearance="light"] .color-drag-handle:is(:hover,:focus-visible) {
+  color:#173e5d;background:#dcecf8;
+}
+:root[data-hwp-appearance="light"] .color-delete {
+  color:#a3293a;
+}
+:root[data-hwp-appearance="light"] .color-delete:is(:hover,:focus-visible) {
+  color:#8a1c2c;background:#fbe9eb;
+}
+:root[data-hwp-appearance="light"] .hwp-bulk-scripture [role=alert] {
+  color:#9a1f2e;
+}
+:root[data-hwp-appearance="light"] :is(.menu-item.danger,.popover-item.danger) {
+  color:#922b36;
+}
+:root[data-hwp-appearance="light"] :is(.menu-item,.popover-item):focus-visible {
+  outline:2px solid #14639b;outline-offset:-2px;
+}
+
