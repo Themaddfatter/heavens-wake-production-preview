@@ -20,42 +20,35 @@ concurrency:
 jobs:
   verify-hwp-production:
     name: Verify production.sioncdo.com
-    runs-on: [self-hosted, Windows, X64]
+    runs-on: [self-hosted, Linux, X64, hwp-wsl]
     timeout-minutes: 10
     steps:
       - name: Check deployed presentation theme isolation
-        shell: powershell
+        shell: bash
         run: |
-          $ErrorActionPreference = 'Stop'
-          $domain = 'https://production.sioncdo.com'
-          $query = [Uri]::EscapeDataString($env:GITHUB_SHA)
-          $ready = $false
+          set -euo pipefail
+          domain="https://production.sioncdo.com"
+          verified=0
 
-          for ($attempt = 1; $attempt -le 20; $attempt++) {
-            try {
-              $home = Invoke-WebRequest -UseBasicParsing -Uri "$domain/?hwp_verify=$query" -TimeoutSec 20 -Headers @{'Cache-Control'='no-cache'}
-              $css = Invoke-WebRequest -UseBasicParsing -Uri "$domain/hwp-style.css?hwp_verify=$query" -TimeoutSec 25 -Headers @{'Cache-Control'='no-cache'}
-              if ($home.StatusCode -ne 200 -or $css.StatusCode -ne 200) {
-                throw "Unexpected HTTP status (home: $($home.StatusCode), css: $($css.StatusCode))"
-              }
-              if ($home.Content -notmatch 'hwp-style\.css') {
-                throw 'HWP stylesheet not linked on deployed homepage'
-              }
-              if ($css.Content -notlike '*HWP: presentation appearance boundary.*') {
-                throw 'Published CSS is missing the theme-isolation fix'
-              }
-              if ($css.Content -notlike '*--text:#f3f1ec*') {
-                throw 'Theme-isolation color variables are missing'
-              }
-              Write-Host "VERIFIED: HWP presentation theme isolation is live at $domain"
-              $ready = $true
-              break
-            } catch {
-              Write-Warning "Production check $attempt/20: $($_.Exception.Message)"
-              if ($attempt -lt 20) { Start-Sleep -Seconds 12 }
-            }
-          }
+          for attempt in $(seq 1 20); do
+            echo "Checking production attempt ${attempt}/20"
+            if curl --fail --silent --show-error --location --max-time 20 \
+                -H 'Cache-Control: no-cache' \
+                "$domain/?hwp_verify=$GITHUB_SHA" -o "$RUNNER_TEMP/hwp-home.html" \
+              && curl --fail --silent --show-error --location --max-time 25 \
+                -H 'Cache-Control: no-cache' \
+                "$domain/hwp-style.css?hwp_verify=$GITHUB_SHA" -o "$RUNNER_TEMP/hwp-style.css" \
+              && grep -Fq 'hwp-style.css' "$RUNNER_TEMP/hwp-home.html" \
+              && grep -Fq 'HWP: presentation appearance boundary.' "$RUNNER_TEMP/hwp-style.css" \
+              && grep -Fq -- '--text:#f3f1ec' "$RUNNER_TEMP/hwp-style.css"; then
+                echo "VERIFIED: HWP presentation theme isolation is live at $domain"
+                verified=1
+                break
+            fi
+            if [ "$attempt" -lt 20 ]; then sleep 12; fi
+          done
 
-          if (-not $ready) {
-            throw 'HWP production does not yet serve the presentation theme-isolation CSS. Check GitHub Pages domain/build and DNS.'
-          }
+          if [ "$verified" -ne 1 ]; then
+            echo "::error::HWP production has not yet served the theme-isolation CSS."
+            exit 1
+          fi
