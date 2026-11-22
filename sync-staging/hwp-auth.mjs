@@ -6,6 +6,7 @@ export async function createHwpAuth({loadConfig,loadSdk}) {
  const app=existing||sdk.initializeApp(config,'hwp-shared');
  const auth=sdk.getAuth(app),functions=sdk.getFunctions(app,'us-central1');
  await sdk.setPersistence(auth,sdk.browserLocalPersistence);
+ if(typeof auth.authStateReady==='function')await auth.authStateReady();
  const workspace=sdk.httpsCallable(functions,'hwpWorkspace');
  const media=sdk.httpsCallable(functions,'hwpMedia');
  return {
