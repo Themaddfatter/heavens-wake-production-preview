@@ -1,0 +1,31 @@
+// Client-side network operations for the shared workspace. Supply Firebase callable adapters.
+export class HwpSyncError extends Error {constructor(message,code){super(message);this.name='HwpSyncError';this.code=code}}
+export function createHwpSyncClient({workspaceCall,mediaCall,fetcher=fetch,now=Date.now}) {
+ if(typeof workspaceCall!=='function'||typeof mediaCall!=='function')throw new TypeError('Authenticated callable adapters required');
+ const signed=new Map();
+ async function load(){return workspaceCall({action:'get'})}
+ async function save(workspace,expectedRevision){
+  if(!Number.isSafeInteger(expectedRevision)||expectedRevision<0)throw new HwpSyncError('Missing cloud revision.','invalid-revision');
+  const result=await workspaceCall({action:'save',workspace,expectedRevision});
+  if(result?.conflict)throw new HwpSyncError('Another device changed the library. Reload before saving.','conflict');
+  if(!result?.saved)throw new HwpSyncError('The library was not saved. Your local work is unchanged.','save-failed');
+  return result;
+ }
+ async function upload(blob,name){
+  if(!(blob instanceof Blob)||!blob.size)throw new HwpSyncError('The local file is missing.','missing-file');
+  const sign=await mediaCall({action:'signUpload',name,type:blob.type,size:blob.size});
+  if(!sign?.id||!sign?.uploadUrl)throw new HwpSyncError('Could not prepare the media upload.','upload-failed');
+  const response=await fetcher(sign.uploadUrl,{method:'PUT',headers:{'Content-Type':sign.contentType||blob.type},body:blob});
+  if(!response.ok)throw new HwpSyncError('Media upload failed; local file is unchanged.','upload-failed');
+  const finish=await mediaCall({action:'completeUpload',id:sign.id});
+  if(!finish?.saved)throw new HwpSyncError('The server could not verify the uploaded media.','upload-failed');
+  return {id:sign.id};
+ }
+ async function mediaUrl(id){
+  const old=signed.get(id);if(old&&old.until>now())return old.url;
+  const reply=await mediaCall({action:'signRead',id});const url=reply?.urls?.[id];
+  if(!url)throw new HwpSyncError('The media file is unavailable.','media-unavailable');
+  signed.set(id,{url,until:now()+Math.max(0,Number(reply.expiresIn||0)-60)*1000});return url;
+ }
+ return {load,save,upload,mediaUrl,clearSignedUrls:()=>signed.clear()};
+}
