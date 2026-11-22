@@ -1,0 +1,56 @@
+name: Verify HWP production theme fix
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - index.html
+      - hwp-style.css
+      - .github/workflows/verify-hwp-production.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify-hwp-production:
+    name: Verify production.sioncdo.com
+    runs-on: [self-hosted, Windows, X64]
+    timeout-minutes: 10
+    steps:
+      - name: Check deployed presentation theme isolation
+        shell: powershell
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $domain = 'https://production.sioncdo.com'
+          $query = [Uri]::EscapeDataString($env:GITHUB_SHA)
+          $ready = $false
+
+          for ($attempt = 1; $attempt -le 20; $attempt++) {
+            try {
+              $home = Invoke-WebRequest -UseBasicParsing -Uri "$domain/?hwp_verify=$query" -TimeoutSec 20 -Headers @{'Cache-Control'='no-cache'}
+              $css = Invoke-WebRequest -UseBasicParsing -Uri "$domain/hwp-style.css?hwp_verify=$query" -TimeoutSec 25 -Headers @{'Cache-Control'='no-cache'}
+              if ($home.StatusCode -ne 200 -or $css.StatusCode -ne 200) {
+                throw "Unexpected HTTP status (home: $($home.StatusCode), css: $($css.StatusCode))"
+              }
+              if ($home.Content -notmatch 'hwp-style\.css') {
+                throw 'HWP stylesheet not linked on deployed homepage'
+              }
+              if ($css.Content -notlike '*HWP: presentation appearance boundary.*') {
+                throw 'Published CSS is missing the theme-isolation fix'
+              }
+              if ($css.Content -notlike '*--text:#f3f1ec*') {
+                throw 'Theme-isolation color variables are missing'
+              }
+              Write-Host "VERIFIED: HWP presentation theme isolation is live at $domain"
+              $ready = $true
+              break
+            } catch {
+              Write-Warning "Production check $attempt/20: $($_.Exception.Message)"
+              if ($attempt -lt 20) { Start-Sleep -Seconds 12 }
+            }
+          }
+
+          if (-not $ready) {
+            throw 'HWP production does not yet serve the presentation theme-isolation CSS. Check GitHub Pages domain/build and DNS.'
+          }
