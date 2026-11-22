@@ -102,3 +102,13 @@
 .hwp-access-actions .hwp-access-reset{height:48px;min-width:150px}
 @media(max-height:790px){.hwp-access-header{height:120px;padding-top:6px}.hwp-access-header img{max-height:106px;width:min(228px,25vw)}.hwp-access-card{padding:18px 22px;max-height:calc(100dvh - 130px)}.hwp-access-form{gap:12px}.hwp-access-input{height:49px}.hwp-access-submit{height:55px;margin-top:2px}.hwp-access-reset{height:45px}}
 @media(max-width:700px){.hwp-access-header{height:105px;padding:9px 15px}.hwp-access-header img{width:130px;max-height:95px}.hwp-access-connect{margin-top:5px;flex-wrap:wrap;justify-content:flex-end;white-space:normal;font-size:11px;gap:5px}.hwp-access-link{padding:7px 9px;font-size:11px}.hwp-access-card{border-radius:16px;padding:20px 16px}.hwp-access-field{font-size:14px}.hwp-access-input{height:49px}.hwp-access-submit{height:55px;font-size:20px}}
+
+/* Extended stage layout editor controls */
+.hwp-stage-background-choice{display:inline-flex;align-items:center;gap:8px;white-space:nowrap;font-size:12px;color:var(--dim)}
+.hwp-stage-background-choice input[type=color]{width:32px;height:29px;padding:0;border-radius:6px;cursor:pointer}
+.hwp-stage-toolbar{gap:9px;flex-wrap:wrap}
+.hwp-stage-object{touch-action:none}
+.hwp-stage-inspector-body .check{padding:6px 0}
+.hwp-stage-inspector-body .grid-2 input{width:100%;min-width:0;box-sizing:border-box}
+.hwp-stage-inspector-body .field input[type=range]{accent-color:#e5ad42}
+.hwp-stage-inspector-body select{width:100%;min-width:0}
