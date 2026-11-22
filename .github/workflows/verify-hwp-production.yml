@@ -12,6 +12,11 @@ on:
 permissions:
   contents: read
 
+# Prevent overlapping production checks when multiple commits land together.
+concurrency:
+  group: verify-hwp-production
+  cancel-in-progress: true
+
 jobs:
   verify-hwp-production:
     name: Verify production.sioncdo.com
