@@ -43,6 +43,21 @@ jobs:
           set -euo pipefail
           mkdir -p _pages_output/hwp-bibles _pages_output/sync-staging
           cp index.html hwp-style.css hwp-access.css hwp-logo.png CNAME .nojekyll _pages_output/
+          # Use the existing HWP logo for the browser tab on every release.
+          python3 - <<'PY'
+          import os
+          import re
+          from pathlib import Path
+          page = Path("_pages_output/index.html")
+          html = page.read_text(encoding="utf-8")
+          # Replace any previous favicon links, regardless of their location in <head>.
+          html = re.sub(r'<link\b(?=[^>]*\brel\s*=\s*["\'](?:shortcut\s+)?icon["\'])[^>]*>', '', html, flags=re.I)
+          favicon = '<link rel="icon" type="image/png" href="/hwp-logo.png?v=' + os.environ['GITHUB_SHA'][:12] + '">'
+          if not re.search(r'</head\s*>', html, re.I):
+              raise SystemExit('Cannot install HWP favicon: </head> missing')
+          html = re.sub(r'</head\s*>', favicon + '\n</head>', html, count=1, flags=re.I)
+          page.write_text(html, encoding="utf-8")
+          PY
           cp hwp-bibles/*.js _pages_output/hwp-bibles/
           cp sync-staging/*.mjs _pages_output/sync-staging/
           test -s _pages_output/index.html
@@ -102,6 +117,10 @@ jobs:
               && grep -Fq "hwp-style.css" "$RUNNER_TEMP/hwp-home.html" \
               && grep -Fq "hwp-access.css" "$RUNNER_TEMP/hwp-home.html" \
               && grep -Fq "function HwpAccessGate" "$RUNNER_TEMP/hwp-home.html" \
+              && grep -Eq '<link rel="icon" type="image/png" href="/hwp-logo[.]png[?]v=' "$RUNNER_TEMP/hwp-home.html" \
+              && curl --fail --silent --show-error --location --max-time 25 "$domain/hwp-logo.png?hwp_verify=$GITHUB_SHA" -o "$RUNNER_TEMP/hwp-logo.png" \
+              && test -s "$RUNNER_TEMP/hwp-logo.png" \
+
               && grep -Fq "HWP: presentation appearance boundary." "$RUNNER_TEMP/hwp-style.css" \
               && grep -Fq -- "--text:#f3f1ec" "$RUNNER_TEMP/hwp-style.css" \
               && grep -Fq ".service-row.background-row" "$RUNNER_TEMP/hwp-access.css" \
