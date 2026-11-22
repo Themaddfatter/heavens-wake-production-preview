@@ -178,3 +178,24 @@
 @media(max-width:380px){
   .hwp-access-header img{width:150px}
 }
+
+/* Media editing controls and larger Settings cog: 2026-11-22 */
+.toolbar .iconbtn.settings-gear{
+  width:44px!important;height:42px!important;min-width:44px!important;
+  display:inline-flex!important;align-items:center;justify-content:center;
+  border-radius:9px;flex:none;
+}
+.toolbar .iconbtn.settings-gear svg{width:25px!important;height:25px!important;flex:none}
+.toolbar .iconbtn.settings-gear:hover,.toolbar .iconbtn.settings-gear:focus-visible{
+  background:var(--bg-3,#262e2c);color:var(--text,#fff)
+}
+.settings-pane .help-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(220px,100%),1fr));gap:18px;margin-top:14px}
+.settings-pane .help-grid section{min-width:0;border:1px solid var(--line,#454a49);border-radius:10px;padding:14px}
+.settings-pane .help-grid h3{color:var(--amber,#e2a04a);margin:0 0 10px;font-size:13px}
+.settings-pane .help-grid .shortcut{grid-template-columns:minmax(95px,38%) minmax(0,1fr);gap:9px}
+.hwp-media-controls{margin-top:10px;border-top:1px solid var(--line,#434643);padding-top:12px}
+.hwp-media-controls>.hint{margin:0 0 6px}
+.hwp-media-controls .grid-2{min-width:0;gap:10px}
+.hwp-media-controls .grid-2>*{min-width:0}
+.hwp-media-controls select{min-width:0;max-width:100%;width:100%}
+.hwp-media-controls .check{font-size:12px}
