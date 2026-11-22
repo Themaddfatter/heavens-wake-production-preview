@@ -407,3 +407,21 @@
   outline:2px solid #14639b;outline-offset:-2px;
 }
 
+/* Additional light-only accent contrast: the default amber is deliberately
+   retained for dark mode and projected content, so recolor text locally. */
+:root[data-hwp-appearance="light"] :is(
+  .bg-heading,.help h3,.templates-panel h3,.template-meta em,
+  .chapter-nums button.active,.mobile-nav button.active,
+  .live-sources button.active
+) {
+  color:#805209;
+}
+:root[data-hwp-appearance="light"] .chapter-nums button.active {
+  background:#fff1cd;border-color:#be9444;
+}
+:root[data-hwp-appearance="light"] .mobile-nav button.active {
+  background:#d6eaf8;border-top:2px solid #855b11;
+}
+:root[data-hwp-appearance="light"] .templates-panel :is(h3,.template-meta em) {
+  color:#805209;
+}
