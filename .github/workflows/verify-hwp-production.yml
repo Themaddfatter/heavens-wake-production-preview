@@ -79,6 +79,10 @@ jobs:
         with:
           path: _pages_output
 
+      - name: Allow GitHub Pages artifact to finish indexing
+        shell: bash
+        run: sleep 15
+
       - name: Deploy HWP to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
