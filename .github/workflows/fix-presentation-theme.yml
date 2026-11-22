@@ -1,0 +1,78 @@
+name: Fix HWP presentation theme isolation
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/fix-presentation-theme.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  isolate-presentation-theme:
+    # Run on the owner's Windows PC, never on a GitHub-hosted runner.
+    runs-on: [self-hosted, Windows, X64]
+    timeout-minutes: 15
+    steps:
+      - name: Check out HWP
+        uses: actions/checkout@v4
+      - name: Preserve presentation colors in both interface themes
+        shell: powershell
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $path = Join-Path $pwd 'index.html'
+          $html = [System.IO.File]::ReadAllText($path, [System.Text.Encoding]::UTF8)
+          $marker = '/* HWP: presentation appearance boundary.'
+          $anchor = '/* Top-bar button labels */'
+          if (-not $html.Contains('function choose(value){setTheme(value);document.documentElement.dataset.hwpAppearance=value;')) { throw 'Unexpected HWP theme-switch code' }
+          if (-not $html.Contains('textAlign:e.textStyle.align,color:e.textStyle.color')) { throw 'Unexpected slide text renderer' }
+          if (-not $html.Contains('background:e.bg,color:e.color')) { throw 'Unexpected projected banner renderer' }
+          if (-not $html.Contains('...Wn(e.background)')) { throw 'Unexpected slide background renderer' }
+          if (-not $html.Contains($marker)) {
+            if (-not $html.Contains($anchor)) { throw 'CSS insertion point is missing' }
+            $css = @'
+          /* HWP: presentation appearance boundary.
+             Operator light/dark mode must never recolor slides, projected overlays,
+             presentation banners, custom text or stage-layout headers. These
+             surfaces keep the original output defaults; document-assigned inline
+             colors, backgrounds and fonts retain priority in both interface modes. */
+          :is(.logical-root, .stage-screen, .stage-program, .program-frame,
+              .thumb-host, .film-thumb, .table-thumb, .reflow-stage,
+              .hwp-stage-artboard, .hwp-stage-preview, .theme-preview) {
+            --bg:#121212;
+            --bg-2:#181818;
+            --bg-3:#202020;
+            --bg-4:#2a2a2a;
+            --line:#2c2c2c;
+            --line-2:#3a3a3a;
+            --text:#f3f1ec;
+            --dim:#b7b3ab;
+            --faint:#7d7a74;
+            --blue:#4c8dff;
+            --shadow:0 16px 50px #00000073;
+            color:#f3f1ec;
+            color-scheme:dark;
+          }
+          /* The fixed-color editing banner retains legible text in either mode. */
+          .template-banner { color:#f3f1ec; }
+
+          '@
+            $html = $html.Replace($anchor, $css + "`r`n" + $anchor)
+            [System.IO.File]::WriteAllText($path, $html, [System.Text.UTF8Encoding]::new($false))
+          }
+          $check = [System.IO.File]::ReadAllText($path, [System.Text.Encoding]::UTF8)
+          if (-not $check.Contains($marker) -or -not $check.Contains('--text:#f3f1ec;')) { throw 'Theme boundary verification failed' }
+          Write-Host 'Slide backgrounds, banners, header and font colors are isolated from the UI switch.'
+          git add -- index.html
+          git diff --cached --quiet -- index.html
+          if ($LASTEXITCODE -eq 0) {
+            Write-Host 'HWP theme isolation was already present.'
+          } else {
+            git config user.name 'hwp-theme-fix[bot]'
+            git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+            git commit -m 'Isolate presentation colors from operator light and dark mode'
+            if ($LASTEXITCODE -ne 0) { throw 'Could not commit HWP theme isolation' }
+            git push origin HEAD:main
+            if ($LASTEXITCODE -ne 0) { throw 'Could not push HWP theme isolation' }
+          }
