@@ -2,7 +2,7 @@
 export class SyncConflictError extends Error {
   constructor() { super('The cloud library changed on another device. Reload before saving.'); this.name = 'SyncConflictError'; }
 }
-export async function migrateLocalLibrary({doc, appearance, readLocalMedia, uploadMedia, commit, expectedRevision, onProgress = () => {}}) {
+export async function migrateLocalLibrary({doc, appearance, preferences, readLocalMedia, uploadMedia, commit, expectedRevision, onProgress = () => {}}) {
   if (!doc || !Array.isArray(doc.presentations) || !Array.isArray(doc.media)) throw new TypeError('Invalid local library');
   if (typeof readLocalMedia !== 'function' || typeof uploadMedia !== 'function' || typeof commit !== 'function') throw new TypeError('Storage adapters are required');
   const copy = structuredClone(doc), sources = new Map();
@@ -22,7 +22,7 @@ export async function migrateLocalLibrary({doc, appearance, readLocalMedia, uplo
     for (const item of entries) item.src = `cloud:${result.id}`;
     onProgress({completed: ++completed, total: sources.size});
   }
-  const result = await commit({doc: copy, appearance, expectedRevision});
+  const result = await commit({doc: copy, appearance, preferences, expectedRevision});
   if (result?.conflict) throw new SyncConflictError();
   if (!result?.saved) throw new Error('Cloud library could not be saved. Local work has been preserved.');
   return {revision: result.revision, uploaded: completed, migratedDoc: copy};
