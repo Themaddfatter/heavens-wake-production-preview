@@ -1,0 +1,104 @@
+/* HWP permissions, Service settings, and production appearance isolation. */
+:root[data-hwp-appearance] .service-row.background-row,
+:root[data-hwp-appearance="light"] .service-row.background-row {
+  background:#183447!important;border:1px solid #dba83d!important;
+  color:#fff!important;
+}
+:root[data-hwp-appearance] .service-row.background-row .service-copy strong,
+:root[data-hwp-appearance="light"] .service-row.background-row .service-copy strong {
+  color:#fff!important;text-shadow:0 1px 1px #001a21;
+}
+:root[data-hwp-appearance] .service-row.background-row .service-copy small,
+:root[data-hwp-appearance] .service-row.background-row .service-num,
+:root[data-hwp-appearance="light"] .service-row.background-row .service-copy small {
+  color:#cfeaf3!important;
+}
+:root[data-hwp-appearance] .service-row.background-row.active {
+  background:#173e57!important;outline:2px solid #e5ae45!important;outline-offset:-2px;
+}
+/* Presentation content is deliberately independent of the operator's theme. */
+:root[data-hwp-appearance="light"] :is(.logical-root,.thumb-host,.film-thumb,.table-thumb,
+ .reflow-stage,.program-frame,.stage-screen,.stage-program,.hwp-stage-preview,.hwp-stage-artboard,.theme-preview),
+:root[data-hwp-appearance="dark"] :is(.logical-root,.thumb-host,.film-thumb,.table-thumb,
+ .reflow-stage,.program-frame,.stage-screen,.stage-program,.hwp-stage-preview,.hwp-stage-artboard,.theme-preview) {
+  --bg:#121212!important;--bg-2:#181818!important;--bg-3:#202020!important;
+  --line:#2c2c2c!important;--text:#f3f1ec!important;--dim:#b7b3ab!important;
+  --faint:#aaa8a3!important;color-scheme:dark;
+}
+:root[data-hwp-appearance="light"] :is(.logical-root,.stage-layout,.stage-screen,.program-frame) .template-banner {
+  color:#f3f1ec;
+}
+.hwp-service-create{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:12px 0 16px}
+.hwp-service-create input{flex:1;min-width:170px}
+.hwp-service-create .btn{white-space:nowrap}
+.hwp-service-list{display:flex;flex-direction:column;gap:6px}
+.hwp-service-entry{display:flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:8px;padding:9px 10px}
+.hwp-service-entry>strong{flex:1;overflow-wrap:anywhere}
+.hwp-service-entry .btn{flex-shrink:0}
+.hwp-stage-format-row{display:flex;flex-wrap:wrap;gap:6px}
+.hwp-stage-format-row .btn{min-width:37px}
+.hwp-stage-inspector .grid-2{min-width:0}
+.hwp-stage-inspector .field input[type=range]{width:100%}
+/* The signed-out experience intentionally follows the supplied sermon login reference. */
+.hwp-access-shell{
+  position:fixed;inset:0;z-index:2147483000;overflow:hidden;
+  color:#f4f8f4;background:linear-gradient(132deg,#04170e 0%,#082b1a 51%,#0c3923 100%);
+  font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;
+  display:grid;grid-template-rows:auto minmax(0,1fr);isolation:isolate;
+}
+.hwp-access-shell::after{
+  content:"";position:absolute;left:-12%;bottom:-24%;width:125%;height:38%;
+  border-top:1.5px solid #f2b934;border-radius:50% 50% 0 0;
+  box-shadow:0 -10px 34px #d3a82529;transform:rotate(-3deg);pointer-events:none;z-index:-1;
+}
+.hwp-access-shell::before{
+  content:"";position:absolute;left:-10%;bottom:-29%;width:130%;height:37%;
+  border-top:1px solid #36745f88;border-radius:50% 50% 0 0;
+  transform:rotate(3deg);pointer-events:none;z-index:-1;
+}
+.hwp-access-header{
+  display:flex;justify-content:space-between;align-items:flex-start;
+  gap:16px;padding:12px clamp(25px,3.6vw,54px);height:168px;box-sizing:border-box;
+}
+.hwp-access-header img{
+  width:clamp(194px,19vw,282px);height:auto;max-height:158px;object-fit:contain;
+  object-position:top left;flex:none;display:block;
+}
+.hwp-access-connect{display:flex;align-items:center;gap:14px;margin-top:16px;color:#90e7cd;font-size:13px;font-weight:550;white-space:nowrap}
+.hwp-access-dot{display:inline-block;background:#39c89a;border-radius:50%;width:10px;height:10px;box-shadow:0 0 0 3px #39c89a28;margin-right:7px}
+.hwp-access-link{color:#fff;text-decoration:none;border:1px solid #81a89a;border-radius:10px;padding:13px 16px;font-size:15px;font-weight:750;background:#0b281e;white-space:nowrap}
+.hwp-access-link:hover{background:#16422d}
+.hwp-access-main{min-height:0;display:flex;align-items:center;justify-content:center;padding:0 18px 18px;box-sizing:border-box}
+.hwp-access-card{width:min(615px,100%);border:2px solid #efb53d;border-radius:22px;background:#061b14f2;padding:29px 24px 23px;box-sizing:border-box;box-shadow:0 14px 42px #0004;max-height:calc(100dvh - 200px);overflow:auto}
+.hwp-access-form{display:flex;flex-direction:column;gap:18px}
+.hwp-access-field{display:flex;flex-direction:column;gap:12px;font-size:16px;font-weight:750;color:#f9fcf7}
+.hwp-access-field>span{display:flex;align-items:center;gap:14px}
+.hwp-access-glyph{font-size:20px;color:#f2ba3b;width:20px;text-align:center}
+.hwp-access-input{
+  appearance:none;display:block;box-sizing:border-box;width:100%;height:57px;
+  border:1.5px solid #9ebcb5;border-radius:11px;background:#e8f0ff;
+  color:#102630!important;font-size:16px;font-weight:550;padding:0 18px;
+}
+.hwp-access-input::placeholder{color:#62798a}
+.hwp-access-input:focus{outline:2px solid #e6ad31;outline-offset:2px}
+.hwp-password-wrap{position:relative}
+.hwp-password-wrap .hwp-access-input{padding-right:60px}
+.hwp-password-toggle{position:absolute;right:8px;top:0;bottom:0;min-width:49px;border:0;background:transparent;color:#385c70;font-size:15px;cursor:pointer}
+.hwp-access-submit{
+  background:linear-gradient(#ffdf76,#e8aa27);border:1px solid #ffe39b;color:#082c31;
+  font-size:23px;font-weight:800;border-radius:11px;width:100%;height:63px;
+  cursor:pointer;margin-top:9px;text-align:center;
+}
+.hwp-access-submit:hover:not(:disabled){filter:brightness(1.07)}
+.hwp-access-submit:disabled{opacity:.7;cursor:wait}
+.hwp-access-reset{display:block;align-self:center;min-width:52%;max-width:100%;height:52px;border:1px solid #93b4ab;border-radius:11px;background:#0c281e;color:#fff;font-weight:700;font-size:15px;cursor:pointer;padding:0 18px}
+.hwp-access-reset:hover{background:#184030}
+.hwp-access-note{font-size:13px;line-height:1.5;color:#d6e4db;text-align:center;margin:3px 0 0}
+.hwp-access-error{font-size:14px;line-height:1.5;color:#fff2d5;background:#533019aa;border:1px solid #f1b346;border-radius:10px;padding:11px 13px;margin:0}
+.hwp-access-message{text-align:center;line-height:1.6;color:#e3f0e7}
+.hwp-access-message h2{font-size:23px;margin:0 0 12px;color:#fff}
+.hwp-access-message p{margin:0 0 17px}
+.hwp-access-actions{display:flex;justify-content:center;gap:12px;flex-wrap:wrap}
+.hwp-access-actions .hwp-access-reset{height:48px;min-width:150px}
+@media(max-height:790px){.hwp-access-header{height:120px;padding-top:6px}.hwp-access-header img{max-height:106px;width:min(228px,25vw)}.hwp-access-card{padding:18px 22px;max-height:calc(100dvh - 130px)}.hwp-access-form{gap:12px}.hwp-access-input{height:49px}.hwp-access-submit{height:55px;margin-top:2px}.hwp-access-reset{height:45px}}
+@media(max-width:700px){.hwp-access-header{height:105px;padding:9px 15px}.hwp-access-header img{width:130px;max-height:95px}.hwp-access-connect{margin-top:5px;flex-wrap:wrap;justify-content:flex-end;white-space:normal;font-size:11px;gap:5px}.hwp-access-link{padding:7px 9px;font-size:11px}.hwp-access-card{border-radius:16px;padding:20px 16px}.hwp-access-field{font-size:14px}.hwp-access-input{height:49px}.hwp-access-submit{height:55px;font-size:20px}}
