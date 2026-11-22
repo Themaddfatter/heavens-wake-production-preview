@@ -38,3 +38,8 @@ Requests below are **not** asserted to be broken in the latest release; compare 
 - Inspect date: 2026-11-22.
 - Baseline `main` SHA: `1760361b0e54c75fcf2dd74b2ad461a51adf6eac`.
 - No source files, application settings, storage, runners, or release workflows were changed as part of this documentation task. Live deployment status was **not** independently verified.
+
+## Bible browser and presentation translation — November 22, 2026
+- Requested: preserve the full-chapter Bible reader, with a view-language dropdown above Create Presentation (English KJV / Spanish RVR1909), including chapter navigation, verse selection and Bible search in the chosen local text. Create Presentation must open a separate translation chooser and create slides using the selected edition; the browser language and slide translation are independent.
+- Implemented in `index.html` on `main` at commit `ce3f8c01d4260ee5df0481abd244480db68c9273`. Reader uses bundled local KJV/RVR1909 assets; licensed translation requests are made only for presentation creation and reuse the existing passage cache. Spanish book-name reference input is supported.
+- Four inline scripts passed syntax compilation in the change check. GitHub Pages self-hosted deployment and actual production behavior require separate confirmation; do not infer live availability solely from this commit. Confirm public-domain resources and translation API licensing remain intact.
