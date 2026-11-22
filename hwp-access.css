@@ -199,3 +199,6 @@
 .hwp-media-controls .grid-2>*{min-width:0}
 .hwp-media-controls select{min-width:0;max-width:100%;width:100%}
 .hwp-media-controls .check{font-size:12px}
+
+.hwp-media-frame-actions{display:grid;gap:8px;margin:10px 0}
+.hwp-media-frame-actions .btn{width:100%;text-align:center;white-space:normal;line-height:1.35;padding:8px 12px}
