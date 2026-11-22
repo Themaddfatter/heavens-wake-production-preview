@@ -731,7 +731,7 @@ function HwpBibleUsagePanel({bible,onChange}){
    ]}),
    (0,M.jsx)(`div`,{style:{fontSize:18,fontWeight:700,marginTop:8},children:count===null?'—':count.toLocaleString()+' HWP calls'}),
    (0,M.jsx)(`div`,{style:{fontSize:12,opacity:.85,marginTop:4},children:note}),
-   limit&&count!==null?(0,M.jsx)(`div`,{style:{height:8,borderRadius:10,background:'rgba(124,143,156,.24)',overflow:'hidden',marginTop:8},children:(0,M.jsx)(`div`,{style:{width:(percent||0)+'%',height:'100%',background:danger?'#c24136':warning?'#ca8e20':'#24765d'}})}):null,
+   limit&&count!==null?(0,M.jsxs)(`div`,{style:{marginTop:8},children:[(0,M.jsx)(`div`,{style:{fontSize:11,opacity:.75,marginBottom:4},children:providerPercent!==null?'Provider quota used: '+providerPercent+'%':'HWP tracked against configured limit: '+(percent||0)+'%'}),(0,M.jsx)(`div`,{style:{height:8,borderRadius:10,background:'rgba(124,143,156,.24)',overflow:'hidden'},children:(0,M.jsx)(`div`,{style:{width:((providerPercent!==null?providerPercent:percent)||0)+'%',height:'100%',background:danger?'#c24136':warning?'#ca8e20':'#24765d'}})})]}):null,
    (0,M.jsx)(`p`,{className:`hint`,style:{marginTop:8},children:status}),
    warning?(0,M.jsx)(`p`,{role:'alert',style:{fontSize:12,color:danger?'#c24136':'#a9770d',fontWeight:700},children:danger?'Usage at or above 95% of the displayed limit.':'Usage at or above 80% of the displayed limit.'}):null,
    (0,M.jsxs)(`label`,{className:`field`,children:[
