@@ -51,6 +51,26 @@ jobs:
           grep -Fq 'HWP: presentation appearance boundary.' _pages_output/hwp-style.css
           grep -Fq -- '--text:#f3f1ec' _pages_output/hwp-style.css
 
+      - name: Verify inline application JavaScript syntax
+        shell: bash
+        run: |
+          set -euo pipefail
+          node <<'NODE'
+          const fs=require('fs'),cp=require('child_process');
+          const html=fs.readFileSync('index.html','utf8');
+          const scripts=[...html.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/g)];
+          let checked=0;
+          for(const match of scripts){
+            if(!match[1].trim())continue;
+            const temp=process.env.RUNNER_TEMP+'/hwp-inline-'+checked+'.js';
+            fs.writeFileSync(temp,match[1]);
+            cp.execFileSync(process.execPath,['--check',temp],{stdio:'inherit'});
+            checked++;
+          }
+          if(checked<2)throw Error('Could not find bundled HWP scripts');
+          console.log('Verified '+checked+' inline JavaScript blocks.');
+          NODE
+
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v5
 
