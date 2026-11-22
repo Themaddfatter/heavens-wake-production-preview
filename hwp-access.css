@@ -125,10 +125,10 @@
 
 /* HWS-matched login controls and logo scale (2026-11-22). */
 /* Match the reference's larger top-left logo while retaining room for the login card. */
-.hwp-access-header{height:186px;padding-top:10px}
-.hwp-access-header img{width:clamp(246px,21.5vw,328px);max-height:174px}
+.hwp-access-header{height:196px;padding-top:10px}
+.hwp-access-header img{width:clamp(260px,22.5vw,348px);max-height:185px}
 .hwp-access-main{padding-top:12px}
-.hwp-access-card{max-height:calc(100dvh - 207px)}
+.hwp-access-card{max-height:calc(100dvh - 217px)}
 
 /* Outline email and padlock icons: 22px, the same visual scale as HWS. */
 .hwp-access-glyph{
@@ -165,16 +165,16 @@
 
 /* The short-screen and phone layouts must still show the whole form. */
 @media(max-height:790px){
-  .hwp-access-header{height:140px;padding-top:6px}
-  .hwp-access-header img{width:min(262px,25vw);max-height:132px}
+  .hwp-access-header{height:148px;padding-top:6px}
+  .hwp-access-header img{width:min(276px,26vw);max-height:140px}
   .hwp-access-main{padding-top:8px}
-  .hwp-access-card{max-height:calc(100dvh - 151px)}
+  .hwp-access-card{max-height:calc(100dvh - 159px)}
 }
 @media(max-width:700px){
-  .hwp-access-header{height:126px;padding:8px 15px}
-  .hwp-access-header img{width:160px;max-height:116px}
-  .hwp-access-card{max-height:calc(100dvh - 144px)}
+  .hwp-access-header{height:134px;padding:8px 15px}
+  .hwp-access-header img{width:171px;max-height:125px}
+  .hwp-access-card{max-height:calc(100dvh - 152px)}
 }
 @media(max-width:380px){
-  .hwp-access-header img{width:140px}
+  .hwp-access-header img{width:150px}
 }
