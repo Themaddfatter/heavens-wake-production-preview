@@ -272,35 +272,203 @@ function hwpStateWithSharedPrefs(state,doc){const incoming=doc.hwpSessionPrefere
 async function hwpPersistStateAndRevision(fullState,revision){
  const db=await m();await new Promise((resolve,reject)=>{const tx=db.transaction(`kv`,`readwrite`),store=tx.objectStore(`kv`);store.put({version:1,doc:fullState.doc,live:fullState.live,session:fullState.session},`state`);store.put(revision,`hwpCloudRevision`);tx.oncomplete=()=>resolve();tx.onerror=()=>reject(tx.error||Error(`Local save failed`));tx.onabort=()=>reject(tx.error||Error(`Local save cancelled`))});
 }
+
 function HwpCloudAgent({getLatest}){
- const {state,dispatch}=N(),latest=(0,l.useRef)(state.doc),latestState=(0,l.useRef)(state),initialDoc=(0,l.useRef)(JSON.stringify(state.doc)),engine=(0,l.useRef)(null),ready=(0,l.useRef)(false),working=(0,l.useRef)(false),timer=(0,l.useRef)(null),signature=(0,l.useRef)(null),refresh=(0,l.useRef)(async()=>{}),run=(0,l.useRef)(async()=>{});
- latest.current=state.doc;latestState.current=state;
- function emit(status){window.hwpCloudLastStatus=status;window.dispatchEvent(new CustomEvent(`hwp-cloud-status`,{detail:status}))}
- (0,l.useEffect)(()=>{let alive=true,stop=()=>{};
-  async function load(){ready.current=false;try{const localRevision=await g(`hwpCloudRevision`),remote=await engine.current.inspect();if(!alive)return;if(remote.revision>0&&localRevision==null&&!window.hwpHadStoredLibrary&&JSON.stringify(latest.current)===initialDoc.current&&remote.workspace){const original=latest.current;await _(`hwpLocalLibraryBackup`,{doc:original,appearance:localStorage.getItem(`hwp-appearance`),preferences:hwpSharedPrefs(getLatest().session)});window.hwpPersistGuard=true;try{const next=hwpStateWithSharedPrefs(getLatest(),remote.workspace);await hwpPersistStateAndRevision(next,remote.revision);window.hwpExpectedSharedDoc=JSON.stringify(next.doc);window.hwpHadStoredLibrary=true;dispatch({type:`import-library`,doc:remote.workspace,history:`none`});dispatch({type:`session`,patch:hwpSharedPrefs({...getLatest().session,...(remote.workspace.hwpSessionPreferences||{})})})}finally{window.hwpPersistGuard=false}const theme=remote.workspace.hwpAppearance;if(theme===`light`||theme===`dark`){localStorage.setItem(`hwp-appearance`,theme);document.documentElement.dataset.hwpAppearance=theme}emit(`syncing`);return}if(remote.revision>0&&localRevision===remote.revision){if(window.hwpExpectedSharedDoc&&JSON.stringify(latest.current)!==window.hwpExpectedSharedDoc){emit(`attention`);return}window.hwpExpectedSharedDoc=null;ready.current=true;emit(`connected`);run.current()}else emit(remote.revision?`attention`:`setup`)}catch{if(alive)emit(`offline`)}}
+ const {state,dispatch}=N(),
+  latest=(0,l.useRef)(state.doc),
+  engine=(0,l.useRef)(null),
+  ready=(0,l.useRef)(false),
+  working=(0,l.useRef)(false),
+  loading=(0,l.useRef)(false),
+  paused=(0,l.useRef)(false),
+  timer=(0,l.useRef)(null),
+  signature=(0,l.useRef)(null),
+  refresh=(0,l.useRef)(async()=>{}),
+  run=(0,l.useRef)(async()=>{});
+ latest.current=state.doc;
+ function emit(status){
+  window.hwpCloudLastStatus=status;
+  window.dispatchEvent(new CustomEvent("hwp-cloud-status",{detail:status}));
+ }
+ (0,l.useEffect)(()=>{
+  let alive=true,stop=()=>{},pollId=null;
+  async function load(){
+   if(!engine.current||working.current||loading.current||paused.current)return;
+   loading.current=true;
+   ready.current=false;
+   window.clearTimeout(timer.current);
+   try{
+    const localRevision=await g("hwpCloudRevision");
+    const remote=await engine.current.inspect();
+    if(!alive||paused.current)return;
+    if(remote.revision===0){
+     // Create the shared workspace on first authorized sign-in; no setup button needed.
+     emit("syncing");
+     const current=getLatest(),
+       appearance=localStorage.getItem("hwp-appearance")==="light"?"light":"dark",
+       prefs=hwpSharedPrefs(current.session);
+     const result=await engine.current.initialize(structuredClone(current.doc),appearance,prefs);
+     if(!alive||paused.current)return;
+     const next=Kt({...getLatest(),doc:result.migratedDoc});
+     window.hwpPersistGuard=true;
+     try{
+      await hwpPersistStateAndRevision(next,result.revision);
+      window.hwpExpectedSharedDoc=JSON.stringify(next.doc);
+      window.hwpHadStoredLibrary=true;
+      dispatch({type:"import-library",doc:result.migratedDoc,history:"none"});
+     }finally{window.hwpPersistGuard=false}
+     signature.current=JSON.stringify([result.migratedDoc,appearance,prefs]);
+     emit("syncing");
+     window.setTimeout(()=>{if(alive)void refresh.current()},200);
+     return;
+    }
+    if(remote.revision>0&&remote.workspace){
+     if(localRevision!==remote.revision){
+      // The cloud is authoritative. Keep a local safety copy before applying
+      // changes from another computer or a previous session.
+      if(window.hwpExpectedSharedDoc&&JSON.stringify(latest.current)!==window.hwpExpectedSharedDoc){
+       emit("syncing");
+       return;
+      }
+      const current=getLatest(),doc=remote.workspace,
+       prefs=hwpSharedPrefs({...current.session,...(doc.hwpSessionPreferences||{})}),
+       next=hwpStateWithSharedPrefs(current,doc);
+      if(JSON.stringify(current.doc)!==JSON.stringify(doc)){
+       await _("hwpLocalLibraryBackup",{
+        doc:current.doc,appearance:localStorage.getItem("hwp-appearance"),
+        preferences:hwpSharedPrefs(current.session),revision:localRevision
+       });
+      }
+      window.hwpPersistGuard=true;
+      try{
+       await hwpPersistStateAndRevision(next,remote.revision);
+       window.hwpExpectedSharedDoc=JSON.stringify(next.doc);
+       window.hwpHadStoredLibrary=true;
+       dispatch({type:"import-library",doc,history:"none"});
+       dispatch({type:"session",patch:prefs});
+      }finally{window.hwpPersistGuard=false}
+      if(doc.hwpAppearance==="light"||doc.hwpAppearance==="dark"){
+       localStorage.setItem("hwp-appearance",doc.hwpAppearance);
+       document.documentElement.dataset.hwpAppearance=doc.hwpAppearance;
+      }
+      signature.current=JSON.stringify([
+       doc,localStorage.getItem("hwp-appearance")==="light"?"light":"dark",prefs
+      ]);
+      emit("syncing");
+      window.setTimeout(()=>{if(alive)void refresh.current()},200);
+      return;
+     }
+     if(window.hwpExpectedSharedDoc&&JSON.stringify(latest.current)!==window.hwpExpectedSharedDoc){
+      emit("syncing");return;
+     }
+     window.hwpExpectedSharedDoc=null;
+     ready.current=true;
+     emit("connected");
+     void run.current();
+    }else{emit("offline")}
+   }catch(e){
+    if(alive){
+     emit("offline");
+     window.dispatchEvent(new CustomEvent("hwp-cloud-error",{detail:e?.message||"Could not connect to shared storage."}));
+    }
+   }finally{loading.current=false}
+  }
   refresh.current=load;
-  function reload(){void load()}
-  function pause(){ready.current=false;window.clearTimeout(timer.current)}
-  function onOnline(){if(ready.current)run.current();else void load()}
-  window.addEventListener(`hwp-cloud-reload`,reload);window.addEventListener(`hwp-cloud-pause`,pause);window.addEventListener(`online`,onOnline);
-  hwpCloudBoot().then(system=>{if(!alive)return;engine.current=system.createController();stop=system.auth.observe(user=>{if(!alive)return;if(!user){ready.current=false;emit(`signed-out`);return}void load()})}).catch(()=>emit(`offline`));
-  return()=>{alive=false;ready.current=false;stop();window.clearTimeout(timer.current);window.removeEventListener(`hwp-cloud-reload`,reload);window.removeEventListener(`hwp-cloud-pause`,pause);window.removeEventListener(`online`,onOnline)};
+  function reload(){paused.current=false;void load()}
+  function pause(){paused.current=true;ready.current=false;window.clearTimeout(timer.current)}
+  function onOnline(){if(!paused.current)void load()}
+  function onVisible(){if(!document.hidden)void load()}
+  function onFocus(){if(!document.hidden)void load()}
+  window.addEventListener("hwp-cloud-reload",reload);
+  window.addEventListener("hwp-cloud-pause",pause);
+  window.addEventListener("online",onOnline);
+  window.addEventListener("focus",onFocus);
+  document.addEventListener("visibilitychange",onVisible);
+  hwpCloudBoot().then(system=>{
+   if(!alive)return;
+   engine.current=system.createController();
+   stop=system.auth.observe(user=>{
+    if(!alive)return;
+    if(!user){
+     ready.current=false;paused.current=false;signature.current=null;
+     window.hwpExpectedSharedDoc=null;emit("signed-out");return;
+    }
+    paused.current=false;
+    void load();
+   });
+   // Firebase callable workspace reads are lightweight; check for changes
+   // without forcing an operator to refresh or reconnect.
+   pollId=window.setInterval(()=>{if(!document.hidden)void load()},30000);
+  }).catch(()=>{if(alive)emit("offline")});
+  return()=>{
+   alive=false;ready.current=false;stop();
+   window.clearTimeout(timer.current);window.clearInterval(pollId);
+   window.removeEventListener("hwp-cloud-reload",reload);
+   window.removeEventListener("hwp-cloud-pause",pause);
+   window.removeEventListener("online",onOnline);
+   window.removeEventListener("focus",onFocus);
+   document.removeEventListener("visibilitychange",onVisible);
+  };
  },[]);
  run.current=async()=>{
-  if(!ready.current||working.current||!engine.current)return;
-  const snapshot=structuredClone(latest.current),appearance=localStorage.getItem(`hwp-appearance`)===`light`?`light`:`dark`,preferences=hwpSharedPrefs(getLatest().session),key=JSON.stringify([snapshot,appearance,preferences]);
-  if(key===signature.current)return;working.current=true;window.hwpCloudBusy=true;emit(`syncing`);let didSave=false;
+  if(!ready.current||working.current||loading.current||paused.current||!engine.current)return;
+  const snapshot=structuredClone(latest.current),
+   appearance=localStorage.getItem("hwp-appearance")==="light"?"light":"dark",
+   preferences=hwpSharedPrefs(getLatest().session),
+   key=JSON.stringify([snapshot,appearance,preferences]);
+  if(key===signature.current)return;
+  working.current=true;window.hwpCloudBusy=true;emit("syncing");
+  let didSave=false;
   try{
-   const previous=engine.current.getRevision();const result=await engine.current.save(snapshot,appearance,preferences,previous);
+   const previous=engine.current.getRevision();
+   const result=await engine.current.save(snapshot,appearance,preferences,previous);
    await hwpPersistStateAndRevision(getLatest(),result.revision);
    const replacements=new Map(result.migratedDoc.media.map(item=>[item.id,item]));
-   const changed=snapshot.media.some(item=>item.src?.startsWith(`idb:`)&&replacements.get(item.id)?.src?.startsWith(`cloud:`));
-   if(changed){const media=latest.current.media.map(item=>{const before=snapshot.media.find(x=>x.id===item.id),after=replacements.get(item.id);return before&&after&&item.src===before.src&&after.src!==before.src?{...item,src:after.src}:item});dispatch({type:`patch-doc`,patch:{media},history:`none`})}
-   signature.current=JSON.stringify([result.migratedDoc,appearance,preferences]);didSave=true;emit(`connected`);
-  }catch(e){if(e?.code===`conflict`){ready.current=false;emit(`conflict`)}else if(!navigator.onLine)emit(`offline`);else{emit(`error`);window.dispatchEvent(new CustomEvent(`hwp-cloud-error`,{detail:e?.message||`Shared storage could not save the latest changes.`}))}}finally{working.current=false;window.hwpCloudBusy=false;if(didSave&&ready.current&&JSON.stringify([latest.current,localStorage.getItem(`hwp-appearance`)===`light`?`light`:`dark`,hwpSharedPrefs(getLatest().session)])!==signature.current){window.clearTimeout(timer.current);timer.current=window.setTimeout(()=>run.current(),1500)}}
+   const changed=snapshot.media.some(item=>item.src?.startsWith("idb:")&&replacements.get(item.id)?.src?.startsWith("cloud:"));
+   if(changed){
+    const media=latest.current.media.map(item=>{
+     const before=snapshot.media.find(x=>x.id===item.id),after=replacements.get(item.id);
+     return before&&after&&item.src===before.src&&after.src!==before.src?{...item,src:after.src}:item
+    });
+    dispatch({type:"patch-doc",patch:{media},history:"none"});
+   }
+   signature.current=JSON.stringify([result.migratedDoc,appearance,preferences]);
+   didSave=true;emit("connected");
+  }catch(e){
+   if(e?.code==="conflict"){
+    ready.current=false;emit("conflict");
+    // Inspect the newer cloud revision and retain a safety copy of local work.
+    window.setTimeout(()=>{void refresh.current()},1500);
+   }else if(!navigator.onLine){emit("offline")}
+   else{
+    emit("error");
+    window.dispatchEvent(new CustomEvent("hwp-cloud-error",{detail:e?.message||"Shared storage could not save the latest changes."}));
+   }
+  }finally{
+   working.current=false;window.hwpCloudBusy=false;
+   if(didSave&&ready.current&&JSON.stringify([
+    latest.current,localStorage.getItem("hwp-appearance")==="light"?"light":"dark",
+    hwpSharedPrefs(getLatest().session)
+   ])!==signature.current){
+    window.clearTimeout(timer.current);
+    timer.current=window.setTimeout(()=>run.current(),1500);
+   }
+  }
  };
- (0,l.useEffect)(()=>{if(window.hwpExpectedSharedDoc&&JSON.stringify(state.doc)===window.hwpExpectedSharedDoc){void refresh.current();return}if(!ready.current)return;window.clearTimeout(timer.current);timer.current=window.setTimeout(()=>run.current(),1200);return()=>window.clearTimeout(timer.current)},[state.doc,JSON.stringify(hwpSharedPrefs(state.session))]);
- (0,l.useEffect)(()=>{const handler=()=>{if(ready.current)run.current()};window.addEventListener(`hwp-appearance-change`,handler);return()=>window.removeEventListener(`hwp-appearance-change`,handler)},[]);
+ (0,l.useEffect)(()=>{
+  if(window.hwpExpectedSharedDoc&&JSON.stringify(state.doc)===window.hwpExpectedSharedDoc){
+   void refresh.current();return;
+  }
+  if(!ready.current)return;
+  window.clearTimeout(timer.current);
+  timer.current=window.setTimeout(()=>run.current(),1200);
+  return()=>window.clearTimeout(timer.current);
+ },[state.doc,JSON.stringify(hwpSharedPrefs(state.session))]);
+ (0,l.useEffect)(()=>{
+  const handler=()=>{if(ready.current)run.current()};
+  window.addEventListener("hwp-appearance-change",handler);
+  return()=>window.removeEventListener("hwp-appearance-change",handler);
+ },[]);
  return null;
 }
 
@@ -317,7 +485,7 @@ function HwpCloudSettings(){
  async function restoreLocal(){setError(``);window.dispatchEvent(new Event(`hwp-cloud-pause`));if(window.hwpCloudBusy){setError(`A sync is finishing. Try restoring again in a moment.`);return}try{const backup=await g(`hwpLocalLibraryBackup`);if(!backup?.doc){setError(`No previous local copy is available on this device.`);return}window.hwpPersistGuard=true;try{const prefs=hwpSharedPrefs({...state.session,...(backup.preferences||{})});const next=Kt({...state,doc:backup.doc,session:{...state.session,...prefs}});await hwpPersistStateAndRevision(next,null);dispatch({type:`import-library`,doc:backup.doc,history:`push`});dispatch({type:`session`,patch:prefs})}finally{window.hwpPersistGuard=false}if(backup.appearance===`light`||backup.appearance===`dark`){localStorage.setItem(`hwp-appearance`,backup.appearance);document.documentElement.dataset.hwpAppearance=backup.appearance}setStatus(`Previous local library restored. Shared sync is paused.`)}catch{setError(`Could not restore the previous local copy.`)}}
  async function refreshShared(){setError(``);try{let result=await controller.current.inspect();setRemote(result);setStatus(`Shared library refreshed. Your local copy remains on this device until you choose to load it.`)}catch(e){setError(e?.message||`Could not refresh shared library.`)}}
  async function saveMembers(){setError(``);try{await session.current.auth.workspace({action:`setMembers`,allowedUids:allowed});setStatus(`Member access saved`)}catch(e){setError(e?.message||`Could not save member access.`)}}
- return (0,M.jsxs)(`div`,{className:`stack`,children:[(0,M.jsx)(`p`,{className:`hint`,children:status}),error&&(0,M.jsx)(`p`,{className:`settings-notice`,role:`alert`,children:error}),!user?(0,M.jsxs)(`form`,{className:`stack`,onSubmit:signIn,children:[(0,M.jsxs)(`label`,{className:`field`,children:[`Zion account email`,(0,M.jsx)(`input`,{type:`email`,value:email,onChange:e=>setEmail(e.target.value),autoComplete:`username`,required:true})]}),(0,M.jsxs)(`label`,{className:`field`,children:[`Password`,(0,M.jsx)(`input`,{type:`password`,value:password,onChange:e=>setPassword(e.target.value),autoComplete:`current-password`,required:true})]}),(0,M.jsx)(`button`,{className:`btn primary`,type:`submit`,children:`Sign in`})]}):(0,M.jsxs)(M.Fragment,{children:[(0,M.jsxs)(`p`,{children:[`Signed in as `,user.email||`member`]}),(0,M.jsx)(`button`,{className:`btn`,onClick:()=>session.current.auth.signOut(),children:`Sign out`}),remote?.revision===0&&(0,M.jsx)(`button`,{className:`btn primary`,onClick:initialize,children:`Save this device's library to shared storage`}),remote?.workspace&&(0,M.jsx)(`button`,{className:`btn`,onClick:refreshShared,children:`Refresh shared library`}),remote?.workspace&&(0,M.jsx)(`button`,{className:`btn`,onClick:loadShared,children:`Load shared library`}),remote?.workspace&&(0,M.jsx)(`button`,{className:`btn`,onClick:restoreLocal,children:`Restore previous local copy`}),members&&(0,M.jsxs)(`div`,{className:`stack`,children:[(0,M.jsx)(`h4`,{children:`Members with access`}),(0,M.jsx)(`p`,{className:`hint`,children:`Administrators always have access. Choose the ministry members who can use HWP.`}),...members.map(member=>(0,M.jsxs)(`label`,{className:`check`,children:[(0,M.jsx)(`input`,{type:`checkbox`,checked:allowed.includes(member.uid),onChange:event=>setAllowed(ids=>event.target.checked?[...ids,member.uid]:ids.filter(id=>id!==member.uid))}),member.name]},member.uid)),(0,M.jsx)(`button`,{className:`btn primary`,onClick:saveMembers,children:`Save member access`})]})]})]});
+ return (0,M.jsxs)(`div`,{className:`stack`,children:[(0,M.jsx)(`p`,{className:`hint`,children:status}),error&&(0,M.jsx)(`p`,{className:`settings-notice`,role:`alert`,children:error}),!user?(0,M.jsxs)(`form`,{className:`stack`,onSubmit:signIn,children:[(0,M.jsxs)(`label`,{className:`field`,children:[`Zion account email`,(0,M.jsx)(`input`,{type:`email`,value:email,onChange:e=>setEmail(e.target.value),autoComplete:`username`,required:true})]}),(0,M.jsxs)(`label`,{className:`field`,children:[`Password`,(0,M.jsx)(`input`,{type:`password`,value:password,onChange:e=>setPassword(e.target.value),autoComplete:`current-password`,required:true})]}),(0,M.jsx)(`button`,{className:`btn primary`,type:`submit`,children:`Sign in`})]}):(0,M.jsxs)(M.Fragment,{children:[(0,M.jsxs)(`p`,{children:[`Signed in as `,user.email||`member`]}),(0,M.jsx)(`button`,{className:`btn`,onClick:()=>session.current.auth.signOut(),children:`Sign out`}),(0,M.jsx)(`p`,{className:`hint`,children:`Shared library connects automatically after sign-in and keeps this device updated.`}),remote?.workspace&&(0,M.jsx)(`button`,{className:`btn`,onClick:restoreLocal,children:`Restore previous local copy`}),members&&(0,M.jsxs)(`div`,{className:`stack`,children:[(0,M.jsx)(`h4`,{children:`Members with access`}),(0,M.jsx)(`p`,{className:`hint`,children:`Administrators always have access. Choose the ministry members who can use HWP.`}),...members.map(member=>(0,M.jsxs)(`label`,{className:`check`,children:[(0,M.jsx)(`input`,{type:`checkbox`,checked:allowed.includes(member.uid),onChange:event=>setAllowed(ids=>event.target.checked?[...ids,member.uid]:ids.filter(id=>id!==member.uid))}),member.name]},member.uid)),(0,M.jsx)(`button`,{className:`btn primary`,onClick:saveMembers,children:`Save member access`})]})]})]});
 }
 
 function HwpAppearanceSwitcher(){
