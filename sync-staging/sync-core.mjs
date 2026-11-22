@@ -25,5 +25,5 @@ export async function migrateLocalLibrary({doc, appearance, readLocalMedia, uplo
   const result = await commit({doc: copy, appearance, expectedRevision});
   if (result?.conflict) throw new SyncConflictError();
   if (!result?.saved) throw new Error('Cloud library could not be saved. Local work has been preserved.');
-  return {revision: result.revision, uploaded: completed};
+  return {revision: result.revision, uploaded: completed, migratedDoc: copy};
 }
