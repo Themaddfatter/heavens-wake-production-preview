@@ -1106,3 +1106,53 @@
  margin:0;
  font-size:12px;
 }
+
+
+/* The ordinary Bible page visibly exposes one-to-four translation selection. */
+.bible-side .hwp-bible-inline-versions{
+ display:flex;
+ flex-direction:column;
+ gap:10px;
+ padding:13px 12px;
+ margin:10px 0;
+ border:1px solid var(--line,rgba(110,138,160,.5));
+ border-radius:11px;
+ background:var(--surface,rgba(28,49,64,.08));
+ min-width:0;
+ box-sizing:border-box;
+}
+.bible-side .hwp-bible-inline-versions h3{
+ font-size:14px;
+ line-height:1.35;
+ margin:0;
+ font-weight:800;
+ letter-spacing:.01em;
+}
+.bible-side .hwp-bible-inline-versions .hint{
+ margin:0;
+ font-size:12px;
+ line-height:1.45;
+}
+.bible-side .hwp-bible-inline-versions .field{
+ min-width:0;
+ width:100%;
+ margin:0;
+}
+.bible-side .hwp-bible-inline-versions .field select{
+ box-sizing:border-box;
+ max-width:100%;
+ width:100%;
+ min-width:0;
+}
+.bible-side .hwp-bible-inline-versions .btn.primary{
+ width:100%;
+ white-space:normal;
+ text-align:center;
+}
+.bible-side .hwp-bible-mul-summary{
+ margin:2px 0;
+ font:750 11px/1.5 system-ui,-apple-system,sans-serif;
+ letter-spacing:.05em;
+ overflow-wrap:anywhere;
+ color:var(--text,#f3f4f6);
+}
