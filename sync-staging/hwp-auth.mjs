@@ -10,6 +10,7 @@ export async function createHwpAuth({loadConfig,loadSdk}) {
  if(typeof auth.authStateReady==='function')await auth.authStateReady();
  const workspace=sdk.httpsCallable(functions,'hwpWorkspace');
  const media=sdk.httpsCallable(functions,'hwpMedia');
+ const songLibrary=sdk.httpsCallable(functions,'zionServiceSongs');
  return {
   firebaseAuth:auth, firebaseStorage:storage, storageSdk:sdk,
   observe:callback=>sdk.onAuthStateChanged(auth,callback),
@@ -17,7 +18,8 @@ export async function createHwpAuth({loadConfig,loadSdk}) {
   async signOut(){return sdk.signOut(auth)},
   async resetPassword(email){return sdk.sendPasswordResetEmail(auth,String(email||'').trim())},
   async workspace(data){return (await workspace(data)).data},
-  async media(data){return (await media(data)).data}
+  async media(data){return (await media(data)).data},
+  async syncWorshipLibrary(){return (await songLibrary({action:'syncHwpLibrary'})).data}
  };
 }
 export async function loadHwpFirebaseSdk(){
