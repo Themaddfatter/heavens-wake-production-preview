@@ -162,3 +162,16 @@ test("HWP service dates use America/Los_Angeles and do not expire during their d
  assert.equal(upcoming.hwpVisibleServices([current],"2026-11-23").length,1);
  assert.equal(upcoming.hwpVisibleServices([current],"2026-11-24").length,0);
 });
+
+test("service picker shows entire service name and date and keeps native select accessible",()=>{
+ assert.ok(html.includes('className:`panel-head hwp-service-picker-head`'));
+ assert.ok(html.includes('className:`hwp-service-dropdown-label`'));
+ assert.ok(html.includes('children:i?.name||`No upcoming published services`'));
+ assert.ok(html.includes('\"aria-label\":`Service`,title:i?.name'));
+ assert.ok(!html.includes('children:[(0,M.jsx)(`span`,{children:`Service`})'));
+ assert.ok(css.includes('.hwp-service-dropdown-label'));
+ assert.ok(css.includes('white-space:normal'));
+ assert.ok(css.includes('overflow-wrap:anywhere'));
+ assert.ok(css.includes('max-width:none;'));
+ assert.ok(css.includes('--left:clamp(298px,24vw,345px)'));
+});
