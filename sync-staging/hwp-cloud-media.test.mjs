@@ -43,3 +43,36 @@ test('legacy media remains playable until copied safely to Firebase', async()=>{
  assert.equal(await client.mediaUrl('old-id'),'https://example.com/legacy.mp4');
  assert.equal(legacyReads,1);
 });
+
+test('while Storage permissions are not yet live, legacy uploads preserve HWP saves', async()=>{
+ let oldCalls=0;
+ const client=createHwpSyncClient({
+  workspaceCall:async()=>({revision:0}),
+  mediaCall:async(data)=>{
+   oldCalls++;
+   if(data.action==='signUpload')return {id:'legacy-safe-file',uploadUrl:'https://example.com/upload',contentType:'image/png'};
+   if(data.action==='completeUpload')return {saved:true};
+   throw Error('Unexpected legacy action');
+  },
+  fetcher:async()=>({ok:true}),
+  cloudMedia:{
+   remote:{upload:async()=>{throw Object.assign(new Error('Not enabled'),{code:'storage/unauthorized'})},listRemote:async()=>[]},
+   local:{runSync:async()=>({}),localEntry:async()=>null,playback:async()=>null}
+  }
+ });
+ assert.deepEqual(await client.upload(new Blob(['abc'],{type:'image/png'}),'intro.png'),{id:'legacy-safe-file'});
+ assert.equal(oldCalls,2);
+});
+test('non-permission Firebase errors do not silently fall back to another provider', async()=>{
+ let oldCalls=0;
+ const client=createHwpSyncClient({
+  workspaceCall:async()=>({revision:0}),
+  mediaCall:async()=>{oldCalls++;throw Error('Unexpected legacy access')},
+  cloudMedia:{
+   remote:{upload:async()=>{throw Object.assign(new Error('Cloud service unavailable'),{code:'storage/retry-limit-exceeded'})},listRemote:async()=>[]},
+   local:{runSync:async()=>({}),localEntry:async()=>null,playback:async()=>null}
+  }
+ });
+ await assert.rejects(client.upload(new Blob(['abc'],{type:'image/png'}),'intro.png'),/Cloud service unavailable/);
+ assert.equal(oldCalls,0);
+});
