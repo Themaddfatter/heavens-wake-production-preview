@@ -517,7 +517,15 @@ async function hwpCloudBoot(){
   const remote=d.createHwpFirebaseMediaRemote({storage:auth.firebaseStorage,auth:auth.firebaseAuth,sdk:auth.storageSdk});
   const local=e.createHwpLocalMediaSync({listRemote:remote.listRemote,download:remote.download});
   const client=b.createHwpSyncClient({workspaceCall:data=>auth.workspace(data),mediaCall:data=>auth.media(data),cloudMedia:{remote,local}});
-  auth.observe(user=>{if(user)void local.runSync().catch(error=>{console.warn('HWP media sync will retry when storage is available:',error?.code||error?.message||'unknown')})});
+  let lastMediaSync=0;
+  const syncNow=()=>{if(!auth.firebaseAuth.currentUser||!navigator.onLine)return;
+   if(Date.now()-lastMediaSync<60000)return;
+   lastMediaSync=Date.now();
+   void local.runSync().catch(error=>{console.warn('HWP media sync will retry when storage is available:',error?.code||error?.message||'unknown')});
+  };
+  auth.observe(user=>{if(user)syncNow();else client.clearSignedUrls()});
+  window.addEventListener('online',syncNow);
+  window.setInterval(syncNow,5*60*1000);
   return {auth,client,createController:()=>c.createHwpController({client,readLocalMedia:v})};
  }).catch(error=>{hwpCloudBootPromise=null;throw error});
  return hwpCloudBootPromise;
