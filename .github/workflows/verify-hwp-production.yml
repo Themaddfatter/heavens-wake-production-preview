@@ -94,7 +94,7 @@ jobs:
 
       - name: Test Bible translation creation and startup compatibility
         shell: bash
-        run: node --test tests/hwp-bible-presentations.test.mjs
+        run: node --test tests/hwp-bible-presentations.test.mjs sync-staging/hwp-cloud-media.test.mjs sync-staging/hwp-local-media-sync.test.mjs sync-staging/hwp-recovery.test.mjs
 
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v5

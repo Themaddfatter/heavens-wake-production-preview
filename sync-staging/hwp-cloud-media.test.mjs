@@ -44,24 +44,18 @@ test('legacy media remains playable until copied safely to Firebase', async()=>{
  assert.equal(legacyReads,1);
 });
 
-test('while Storage permissions are not yet live, legacy uploads preserve HWP saves', async()=>{
- let oldCalls=0;
+test('Firebase permission failure keeps local source and never falls back to retired storage', async()=>{
+ let legacyCalls=0;
  const client=createHwpSyncClient({
   workspaceCall:async()=>({revision:0}),
-  mediaCall:async(data)=>{
-   oldCalls++;
-   if(data.action==='signUpload')return {id:'legacy-safe-file',uploadUrl:'https://example.com/upload',contentType:'image/png'};
-   if(data.action==='completeUpload')return {saved:true};
-   throw Error('Unexpected legacy action');
-  },
-  fetcher:async()=>({ok:true}),
+  mediaCall:async()=>{legacyCalls++;throw Error('Retired media provider must not be called')},
   cloudMedia:{
-   remote:{upload:async()=>{throw Object.assign(new Error('Not enabled'),{code:'storage/unauthorized'})},listRemote:async()=>[]},
+   remote:{upload:async()=>{throw Object.assign(new Error('Denied'),{code:'storage/unauthorized'})},listRemote:async()=>[]},
    local:{runSync:async()=>({}),localEntry:async()=>null,playback:async()=>null}
   }
  });
- assert.deepEqual(await client.upload(new Blob(['abc'],{type:'image/png'}),'intro.png'),{id:'legacy-safe-file'});
- assert.equal(oldCalls,2);
+ await assert.rejects(client.upload(new Blob(['abc'],{type:'image/png'}),'photo.png'),/original file remains/);
+ assert.equal(legacyCalls,0);
 });
 test('non-permission Firebase errors do not silently fall back to another provider', async()=>{
  let oldCalls=0;

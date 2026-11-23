@@ -21,7 +21,7 @@ jobs:
         with:
           node-version: '22'
       - name: Verify local playback, no overwrite, Firebase priority and legacy fallback
-        run: node --test sync-staging/hwp-local-media-sync.test.mjs sync-staging/hwp-cloud-media.test.mjs
+        run: node --test sync-staging/hwp-local-media-sync.test.mjs sync-staging/hwp-cloud-media.test.mjs sync-staging/hwp-recovery.test.mjs
       - name: Test Bible translation creation and startup compatibility
         run: node --test tests/hwp-bible-presentations.test.mjs
       - name: Verify connector scripts and one-time Firebase browser bootstrap

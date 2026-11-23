@@ -22,10 +22,11 @@ export function createHwpSyncClient({workspaceCall,mediaCall,cloudMedia=null,fet
      void cloudMedia.local.runSync().catch(()=>{});
      return {id:result.id};
    }catch(error){
-     // Until initial Storage rules are live, preserve the existing signed-media
-     // gateway rather than break autosave. All other cloud errors remain visible.
-     if(error?.code!=='storage/unauthorized' && error?.code!=='storage/permission-denied')
-       throw error;
+     // Never silently switch new Firebase files to a retired provider.
+     // The IndexedDB original remains intact and can be retried.
+     if(error?.code==='storage/unauthorized' || error?.code==='storage/permission-denied')
+       throw new HwpSyncError('Firebase Storage denied this upload. The original file remains on this computer.','cloud-storage-denied');
+     throw error;
    }
   }
   const sign=await mediaCall({action:'signUpload',name,type:blob.type,size:blob.size});
