@@ -121,3 +121,15 @@ Requests below are **not** asserted to be broken in the latest release; compare 
 - Restored ONLY `index.html` from the last previously verified build, commit `24e7375e7c3402bca729928cb36eb7c703b5a379`, in recovery commit `944351b72acd86d20d6be5d667c9d875f0112373`; did not reset service data, media, shared assets, other repository files, or history.
 - Recovery production workflow run `45110950249` succeeded, including deployment and HTTP checks of `https://production.sioncdo.com`; authenticated end-to-end startup and browser-side logo cache remain unverified.
 - Do NOT reintroduce the new Bible tag / badge / divider / Settings normalization from `d6e586ba...` and `6e05b96f...` to production without testing startup with older persisted libraries, full Bible and song workflows, and actual logged-in browser usage. Preserve the older working multi-translation selector while reworking the new presentation enhancements separately.
+
+
+## 2026-11-22 — Safe Bible multi-translation presentation release
+- Implemented in PR #2, merged into main at commit 550aa59b17bea44a51ff9df8e40c54604fbff771.
+- Normal Bible Create presentation and verse right-click selectors offer one to four translations, in separate slides within one presentation. Settings > Bible controls the default count; verses per slide and MUL naming remain unchanged.
+- New Scripture slides receive a persistent matching abbreviation tag (hwp_bible_translation_*) with white background and black text in the tag UI, plus an optional audience badge with white fill and black type. Settings > Bible controls the divider headings, badge visibility, corner and text size.
+- The manual Apply translation tags and badges to existing Scripture slides action updates older saved presentations explicitly. Editing the badge settings also refreshes Scripture slides intentionally, rather than at library startup.
+- Dividers are editor-only above each translation group; they never project to the audience. The UI follows the existing song language separator pattern.
+- Crucial safety constraint: do NOT automatically decorate or normalize all saved Scripture slides in Kt during application startup. The previous release caused a loading regression.
+- Added tests/hwp-bible-presentations.test.mjs. PR validation run 45111719853 passed the existing media tests and the Bible regression suite.
+- Production workflow run 45111775873 passed syntax checks, Bible tests, GitHub Pages deployment and custom-domain HTTP/content verification at https://production.sioncdo.com.
+- Authenticated browser startup, slide projection and real Bible API data paths were not independently tested in this tool session.
