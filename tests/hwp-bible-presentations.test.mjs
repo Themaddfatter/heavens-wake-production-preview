@@ -184,3 +184,51 @@ test("audience and stage output hide translation badges while retaining saved ed
  assert.equal(saved.tags.length,2,"editing tags remain intact");
  assert.ok(html.includes("hwpOutputWithoutTranslationTag(hwpBibleDisplaySlide"),"both current and next output slides must filter badges");
 });
+
+test("slide editor media-fit choices reach correctly sized image and video output frames",()=>{
+ const start=html.indexOf("function Pn({item:e,playing:t,quality:n})");
+ const end=html.indexOf("function Fn({preset:e,playing:t})",start);
+ assert.ok(start>0&&end>start,"media renderer is present");
+ const scope=createContext({
+  M:{jsx:(tag,props)=>({tag,props})},
+  Ve:src=>src,jn:src=>src,Nn:()=>false
+ });
+ runInContext(html.slice(start,end),scope);
+ for(const kind of ["image","video"]){
+  const node=scope.Pn({item:{id:"test",src:"blob:example",kind},playing:false,quality:"draft"});
+  assert.equal(node.tag,kind==="image"?"img":"video");
+  assert.equal(node.props.style.width,"100%");
+  assert.equal(node.props.style.height,"100%");
+  assert.equal(node.props.style.position,"absolute");
+  assert.equal(node.props.style.objectFit,"var(--media-fit, cover)");
+  assert.equal(node.props.style.objectPosition,"var(--media-position, center)");
+ }
+ for(const choice of ["cover","contain","fill","none","scale-down"]){
+  assert.ok(html.includes('["'+choice+'",'),choice+" remains in the media fit selector");
+ }
+ assert.ok(html.includes('onChange:e=>patch("fit",e.target.value)'));
+ assert.ok(html.includes('onChange:e=>patch({mediaFit:e.target.value})'));
+});
+test("logo output switches immediately with cached media and image/video prewarm",()=>{
+ assert.ok(html.includes('outMs:e.logoOn?0:c,inMs:e.logoOn?0:l'));
+ assert.ok(html.includes('const hwpResolvedLocalMedia=new Map()'));
+ assert.ok(html.includes('hwpLocalMediaUrl(e).then('));
+ assert.ok(html.includes('function HwpLogoPrewarm({media})'));
+ assert.ok(html.includes('preload:"auto",muted:true,playsInline:true'));
+ assert.ok(html.includes('loading:"eager",decoding:"async"'));
+ assert.ok(html.includes('<link rel="preload" as="image" href="./hwp-logo.png"/>'));
+});
+test("slide edit right click has main slide view copy paste delete label tag and template operations",()=>{
+ const menu=html.slice(html.indexOf('function HwpEditorSlideContextMenu('),html.indexOf('function gr(){',html.indexOf('function HwpEditorSlideContextMenu(')));
+ assert.ok(menu.length>1500);
+ for(const action of ['Duplicate slide','Copy slide','Paste slide','Delete slide','Edit','Templates','Label','Tag','Translation']){
+  assert.ok(menu.includes(action),"missing menu action "+action);
+ }
+ for(const action of ['type:"paste-slide"','type:"set-slide-label"','type:"set-slide-tags"','type:"apply-theme"','type:"bulk-delete-selected-slides"']){
+  assert.ok(menu.includes(action),"missing dispatched slide action "+action);
+ }
+ const film=html.slice(html.indexOf('function gr(){'),html.indexOf('function Er(){',html.indexOf('function gr(){')));
+ assert.ok(film.includes('onContextMenu:event=>{event.preventDefault();event.stopPropagation();'));
+ assert.ok(film.includes('setFilmMenu({slideId:i.id,x:event.clientX,y:event.clientY})'));
+ assert.ok(film.includes('filmMenu&&(0,M.jsx)(HwpEditorSlideContextMenu'));
+});
