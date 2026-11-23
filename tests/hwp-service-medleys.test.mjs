@@ -177,3 +177,58 @@ test("service picker is one compact native selector with service inside it",()=>
  assert.ok(css.includes('height:32px'));
  assert.ok(css.includes('width:100%'));
 });
+
+test("Ministry Connect service types select the correct independent HWP theme",()=>{
+ assert.equal(ctx.hwpServiceThemeType({hwpScheduleServiceType:"sunday-spanish",name:"Unknown"}),"sunday-spanish");
+ assert.equal(ctx.hwpServiceThemeType({name:"Sunday English — Nov 29, 2026"}),"sunday-english");
+ assert.equal(ctx.hwpServiceThemeType({hwpScheduleServiceType:"wednesday"}),"wednesday");
+ assert.equal(ctx.hwpServiceThemeType({hwpScheduleServiceType:"tuesday"}),"consecration");
+ assert.equal(ctx.hwpServiceThemeType({hwpScheduleServiceType:"thursday"}),"consecration");
+ assert.equal(ctx.hwpServiceThemeType({name:"Unrecognized Special Service"}),null);
+});
+test("saved service theme preserves sermon and song ownership and applies header and boundary colors",()=>{
+ const base={...fixture(),hwpScheduleId:"ministry_service",hwpScheduleServiceType:"sunday-spanish"};
+ const themed={headers:[
+  {key:"sermon",name:"Sermon",bgColor:"#244466",fontColor:"#ffffff"},
+  {key:"praise-songs",name:"Praise Songs",bgColor:"#552266",fontColor:"#eeeeee"},
+  {key:"custom-welcome",name:"Welcome",bgColor:"#227744",fontColor:"#ffffff"}
+ ],boundaryStyles:{start:{bgColor:"#333333",fontColor:"#ffffff"},end:{bgColor:"#111111",fontColor:"#eeeeee"}}};
+ const updated=ctx.hwpApplyServiceThemeToPlaylist(base,themed);
+ assert.equal(updated.items.filter(x=>x.header)[0].header,"Sermon");
+ assert.equal(updated.items.filter(x=>x.header)[1].header,"Praise Songs");
+ assert.equal(updated.items.filter(x=>x.header)[2].header,"Welcome");
+ assert.equal(byKey(updated,"praise-songs").bgColor,"#552266");
+ assert.equal(byKey(updated,"sermon").bgColor,"#244466");
+ assert.equal(get("song-a",updated).groupHeaderId,byKey(updated,"praise-songs").id);
+ assert.equal(get("scripture",updated).groupHeaderId,byKey(updated,"sermon").id);
+ assert.equal(updated.boundaryStyles.start.bgColor,"#333333");
+ assert.equal(updated.boundaryStyles.end.bgColor,"#111111");
+ assert.equal(ctx.hwpApplyServiceThemeToPlaylist(updated,themed),updated,"theme application is stable");
+ assert.equal(ctx.hwpApplyServiceThemeToPlaylist(fixture(),themed).hwpScheduleId,undefined,"manual services are not overwritten");
+});
+test("service theme editor includes template selection, reorder, colors and save",()=>{
+ assert.ok(html.includes('function HwpServiceThemeSettings()'));
+ assert.ok(html.includes('i===`Service Themes`'));
+ assert.ok(html.includes('Save Service Theme'));
+ assert.ok(html.includes('Use current service layout'));
+ assert.ok(html.includes('type:"save-service-theme"'));
+ assert.ok(html.includes('case"save-service-theme"'));
+ assert.ok(css.includes('.hwp-service-theme-editor .hwp-theme-header-row'));
+});
+test("expanded right preview removes clear buttons and transport and includes stage messages",()=>{
+ const start=html.indexOf("function Ni(){"),end=html.indexOf("function Pi(){",start);
+ assert.ok(start>0&&end>start);
+ const preview=html.slice(start,end);
+ assert.ok(preview.includes('className:`preview hwp-preview-redesign`'));
+ assert.ok(preview.includes('className:`hwp-preview-meta-actions`'));
+ assert.ok(preview.includes('HwpStageMessageComposer'));
+ assert.ok(!preview.includes('className:`clears`'));
+ assert.ok(!preview.includes('(0,M.jsx)(Pi,{})'));
+ assert.ok(html.includes('function HwpStageFlash({message})'));
+ assert.ok(html.includes('stageMessage:n.stageMessage??null'));
+ assert.ok(html.includes('className:`hwp-stage-flash`'));
+ assert.ok(css.includes('.preview.hwp-preview-redesign .program-frame'));
+ assert.ok(css.includes('.stage-layout .hwp-stage-flash'));
+ const audience=html.slice(html.indexOf('function tr({snap:e'),html.indexOf('function nr(',html.indexOf('function tr({snap:e')));
+ assert.ok(!audience.includes('HwpStageFlash'),"audience must not show stage-only flashes");
+});
