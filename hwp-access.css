@@ -744,54 +744,76 @@
 @media(max-width:550px){.templates-panel{padding:10px;max-height:calc(100dvh - 100px)}.templates-panel .template-card{grid-template-columns:minmax(86px,35%) minmax(0,1fr)}}
 
 
-/* Bilingual HWW song presentation language separation: operator thumbnails only. */
-.thumb-cell[data-hwp-song-lang] {
-  position: relative;
-}
-.thumb-cell[data-hwp-song-start="en"]::before,
-.thumb-cell[data-hwp-song-start="es"]::before {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-sizing: border-box;
-  width: 100%;
-  min-height: 29px;
-  padding: 5px 8px;
-  margin-bottom: 6px;
-  border-radius: 6px;
-  font: 700 11px/1.35 system-ui, sans-serif;
-  letter-spacing: .085em;
+/* Full-width diagonal boundary between English and Spanish song slides (operator UI only). */
+.hwp-song-language-divider {
   grid-column: 1 / -1;
-  text-transform: uppercase;
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 112px;
+  margin: 15px 0 20px;
+  box-sizing: border-box;
+  pointer-events: none;
+  isolation: isolate;
+  color: #e9f2fc;
 }
-.thumb-cell[data-hwp-song-start="en"]::before {
-  content: "ENGLISH SLIDES";
-  color: #e8f2ff;
-  background: #194a79;
-  border: 1px solid #477faf;
+.hwp-song-language-divider svg {
+  position: absolute;
+  width: 100%;
+  height: 108px;
+  inset: 1px 0 auto;
+  overflow: visible;
 }
-.thumb-cell[data-hwp-song-start="es"]::before {
-  content: "DIAPOSITIVAS EN ESPAÑOL";
-  color: #23375b;
-  background: #d9e8fa;
-  border: 1px solid #98b9df;
+.hwp-song-language-divider svg line {
+  stroke: #a8c5df;
+  stroke-width: 2.6px;
+  vector-effect: non-scaling-stroke;
+  stroke-linecap: round;
+  opacity: .92;
 }
-.thumb-cell[data-hwp-song-start="es"] {
-  padding-top: 13px;
-  border-top: 2px solid #97b8e2;
-}
-.thumb-cell[data-hwp-song-lang="es"] .thumb-label {
-  outline: 1px solid rgba(114,148,191,.64);
-  outline-offset: -1px;
-}
-.thumb-cell[data-hwp-song-lang="en"] .thumb-label::after,
-.thumb-cell[data-hwp-song-lang="es"] .thumb-label::after {
-  display: inline-block;
-  flex-shrink: 0;
-  font: 700 10px/1.2 system-ui, sans-serif;
-  letter-spacing: .05em;
-  border-radius: 4px;
+.hwp-song-language-divider span {
+  position: absolute;
+  display: block;
+  max-width: 45%;
   padding: 2px 5px;
+  border: none;
+  background: none;
+  font: 750 13px/1.3 system-ui, -apple-system, sans-serif;
+  letter-spacing: .15em;
+  text-shadow: 0 1px 3px rgba(0,0,0,.45);
+  white-space: nowrap;
 }
-.thumb-cell[data-hwp-song-lang="en"] .thumb-label::after {content: "EN";background: #18446f;color:#fff}
-.thumb-cell[data-hwp-song-lang="es"] .thumb-label::after {content: "ES";background: #f2f7ff;color:#24395d}
+.hwp-song-language-divider .hwp-song-language-en {
+  top: 0;
+  left: 3%;
+  color: #dcecff;
+}
+.hwp-song-language-divider .hwp-song-language-es {
+  bottom: 0;
+  right: 3%;
+  color: #e6ddfa;
+  text-align: right;
+}
+html[data-hwp-appearance="light"] .hwp-song-language-divider {
+  color: #223d5d;
+}
+html[data-hwp-appearance="light"] .hwp-song-language-divider svg line {
+  stroke: #54789e;
+}
+html[data-hwp-appearance="light"] .hwp-song-language-divider span {
+  text-shadow: none;
+}
+html[data-hwp-appearance="light"] .hwp-song-language-divider .hwp-song-language-en {
+  color: #284c72;
+}
+html[data-hwp-appearance="light"] .hwp-song-language-divider .hwp-song-language-es {
+  color: #654b82;
+}
+@media(max-width:540px) {
+  .hwp-song-language-divider {
+    height: 90px;
+    margin: 10px 0 16px;
+  }
+  .hwp-song-language-divider svg {height: 86px}
+  .hwp-song-language-divider span {font-size: 11px;letter-spacing: .08em}
+}
