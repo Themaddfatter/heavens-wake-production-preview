@@ -53,7 +53,7 @@ export function createHwpLocalMediaSync({
     try {
       const file = await (await getDir()).getFileHandle(saved.fileName).then(h => h.getFile());
       if (file.size !== saved.size) return null;
-      return { file, version: saved.version, size: saved.size };
+      return { file, version: saved.version, size: saved.size, type: saved.type || file.type || 'application/octet-stream' };
     } catch (error) {
       if (error?.name === 'NotFoundError') return null;
       throw error;
@@ -93,7 +93,7 @@ export function createHwpLocalMediaSync({
           const verified = await fileHandle.getFile();
           if (verified.size !== blob.size)
             throw new Error('Local file size verification failed.');
-          state.files[item.id] = { version: item.version, size: blob.size, fileName };
+          state.files[item.id] = { version: item.version, size: blob.size, type: item.type || blob.type || 'application/octet-stream', fileName };
           await writeIndex(state); // publish new version only after completed write
         } catch (error) {
           await writer.abort().catch(() => {});
@@ -111,8 +111,9 @@ export function createHwpLocalMediaSync({
   async function playback(id) {
     const local = await localEntry(id);
     if (!local) return null;
-    const url = URL.createObjectURL(local.file);
-    return { url, file: local.file, release: () => URL.revokeObjectURL(url) };
+    const media = local.file.type === local.type ? local.file : new Blob([local.file], { type: local.type });
+    const url = URL.createObjectURL(media);
+    return { url, file: media, release: () => URL.revokeObjectURL(url) };
   }
   async function readiness(ids) {
     const missing = [];
