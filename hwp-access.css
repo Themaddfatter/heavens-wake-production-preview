@@ -744,80 +744,150 @@
 @media(max-width:550px){.templates-panel{padding:10px;max-height:calc(100dvh - 100px)}.templates-panel .template-card{grid-template-columns:minmax(86px,35%) minmax(0,1fr)}}
 
 
-/* Full-width diagonal boundary between English and Spanish song slides (operator UI only). */
-.hwp-song-language-divider {
-  grid-column: 1 / -1;
-  position: relative;
-  display: block;
-  width: 100%;
-  height: 112px;
-  margin: 15px 0 20px;
-  box-sizing: border-box;
-  pointer-events: none;
-  isolation: isolate;
-  color: #e9f2fc;
+/* Clean, full-width bilingual song section headings. Operator grid only. */
+.thumb-grid .hwp-song-language-divider{
+ grid-column:1/-1;
+ width:100%;
+ display:flex;
+ align-items:center;
+ justify-content:flex-start;
+ min-height:31px;
+ margin:4px 0 7px;
+ padding:0 0 0 5px;
+ border:0;
+ border-radius:0;
+ box-sizing:border-box;
+ background:transparent;
+ color:#315779;
+ pointer-events:none;
 }
-.hwp-song-language-divider svg {
-  position: absolute;
-  width: 100%;
-  height: 108px;
-  inset: 1px 0 auto;
-  overflow: visible;
+.thumb-grid .hwp-song-language-divider span{
+ display:block;
+ text-align:left;
+ color:inherit;
+ background:transparent;
+ padding:0;
+ margin:0;
+ border:0;
+ font:800 12px/1.4 system-ui,-apple-system,sans-serif;
+ letter-spacing:.115em;
+ text-transform:uppercase;
 }
-.hwp-song-language-divider svg line {
-  stroke: #a8c5df;
-  stroke-width: 2.6px;
-  vector-effect: non-scaling-stroke;
-  stroke-linecap: round;
-  opacity: .92;
+.thumb-grid .hwp-song-language-divider.hwp-song-language-es{
+ margin:18px 0 8px;
+ padding-top:14px;
+ min-height:48px;
+ border-top:2px solid #7590ad;
+ color:#654c85;
 }
-.hwp-song-language-divider span {
-  position: absolute;
-  display: block;
-  max-width: 45%;
-  padding: 2px 5px;
-  border: none;
-  background: none;
-  font: 750 13px/1.3 system-ui, -apple-system, sans-serif;
-  letter-spacing: .15em;
-  text-shadow: 0 1px 3px rgba(0,0,0,.45);
-  white-space: nowrap;
+:root[data-hwp-appearance="light"] .thumb-grid .hwp-song-language-en{color:#28486d}
+:root[data-hwp-appearance="light"] .thumb-grid .hwp-song-language-es{
+ color:#5a3c80;
+ border-top-color:#6685a5;
 }
-.hwp-song-language-divider .hwp-song-language-en {
-  top: 0;
-  left: 3%;
-  color: #dcecff;
+:root:not([data-hwp-appearance="light"]) .thumb-grid .hwp-song-language-en{color:#d8eafb}
+:root:not([data-hwp-appearance="light"]) .thumb-grid .hwp-song-language-es{
+ color:#e6daf9;
+ border-top-color:#90aaca;
 }
-.hwp-song-language-divider .hwp-song-language-es {
-  bottom: 0;
-  right: 3%;
-  color: #e6ddfa;
-  text-align: right;
+/* Service list drag-and-drop: obvious grips, precise lines, indentation and wider targets. */
+.service-list .hwp-service-drag-grip{
+ display:inline-flex;
+ flex:0 0 17px;
+ justify-content:center;
+ align-items:center;
+ font-size:17px;
+ line-height:1;
+ opacity:.75;
+ color:inherit;
+ cursor:grab;
+ user-select:none;
+ pointer-events:none;
 }
-html[data-hwp-appearance="light"] .hwp-song-language-divider {
-  color: #223d5d;
+.service-list .service-row[draggable]:hover .hwp-service-drag-grip,
+.service-list .service-header[draggable]:hover .hwp-service-drag-grip,
+.service-list .service-row[draggable]:focus-visible .hwp-service-drag-grip,
+.service-list .service-header[draggable]:focus-visible .hwp-service-drag-grip{
+ opacity:1;
 }
-html[data-hwp-appearance="light"] .hwp-song-language-divider svg line {
-  stroke: #54789e;
+.service-list .service-header[draggable]{
+ position:relative;
+ padding-left:26px;
+ cursor:grab;
 }
-html[data-hwp-appearance="light"] .hwp-song-language-divider span {
-  text-shadow: none;
+.service-list .service-header[draggable] .hwp-service-drag-grip{
+ position:absolute;
+ left:5px;
+ top:50%;
+ transform:translateY(-50%);
 }
-html[data-hwp-appearance="light"] .hwp-song-language-divider .hwp-song-language-en {
-  color: #284c72;
+.service-list .service-row[draggable]{cursor:grab;min-height:37px;touch-action:pan-y}
+.service-list .service-row[draggable]:active,
+.service-list .service-header[draggable]:active{cursor:grabbing}
+.service-list.hwp-service-dragging .service-row,
+.service-list.hwp-service-dragging .service-header{transition:box-shadow .08s ease}
+.service-list .service-row.drop-before::before,
+.service-list .service-row.drop-after::after,
+.service-list .service-header.drop-before::before,
+.service-list .service-header.drop-after::after{
+ content:"";
+ position:absolute;
+ display:block;
+ left:0;
+ right:0;
+ width:auto;
+ height:3px;
+ background:#1c90e9;
+ border-radius:3px;
+ box-shadow:0 0 0 2px rgba(231,245,255,.92);
+ pointer-events:none;
+ z-index:5;
 }
-html[data-hwp-appearance="light"] .hwp-song-language-divider .hwp-song-language-es {
-  color: #654b82;
+.service-list .service-row.drop-before::before,
+.service-list .service-header.drop-before::before{top:-3px}
+.service-list .service-row.drop-after::after,
+.service-list .service-header.drop-after::after{bottom:-3px}
+.service-list .service-standalone-drop.dragging{
+ height:14px;
+ min-height:14px;
+ padding:0;
+ margin:2px 0;
+ border:1px dashed #608eb4;
+ background:rgba(56,128,192,.08);
+ border-radius:5px;
+ cursor:copy;
 }
-@media(max-width:540px) {
-  .hwp-song-language-divider {
-    height: 90px;
-    margin: 10px 0 16px;
-  }
-  .hwp-song-language-divider svg {height: 86px}
-  .hwp-song-language-divider span {font-size: 11px;letter-spacing: .08em}
+.service-list .service-standalone-drop.dragging.over{
+ min-height:30px;
+ height:30px;
+ border:2px dashed #2c94d9;
+ background:rgba(57,147,210,.22);
+ box-shadow:inset 0 0 0 1px rgba(245,252,255,.55);
 }
-
+.service-list .service-header-drop.dragging{
+ min-height:33px;
+ height:33px;
+ margin:3px 0 5px 15px;
+ width:calc(100% - 15px);
+ border:2px dashed #698ab9;
+ border-left:4px solid #2785c3;
+ border-radius:7px;
+ background:rgba(67,145,202,.12);
+ pointer-events:auto;
+ cursor:copy;
+}
+.service-list .service-header-drop.dragging.over{
+ background:rgba(53,162,229,.28);
+ box-shadow:inset 0 0 0 1px #d4edff;
+}
+.service-list.hwp-service-dragging .service-group-child{border-left:3px solid rgba(55,132,192,.55)}
+.service-list .service-header.drop-linked,
+.service-list .service-row.drop-linked{box-shadow:inset 4px 0 0 #309ee4}
+.service-list .service-row[draggable]:focus-visible,
+.service-list .service-header[draggable]:focus-visible{
+ outline:2px solid #2e8bc1;
+ outline-offset:1px;
+}
 /* HWP paired English and Spanish label editor */
 .settings-pane .hwp-linked-labels {gap:14px}
 .settings-pane .hwp-linked-label-section {
