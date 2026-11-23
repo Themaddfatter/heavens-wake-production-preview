@@ -1,5 +1,5 @@
-name: Publish and verify HWP production
-run-name: HWP production deployment - ${{ github.sha }}
+name: Verify published HWP site (no deployment)
+run-name: HWP browser release checks - ${{ github.sha }}
 
 on:
   push:
@@ -8,141 +8,71 @@ on:
       - index.html
       - hwp-style.css
       - hwp-access.css
-      - sync-staging/**
       - hwp-logo.png
       - hwp-bibles/**
-      - CNAME
-      - .nojekyll
+      - sync-staging/**
+      - tests/**
       - .github/workflows/verify-hwp-production.yml
   workflow_dispatch:
 
+# Pages deployment is owned by GitHub's built-in "pages build and deployment".
+# Do not call deploy-pages, configure-pages or upload-pages-artifact here.
 permissions:
   contents: read
-  pages: write
-  id-token: write
-
-concurrency:
-  group: hwp-github-pages-production
-  cancel-in-progress: false
 
 jobs:
-  publish-hwp:
-    name: Publish and verify production.sioncdo.com
-    runs-on: [self-hosted, Linux, X64, hwp-wsl]
-    timeout-minutes: 20
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+  verify-hwp:
+    name: Test HWP source and verify live Bible release
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
     steps:
       - name: Check out HWP source
         uses: actions/checkout@v4
 
-      - name: Prepare HWP static website
-        shell: bash
-        run: |
-          set -euo pipefail
-          mkdir -p _pages_output/hwp-bibles _pages_output/sync-staging
-          cp index.html hwp-style.css hwp-access.css hwp-logo.png CNAME .nojekyll _pages_output/
-          # Use the existing HWP logo for the browser tab on every release.
-          python3 - <<'PY'
-          import os
-          import re
-          from pathlib import Path
-          page = Path("_pages_output/index.html")
-          html = page.read_text(encoding="utf-8")
-          # Version stylesheet URLs on every deploy so browsers load UI fixes.
-          for stylesheet in ("hwp-style.css", "hwp-access.css"):
-              source = f'href="./{stylesheet}"'
-              if source not in html:
-                  raise SystemExit(f"Missing HWP stylesheet: {stylesheet}")
-              html = html.replace(source, f'href="./{stylesheet}?v={os.environ["GITHUB_SHA"][:12]}"', 1)
-          # Replace any previous favicon links, regardless of their location in <head>.
-          html = re.sub(r'<link\b(?=[^>]*\brel\s*=\s*["\'](?:shortcut\s+)?icon["\'])[^>]*>', '', html, flags=re.I)
-          favicon = '<link rel="icon" type="image/png" href="/hwp-logo.png?v=' + os.environ['GITHUB_SHA'][:12] + '">'
-          if not re.search(r'</head\s*>', html, re.I):
-              raise SystemExit('Cannot install HWP favicon: </head> missing')
-          html = re.sub(r'</head\s*>', favicon + '\n</head>', html, count=1, flags=re.I)
-          page.write_text(html, encoding="utf-8")
-          PY
-          cp hwp-bibles/*.js _pages_output/hwp-bibles/
-          cp sync-staging/*.mjs _pages_output/sync-staging/
-          test -s _pages_output/index.html
-          test -s _pages_output/sync-staging/hwp-auth.mjs
-          grep -Fq 'function HwpAccessGate' _pages_output/index.html
-          grep -Fq 'HWP: presentation appearance boundary.' _pages_output/hwp-style.css
-          grep -Fq -- '--text:#f3f1ec' _pages_output/hwp-style.css
-
-      - name: Verify inline application JavaScript syntax
+      - name: Verify all inline application JavaScript parses
         shell: bash
         run: |
           set -euo pipefail
           node <<'NODE'
-          const fs=require('fs'),cp=require('child_process');
+          const fs=require('node:fs'),vm=require('node:vm');
           const html=fs.readFileSync('index.html','utf8');
           const scripts=[...html.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/g)];
           let checked=0;
           for(const match of scripts){
             if(!match[1].trim())continue;
-            const temp=process.env.RUNNER_TEMP+'/hwp-inline-'+checked+'.js';
-            fs.writeFileSync(temp,match[1]);
-            cp.execFileSync(process.execPath,['--check',temp],{stdio:'inherit'});
+            new vm.Script(match[1],{filename:'index-inline-'+checked+'.js'});
             checked++;
           }
-          if(checked<2)throw Error('Could not find bundled HWP scripts');
-          console.log('Verified '+checked+' inline JavaScript blocks.');
+          if(checked<3)throw Error('Missing HWP application scripts');
+          console.log('Compiled '+checked+' inline JavaScript blocks');
           NODE
 
-      - name: Test Bible translation creation and startup compatibility
-        shell: bash
-        run: node --test tests/hwp-bible-presentations.test.mjs sync-staging/hwp-cloud-media.test.mjs sync-staging/hwp-local-media-sync.test.mjs sync-staging/hwp-recovery.test.mjs
+      - name: Run Bible and local media regression tests
+        run: node --test tests/hwp-bible-presentations.test.mjs sync-staging/hwp-local-media-sync.test.mjs sync-staging/hwp-cloud-media.test.mjs sync-staging/hwp-recovery.test.mjs
 
-      - name: Configure GitHub Pages
-        uses: actions/configure-pages@v5
-
-      - name: Upload HWP website
-        uses: actions/upload-pages-artifact@v4
-        with:
-          path: _pages_output
-
-      - name: Allow GitHub Pages artifact to finish indexing
-        shell: bash
-        run: sleep 15
-
-      - name: Deploy HWP to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
-
-      - name: Verify deployed HWP theme isolation
+      - name: Confirm latest HWP Bible release is on custom domain
         shell: bash
         run: |
           set -euo pipefail
           domain="https://production.sioncdo.com"
-          verified=0
-          for attempt in $(seq 1 20); do
-            echo "Checking production attempt ${attempt}/20"
-            if curl --fail --silent --show-error --location --max-time 20 -H "Cache-Control: no-cache" "$domain/?hwp_verify=$GITHUB_SHA" -o "$RUNNER_TEMP/hwp-home.html" \
-              && curl --fail --silent --show-error --location --max-time 25 -H "Cache-Control: no-cache" "$domain/hwp-style.css?hwp_verify=$GITHUB_SHA" -o "$RUNNER_TEMP/hwp-style.css" \
-              && curl --fail --silent --show-error --location --max-time 25 -H "Cache-Control: no-cache" "$domain/hwp-access.css?hwp_verify=$GITHUB_SHA" -o "$RUNNER_TEMP/hwp-access.css" \
-              && curl --fail --silent --show-error --location --max-time 25 -H "Cache-Control: no-cache" "$domain/sync-staging/hwp-auth.mjs?hwp_verify=$GITHUB_SHA" -o "$RUNNER_TEMP/hwp-auth.mjs" \
-              && grep -Fq "hwp-style.css" "$RUNNER_TEMP/hwp-home.html" \
-              && grep -Fq "hwp-access.css" "$RUNNER_TEMP/hwp-home.html" \
-              && grep -Fq "function HwpAccessGate" "$RUNNER_TEMP/hwp-home.html" \
-              && grep -Fq "Quick Scripture" "$RUNNER_TEMP/hwp-home.html" \
-              && grep -Fq "hwp-logo.png" "$RUNNER_TEMP/hwp-home.html" \
-              && curl --fail --silent --show-error --location --max-time 25 "$domain/hwp-logo.png?hwp_verify=$GITHUB_SHA" -o "$RUNNER_TEMP/hwp-logo.png" \
-              && test -s "$RUNNER_TEMP/hwp-logo.png" \
-              && grep -Fq "HWP: presentation appearance boundary." "$RUNNER_TEMP/hwp-style.css" \
-              && grep -Fq -- "--text:#f3f1ec" "$RUNNER_TEMP/hwp-style.css" \
-              && grep -Fq ".service-row.background-row" "$RUNNER_TEMP/hwp-access.css" \
-              && grep -Fq "min-height:24px;" "$RUNNER_TEMP/hwp-access.css" \
-              && grep -Fq "createHwpAuth" "$RUNNER_TEMP/hwp-auth.mjs"; then
-                echo "VERIFIED: HWP theme isolation is live at $domain"
-                verified=1
-                break
+          for attempt in $(seq 1 25); do
+            echo "Checking HWP production content $attempt/25"
+            if curl --fail --silent --show-error --location --max-time 20 -H "Cache-Control: no-cache" \
+                "$domain/?hwp_release=$GITHUB_SHA" -o "$RUNNER_TEMP/hwp-home.html" \
+              && curl --fail --silent --show-error --location --max-time 20 -H "Cache-Control: no-cache" \
+                "$domain/hwp-access.css?hwp_release=$GITHUB_SHA" -o "$RUNNER_TEMP/hwp-access.css" \
+              && curl --fail --silent --show-error --location --max-time 20 -H "Cache-Control: no-cache" \
+                "$domain/hwp-logo.png?hwp_release=$GITHUB_SHA" -o "$RUNNER_TEMP/hwp-logo.png" \
+              && grep -Fq 'name="hwp-release" content="bible-20261122-single-publisher"' "$RUNNER_TEMP/hwp-home.html" \
+              && grep -Fq 'function HwpAccessGate' "$RUNNER_TEMP/hwp-home.html" \
+              && grep -Fq 'function hwpBibleTranslationBadge' "$RUNNER_TEMP/hwp-home.html" \
+              && grep -Fq 'function hwpScriptureTranslationStart' "$RUNNER_TEMP/hwp-home.html" \
+              && grep -Fq 'hwp-scripture-translation-divider' "$RUNNER_TEMP/hwp-access.css" \
+              && test -s "$RUNNER_TEMP/hwp-logo.png"; then
+                echo "Verified current Bible translation functionality is published to $domain"
+                exit 0
             fi
-            if [ "$attempt" -lt 20 ]; then sleep 12; fi
+            if [ "$attempt" -lt 25 ]; then sleep 12; fi
           done
-          if [ "$verified" -ne 1 ]; then
-            echo "::error::HWP production could not be verified. Confirm GitHub Pages custom domain and DNS."
-            exit 1
-          fi
+          echo "::error::HWP custom domain is not serving the current Bible translation release."
+          exit 1
