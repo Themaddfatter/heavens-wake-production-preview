@@ -45,7 +45,7 @@ test('Media browser supports folder drag/drop, context actions, and folder desti
 test('Background slides have photo and video labels and use ordinary slide creation',()=>{
  includes('Photo Background','photo section');
  includes('Video Background','video section');
- includes('name:t.presentationId===ge?','background label by type');
+ includes('hwpRegisteredLabel(e.doc,null,t.item.kind,t.presentationId===ge)','background label by type');
  includes('r.id===`pres_background`?(0,M.jsxs)(M.Fragment','background categories visible');
  includes('onClick:()=>setChooser(!0),children:`+ Slide`','create-slide button');
  assert.ok(!html.includes('className:`pres-name`,value:r.name'),'no inline presentation rename input');
@@ -155,3 +155,6 @@ test("Folder helpers preserve media and presentation contents while moving, copy
  const deleted=tools.hwpLibraryFolderEdit(moved,{kind:"remove",ids:["custom"]});assert.equal(deleted.presentations.length,1);assert.equal(deleted.hwpFolderPlacement.p,"unassigned");
 });
 test("Bible editions are loaded on request without blocking sign-in",()=>{assert.ok(html.includes("function hwpLoadBibleFile(name)"));assert.ok(html.includes("HWP_BIBLE_FILES.has(m[1])"));assert.ok(!html.includes('<script src="./hwp-bibles/kjv.js">'));assert.ok(html.includes("action:'access'"));});
+
+test("Scripture is service-only and merges can be reversed without losing source rows",()=>{for(const marker of ["presentations=state.doc.presentations.filter(hwpIsLibraryPresentation)","if(!hwpIsLibraryPresentation(pres))return false","hwpRemoveServiceScriptures","hwpUnmergeServiceScriptures","Unmerge Scriptures","hwpScriptureMerge:{version:1,sources:snapshots}"])assert.ok(html.includes(marker),marker);});
+test("Registered media labels and continuous medley frame",()=>{for(const marker of ["function hwpRegisteredLabel","function hwpRepairPresentationLabels","hwpLabelFields(defaultLabel)","function hwpRenderMedleyGroups"])assert.ok(html.includes(marker),marker);assert.ok(css.includes(".hwp-medley-frame"));assert.ok(css.includes("4px solid #29ff70"));});

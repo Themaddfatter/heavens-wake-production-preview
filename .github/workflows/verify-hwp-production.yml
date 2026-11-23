@@ -68,7 +68,10 @@ jobs:
               && grep -Fq 'function hwpMediaFolderEdit' "$RUNNER_TEMP/hwp-home.html" \
               && grep -Fq 'function hwpLibraryFolderEdit' "$RUNNER_TEMP/hwp-home.html" \
               && grep -Fq 'function hwpLoadBibleFile' "$RUNNER_TEMP/hwp-home.html" \
-              && grep -Fq 'hwp-operator-workflow-v2' "$RUNNER_TEMP/hwp-home.html" \
+              && grep -Fq 'hwp-service-scripture-medley-v1' "$RUNNER_TEMP/hwp-home.html" \
+              && grep -Fq 'function hwpUnmergeServiceScriptures' "$RUNNER_TEMP/hwp-home.html" \
+              && grep -Fq 'function hwpRegisteredLabel' "$RUNNER_TEMP/hwp-home.html" \
+              && grep -Fq '.hwp-medley-frame' "$RUNNER_TEMP/hwp-access.css" \
               && grep -Fq 'hwpPresentationView' "$RUNNER_TEMP/hwp-home.html" \
               && grep -Fq 'function HwpAccessGate' "$RUNNER_TEMP/hwp-home.html" \
                             && grep -Fq 'function HwpBibleInlineTranslationPicker' "$RUNNER_TEMP/hwp-home.html" \
