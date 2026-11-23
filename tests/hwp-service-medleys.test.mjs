@@ -163,16 +163,17 @@ test("HWP service dates use America/Los_Angeles and do not expire during their d
  assert.equal(upcoming.hwpVisibleServices([current],"2026-11-24").length,0);
 });
 
-test("service picker shows complete selected name in a native accessible select",()=>{
+test("service picker is one compact native selector with service inside it",()=>{
  assert.ok(html.includes('className:`panel-head hwp-service-picker-head`'));
  assert.ok(html.includes('className:`hwp-service-dropdown`'));
  assert.ok(html.includes('children:serviceOptions.length?serviceOptions.map'));
  assert.ok(html.includes('children:e.name'));
  assert.ok(html.includes('title:i?.name||`No upcoming published services`'));
  assert.ok(html.includes('"aria-label":`Service`'));
+ assert.ok(!html.includes('className:`hwp-service-dropdown-label`'));
  assert.ok(!html.includes('children:[(0,M.jsx)(`span`,{children:`Service`})'));
- assert.ok(css.includes('.library .panel-head.hwp-service-picker-head .hwp-service-dropdown select'));
- assert.ok(css.includes('white-space:normal'));
- assert.ok(css.includes('overflow-wrap:anywhere'));
- assert.ok(css.includes('max-width:none;'));
+ assert.ok(css.includes('--left:232px!important'));
+ assert.ok(css.includes('select.hwp-service-dropdown'));
+ assert.ok(css.includes('height:32px'));
+ assert.ok(css.includes('width:100%'));
 });
