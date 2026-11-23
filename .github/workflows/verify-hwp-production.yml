@@ -104,15 +104,18 @@ jobs:
               && grep -Fq 'Photo Background' "$RUNNER_TEMP/hwp-home.html" \
               && grep -Fq 'function hwpFastResolve' "$RUNNER_TEMP/hwp-home.html" \
               && grep -Fq 'let hwpMediaClipboard' "$RUNNER_TEMP/hwp-home.html" \
-              && grep -Fq 'title:`Take off stage`' "$RUNNER_TEMP/hwp-home.html" \
+              && grep -Fq 'title:`SM OFF`' "$RUNNER_TEMP/hwp-home.html" \
+              && grep -Fq 'title:`SM ON`' "$RUNNER_TEMP/hwp-home.html" \
               && grep -Fq 'function hwpOutputWithoutTranslationTag' "$RUNNER_TEMP/hwp-home.html" \
               && grep -Fq 'function HwpServiceThemeSettings' "$RUNNER_TEMP/hwp-home.html" \
               && grep -Fq 'function hwpApplyServiceThemeToPlaylist' "$RUNNER_TEMP/hwp-home.html" \
               && grep -Fq '.preview.hwp-preview-redesign .program-frame' "$RUNNER_TEMP/hwp-access.css" \
               && grep -Fq '.stage-layout .hwp-stage-flash' "$RUNNER_TEMP/hwp-access.css" \
               && grep -Fq '.hwp-service-theme-editor .hwp-theme-header-row' "$RUNNER_TEMP/hwp-access.css" \
+              && cmp -s index.html "$RUNNER_TEMP/hwp-home.html" \
+              && cmp -s hwp-access.css "$RUNNER_TEMP/hwp-access.css" \
               && test -s "$RUNNER_TEMP/hwp-logo.png"; then
-                echo "Verified Bible and service medley release is published to $domain"
+                echo "Verified exact current HWP application and stylesheet are published to $domain"
                 exit 0
             fi
             if [ "$attempt" -lt 25 ]; then sleep 12; fi
