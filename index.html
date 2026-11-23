@@ -1418,7 +1418,7 @@ function HwpCloudAgent({getLatest}){
   window.dispatchEvent(new CustomEvent("hwp-cloud-status",{detail:status}));
  }
  (0,l.useEffect)(()=>{
-  let alive=true,stop=()=>{},pollId=null;
+  let alive=true,stop=()=>{},pollId=null,bootRetryId=null,bootBusy=false;
   async function load(){
    if(!engine.current||working.current||loading.current||paused.current)return;
    loading.current=true;
@@ -1539,9 +1539,9 @@ function HwpCloudAgent({getLatest}){
    }finally{loading.current=false}
   }
   refresh.current=load;
-  function reload(){paused.current=false;void load()}
+  function reload(){paused.current=false;if(!engine.current)bootCloud();else void load()}
   function pause(){paused.current=true;ready.current=false;window.clearTimeout(timer.current)}
-  function onOnline(){if(!paused.current)void load()}
+  function onOnline(){if(!paused.current){if(!engine.current)bootCloud();else void load()}}
   function onVisible(){if(!document.hidden)void load()}
   function onFocus(){if(!document.hidden)void load()}
   window.addEventListener("hwp-cloud-reload",reload);
@@ -1549,7 +1549,12 @@ function HwpCloudAgent({getLatest}){
   window.addEventListener("online",onOnline);
   window.addEventListener("focus",onFocus);
   document.addEventListener("visibilitychange",onVisible);
-  hwpCloudBoot().then(system=>{
+  function bootCloud(){
+   if(!alive||engine.current||bootBusy)return;
+   bootBusy=true;
+   window.clearTimeout(bootRetryId);
+   hwpCloudBoot().then(system=>{
+   bootBusy=false;
    if(!alive)return;
    engine.current=system.createController();
    stop=system.auth.observe(user=>{
@@ -1565,10 +1570,18 @@ function HwpCloudAgent({getLatest}){
    // Firebase callable workspace reads are lightweight; check for changes
    // without forcing an operator to refresh or reconnect.
    pollId=window.setInterval(()=>{if(!document.hidden)void load()},15000);
-  }).catch(()=>{if(alive)emit("offline")});
+  }).catch(error=>{
+   bootBusy=false;
+   if(!alive)return;
+   emit(navigator.onLine?"error":"offline");
+   window.dispatchEvent(new CustomEvent("hwp-cloud-error",{detail:error?.message||"Could not initialize Firebase sync."}));
+   bootRetryId=window.setTimeout(bootCloud,15000);
+  });
+  }
+  bootCloud();
   return()=>{
    alive=false;ready.current=false;stop();
-   window.clearTimeout(timer.current);window.clearInterval(pollId);
+   window.clearTimeout(timer.current);window.clearInterval(pollId);window.clearTimeout(bootRetryId);
    window.removeEventListener("hwp-cloud-reload",reload);
    window.removeEventListener("hwp-cloud-pause",pause);
    window.removeEventListener("online",onOnline);
@@ -1670,7 +1683,7 @@ async function hwpBackfillPublishedServices(){
   console.warn("Published service sync will retry:",error?.code||"unavailable");
  }finally{hwpServiceBackfillActive=false}
 }
-function HwpCloudIndicator(){const [value,setValue]=(0,l.useState)(()=>window.hwpCloudLastStatus||`signed-out`);(0,l.useEffect)(()=>{const handler=e=>setValue(e.detail);window.addEventListener(`hwp-cloud-status`,handler);return()=>window.removeEventListener(`hwp-cloud-status`,handler)},[]);const labels={connected:`Saved`,syncing:`Saving`,offline:`Offline`,error:`Sync issue`,conflict:`Sync paused`,attention:`Check sync`,setup:`Set up sync`,"signed-out":`Local only`};return (0,M.jsx)(`span`,{className:`hwp-cloud-indicator`,role:`status`,title:`Shared storage: ${labels[value]||`Local only`}`,children:labels[value]||`Local only`})}
+function HwpCloudIndicator(){const [value,setValue]=(0,l.useState)(()=>window.hwpCloudLastStatus||`signed-out`);(0,l.useEffect)(()=>{const handler=e=>setValue(e.detail);window.addEventListener(`hwp-cloud-status`,handler);return()=>window.removeEventListener(`hwp-cloud-status`,handler)},[]);const labels={connected:`Saved`,syncing:`Saving`,offline:`Offline`,error:`Sync issue`,conflict:`Sync paused`,attention:`Check sync`,setup:`Set up sync`,"signed-out":`Local only`};return (0,M.jsx)(`button`,{type:`button`,className:`hwp-cloud-indicator`,role:`status`,title:`Shared storage: ${labels[value]||`Local only`}. Click to reconnect.`,onClick:()=>window.dispatchEvent(new CustomEvent(`hwp-cloud-reload`)),children:labels[value]||`Local only`})}
 function HwpCloudSettings(){
  const {state,dispatch}=N();
  const [email,setEmail]=(0,l.useState)(``),[password,setPassword]=(0,l.useState)(``),[user,setUser]=(0,l.useState)(null),[status,setStatus]=(0,l.useState)(`Connecting…`),[error,setError]=(0,l.useState)(``),[remote,setRemote]=(0,l.useState)(null),[members,setMembers]=(0,l.useState)(null),[allowed,setAllowed]=(0,l.useState)([]);
