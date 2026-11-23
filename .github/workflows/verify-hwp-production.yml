@@ -63,8 +63,12 @@ jobs:
                 "$domain/hwp-access.css?hwp_release=$GITHUB_SHA" -o "$RUNNER_TEMP/hwp-access.css" \
               && curl --fail --silent --show-error --location --max-time 20 -H "Cache-Control: no-cache" \
                 "$domain/hwp-logo.png?hwp_release=$GITHUB_SHA" -o "$RUNNER_TEMP/hwp-logo.png" \
-              && grep -Fq 'name="hwp-release" content="bible-20261122-single-publisher"' "$RUNNER_TEMP/hwp-home.html" \
+              && grep -Fq 'name="hwp-release" content="bible-20261122-visible-controls-v2"' "$RUNNER_TEMP/hwp-home.html" \
               && grep -Fq 'function HwpAccessGate' "$RUNNER_TEMP/hwp-home.html" \
+                            && grep -Fq 'function HwpBibleInlineTranslationPicker' "$RUNNER_TEMP/hwp-home.html" \
+              && grep -Fq 'Number of Bible translations' "$RUNNER_TEMP/hwp-home.html" \
+              && grep -Fq 'function hwpBibleDisplaySlide' "$RUNNER_TEMP/hwp-home.html" \
+              && grep -Fq '.bible-side .hwp-bible-inline-versions' "$RUNNER_TEMP/hwp-access.css" \
               && grep -Fq 'function hwpBibleTranslationBadge' "$RUNNER_TEMP/hwp-home.html" \
               && grep -Fq 'function hwpScriptureTranslationStart' "$RUNNER_TEMP/hwp-home.html" \
               && grep -Fq 'hwp-scripture-translation-divider' "$RUNNER_TEMP/hwp-access.css" \
