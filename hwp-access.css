@@ -817,3 +817,110 @@ html[data-hwp-appearance="light"] .hwp-song-language-divider .hwp-song-language-
   .hwp-song-language-divider svg {height: 86px}
   .hwp-song-language-divider span {font-size: 11px;letter-spacing: .08em}
 }
+
+/* HWP paired English and Spanish label editor */
+.settings-pane .hwp-linked-labels {gap:14px}
+.settings-pane .hwp-linked-label-section {
+ border:1px solid var(--line);
+ background:var(--field,rgba(128,128,128,.05));
+ border-radius:12px;
+ padding:13px;
+ min-width:0;
+}
+.settings-pane .hwp-linked-label-section h5{
+ margin:0 0 13px;
+ font-size:14px;
+ font-weight:750;
+ letter-spacing:.02em;
+ color:var(--text,#f3f4f6);
+}
+.settings-pane .hwp-linked-label-list{display:flex;flex-direction:column;gap:8px;min-width:0}
+.settings-pane .hwp-linked-label-row{
+ display:flex;
+ justify-content:space-between;
+ gap:12px;
+ padding:12px 14px;
+ border:1px solid var(--line);
+ border-radius:10px;
+ background:var(--surface,#16232e);
+ align-items:center;
+ min-width:0;
+}
+.settings-pane .hwp-linked-label-details{
+ display:grid;
+ grid-template-columns:repeat(2,minmax(0,1fr));
+ gap:12px;
+ flex:1;
+ min-width:0;
+}
+.settings-pane .hwp-linked-label-name{display:flex;align-items:center;gap:10px;min-width:0}
+.settings-pane .hwp-linked-label-name>div{display:flex;flex-direction:column;min-width:0;gap:3px}
+.settings-pane .hwp-linked-label-name strong{font-size:14px;font-weight:700;overflow-wrap:anywhere}
+.settings-pane .hwp-linked-label-name small{font-size:11px;color:var(--label-subtle,var(--dim));font-weight:500;overflow-wrap:anywhere}
+.settings-pane .hwp-linked-swatch{
+ display:inline-block;
+ width:27px;height:27px;flex:0 0 27px;
+ border-radius:7px;border:1px solid rgba(100,109,126,.25);
+ box-shadow:inset 0 0 0 1px rgba(255,255,255,.08);
+}
+.settings-pane .hwp-linked-label-controls{display:flex;align-items:center;gap:7px;flex-shrink:0}
+.settings-pane .hwp-linked-label-controls>.btn{font-weight:650;padding:7px 12px;min-height:33px}
+.settings-pane .hwp-linked-label-controls .color-delete{
+ font-size:20px;line-height:1;width:32px;height:32px;
+ color:var(--label-subtle,var(--dim));
+}
+.settings-pane .hwp-linked-label-edit-row{
+ border-radius:11px;
+ border:1px solid #7a75b5;
+ background:var(--surface,#192934);
+ padding:15px;
+ min-width:0;
+}
+.settings-pane .hwp-linked-label-form-fields{
+ display:grid;
+ grid-template-columns:repeat(2,minmax(0,1fr));
+ gap:12px;
+}
+.settings-pane .hwp-linked-label-form-fields label{display:flex;flex-direction:column;gap:7px;min-width:0}
+.settings-pane .hwp-linked-label-form-fields label>span,
+.settings-pane .hwp-linked-color-preview>span{font-size:12px;font-weight:650;color:var(--text,#f4f6fc)}
+.settings-pane .hwp-linked-label-form-fields input[type="text"],
+.settings-pane .hwp-linked-label-form-fields select{
+ min-width:0;width:100%;height:38px;
+ border-radius:7px;
+ border:1px solid var(--line);
+ padding:6px 9px;
+ background:var(--field,#16222c);
+ color:var(--text,#f4f6fc);
+}
+.settings-pane .hwp-linked-color-preview{
+ display:flex;flex-direction:column;gap:8px;
+}
+.settings-pane .hwp-linked-label-form-fields input[type="color"]{width:66px;height:39px;cursor:pointer}
+.settings-pane .hwp-linked-label-form-actions{
+ display:flex;align-items:center;justify-content:flex-end;gap:10px;margin-top:15px;
+}
+.settings-pane .hwp-linked-label-error{font-size:13px;color:#d36c73;margin:8px 0 0}
+.settings-pane .hwp-linked-add-label{align-self:flex-start}
+:root[data-hwp-appearance="light"] .settings-pane .hwp-linked-label-section{
+ background:#f9fbfc;
+}
+:root[data-hwp-appearance="light"] .settings-pane .hwp-linked-label-section h5,
+:root[data-hwp-appearance="light"] .settings-pane .hwp-linked-label-form-fields label>span,
+:root[data-hwp-appearance="light"] .settings-pane .hwp-linked-color-preview>span{
+ color:#23364b;
+}
+:root[data-hwp-appearance="light"] .settings-pane .hwp-linked-label-row,
+:root[data-hwp-appearance="light"] .settings-pane .hwp-linked-label-edit-row{
+ background:#ffffff;color:#263747;
+}
+:root[data-hwp-appearance="light"] .settings-pane .hwp-linked-label-form-fields input[type="text"],
+:root[data-hwp-appearance="light"] .settings-pane .hwp-linked-label-form-fields select{
+ background:#ffffff;color:#263747;border-color:#d1d8e0;
+}
+@media(max-width:650px){
+ .settings-pane .hwp-linked-label-row{flex-direction:column;align-items:stretch}
+ .settings-pane .hwp-linked-label-details{gap:9px}
+ .settings-pane .hwp-linked-label-controls{justify-content:flex-end}
+ .settings-pane .hwp-linked-label-form-fields{grid-template-columns:1fr}
+}
