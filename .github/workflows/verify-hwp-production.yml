@@ -50,6 +50,12 @@ jobs:
           from pathlib import Path
           page = Path("_pages_output/index.html")
           html = page.read_text(encoding="utf-8")
+          # Version stylesheet URLs on every deploy so browsers load UI fixes.
+          for stylesheet in ("hwp-style.css", "hwp-access.css"):
+              source = f'href="./{stylesheet}"'
+              if source not in html:
+                  raise SystemExit(f"Missing HWP stylesheet: {stylesheet}")
+              html = html.replace(source, f'href="./{stylesheet}?v={os.environ["GITHUB_SHA"][:12]}"', 1)
           # Replace any previous favicon links, regardless of their location in <head>.
           html = re.sub(r'<link\b(?=[^>]*\brel\s*=\s*["\'](?:shortcut\s+)?icon["\'])[^>]*>', '', html, flags=re.I)
           favicon = '<link rel="icon" type="image/png" href="/hwp-logo.png?v=' + os.environ['GITHUB_SHA'][:12] + '">'
@@ -115,7 +121,7 @@ jobs:
               && curl --fail --silent --show-error --location --max-time 25 -H "Cache-Control: no-cache" "$domain/hwp-access.css?hwp_verify=$GITHUB_SHA" -o "$RUNNER_TEMP/hwp-access.css" \
               && curl --fail --silent --show-error --location --max-time 25 -H "Cache-Control: no-cache" "$domain/sync-staging/hwp-auth.mjs?hwp_verify=$GITHUB_SHA" -o "$RUNNER_TEMP/hwp-auth.mjs" \
               && grep -Fq "hwp-style.css" "$RUNNER_TEMP/hwp-home.html" \
-              && grep -Fq "hwp-access.css" "$RUNNER_TEMP/hwp-home.html" \
+              && grep -Fq "hwp-access.css?v=${GITHUB_SHA:0:12}" "$RUNNER_TEMP/hwp-home.html" \
               && grep -Fq "function HwpAccessGate" "$RUNNER_TEMP/hwp-home.html" \
               && grep -Eq '<link rel="icon" type="image/png" href="/hwp-logo[.]png[?]v=' "$RUNNER_TEMP/hwp-home.html" \
               && curl --fail --silent --show-error --location --max-time 25 "$domain/hwp-logo.png?hwp_verify=$GITHUB_SHA" -o "$RUNNER_TEMP/hwp-logo.png" \
@@ -123,6 +129,7 @@ jobs:
               && grep -Fq "HWP: presentation appearance boundary." "$RUNNER_TEMP/hwp-style.css" \
               && grep -Fq -- "--text:#f3f1ec" "$RUNNER_TEMP/hwp-style.css" \
               && grep -Fq ".service-row.background-row" "$RUNNER_TEMP/hwp-access.css" \
+              && grep -Fq "min-height:24px;" "$RUNNER_TEMP/hwp-access.css" \
               && grep -Fq "createHwpAuth" "$RUNNER_TEMP/hwp-auth.mjs"; then
                 echo "VERIFIED: HWP theme isolation is live at $domain"
                 verified=1
