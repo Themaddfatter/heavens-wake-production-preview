@@ -92,6 +92,10 @@ jobs:
           console.log('Verified '+checked+' inline JavaScript blocks.');
           NODE
 
+      - name: Test Bible translation creation and startup compatibility
+        shell: bash
+        run: node --test tests/hwp-bible-presentations.test.mjs
+
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v5
 

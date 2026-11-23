@@ -5,6 +5,7 @@ on:
     paths:
       - 'sync-staging/**'
       - 'index.html'
+      - 'tests/hwp-bible-presentations.test.mjs'
       - '.github/workflows/validate-firebase-local-media.yml'
   workflow_dispatch:
 permissions:
@@ -21,6 +22,8 @@ jobs:
           node-version: '22'
       - name: Verify local playback, no overwrite, Firebase priority and legacy fallback
         run: node --test sync-staging/hwp-local-media-sync.test.mjs sync-staging/hwp-cloud-media.test.mjs
+      - name: Test Bible translation creation and startup compatibility
+        run: node --test tests/hwp-bible-presentations.test.mjs
       - name: Verify connector scripts and one-time Firebase browser bootstrap
         run: |
           node --check sync-staging/hwp-auth.mjs
