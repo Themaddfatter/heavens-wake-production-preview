@@ -139,3 +139,31 @@ test("old Scripture slides visibly receive badges without mutating saved data",(
  assert.ok(html.includes("hwpBibleDisplaySlide(De(r,c.slide"));
  assert.ok(html.includes("hwpBibleVisibleObjects(e.slide,i.doc.settings.bible,o.width,o.height)"));
 });
+
+test("scripture labels follow current HWP label settings, never obsolete Reading defaults",()=>{
+ const start=html.indexOf("function hwpScriptureConfiguredLabel(doc){");
+ const end=html.indexOf("var Ge=[[",start);
+ assert.ok(start>=0&&end>start,"configured scripture label resolver exists");
+ const labelContext=createContext({
+  Ge:[],
+  le:()=>"#c4a574",
+  hwpCategoryForLabel:name=>String(name).toLowerCase()==="scripture"?"scripture":"standard"
+ });
+ runInContext(html.slice(start,end),labelContext);
+ const labels=[
+  {id:"old-reading",name:"Reading",color:"#bbbbbb",categoryId:"scripture"},
+  {id:"scripture-label",name:"Scripture",color:"#ca9f55",categoryId:"scripture"},
+  {id:"passage",name:"Passage",color:"#33aacc",categoryId:"scripture"}
+ ];
+ const doc=chosen=>({labels,settings:{appearance:{slideDefaults:{scripture:chosen}}}});
+ const outdated=labelContext.hwpScriptureConfiguredLabel(doc("Reading"));
+ assert.equal(outdated.name,"Scripture");
+ assert.equal(outdated.id,"scripture-label");
+ assert.equal(outdated.color,"#ca9f55");
+ assert.equal(labelContext.hwpScriptureConfiguredLabel(doc("Passage")).name,"Passage");
+ const deleted=labelContext.hwpScriptureConfiguredLabel({labels:labels.filter(label=>label.name!=="Reading"),settings:{appearance:{slideDefaults:{scripture:"Reading"}}}});
+ assert.equal(deleted.name,"Scripture");
+ assert.ok(html.includes("labelId:hwpScriptureConfiguredLabel(e.doc).id"),"new scripture groups link to configured label");
+ assert.ok(html.includes("group.name===`Reading`?defaultLabel:null"),"legacy Reading groups migrate");
+ assert.ok(html.includes("[`scripture`,`Scripture`,`Scripture`]"),"settings never suggest Reading by default");
+});
