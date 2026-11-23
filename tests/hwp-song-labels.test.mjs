@@ -73,12 +73,14 @@ test('manually colored legacy Spanish labels are preserved without preventing a 
  const custom=context.hwpPairSongLabels([{...english,spanishColor:'#2244dd'},spanish]);
  assert.equal(custom.find(x=>x.id==='verse-es').color,'#2244dd');
 });
-test('Spanish color can be changed directly on the paired label row and saved in the shared HWW catalog',()=>{
+test('Spanish label color can only be changed in Edit and falls back to pale English',()=>{
  const editor=html.slice(html.indexOf('function HwpPairedLabelsEditor({items})'),html.indexOf('function Ji({kind,items})'));
- assert.ok(editor.includes('function changeSpanishColor(label,color)'));
- assert.ok(editor.includes('spanishColor:color'));
- assert.ok(editor.includes('onChange:event=>void changeSpanishColor(item,event.target.value)'));
- assert.ok(editor.includes('title:"Choose a separate color for this Spanish label"'));
+ assert.ok(!editor.includes('function changeSpanishColor(label,color)'));
+ assert.ok(!editor.includes('hwp-inline-spanish-color'));
+ assert.ok(!editor.includes('onChange:event=>void changeSpanishColor'));
  assert.ok(editor.includes('value:draft.spanishColor||hwpPaleSongColor(draft.color)'));
+ assert.ok(editor.includes('onChange:e=>setDraft(x=>({...x,spanishColor:e.target.value}))'));
  assert.ok(editor.includes('onClick:()=>setDraft(x=>({...x,spanishColor:""}))'));
+ assert.ok(editor.includes('spanishColor:draft.spanishColor'));
+ assert.ok(editor.includes('style:{background:es?.color||item.spanishColor||hwpPaleSongColor(item.color)}'));
 });

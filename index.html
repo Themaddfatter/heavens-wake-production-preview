@@ -1820,18 +1820,6 @@ function HwpPairedLabelsEditor({items}){
   window.dispatchEvent(new Event("hwp-cloud-reload"));
   return result;
  }
- async function changeSpanishColor(label,color){
-  if(busy)return;
-  setBusy(true);setError("");setNotice("");
-  try{
-   const spanish=paired(label),nameEs=label.nameEs||spanish?.name||hwpSpanishSongLabel(label.name);
-   await saveSongLabel({operation:"upsert",label:{
-    id:label.id,name:label.name,nameEs,color:label.color,spanishColor:color
-   }});
-   setNotice(color?"Spanish label color saved in HWP and HWW.":"Spanish label color reset to the pale English version.");
-  }catch(error){setError(error?.message||"Could not save the Spanish label color.")}
-  finally{setBusy(false)}
- }
  function start(label){
   const spanish=label?paired(label):null;
   setDraft({name:label?.name||"",nameEs:label?.nameEs||spanish?.name||"",
@@ -1932,12 +1920,6 @@ function HwpPairedLabelsEditor({items}){
       (0,M.jsx)("strong",{children:es?.name||item.nameEs||hwpSpanishSongLabel(item.name)}),
       (0,M.jsx)("small",{children:"Español · linked to English"})
      ]}),
-     (0,M.jsxs)("label",{className:"hwp-inline-spanish-color",title:"Choose a separate color for this Spanish label",children:[
-      (0,M.jsx)("span",{children:"Spanish color"}),
-      (0,M.jsx)("input",{type:"color","aria-label":"Spanish color for "+item.name,
-       value:item.spanishColor||es?.color||hwpPaleSongColor(item.color),disabled:busy,
-       onChange:event=>void changeSpanishColor(item,event.target.value)})
-     ]})
     ]})
    ]}),
    (0,M.jsxs)("div",{className:"hwp-linked-label-controls",children:[
