@@ -228,12 +228,50 @@ function hwpPairSongLabels(input,previous=[]){
   const manuallyChangedSpanish=Boolean(pair&&priorSpanish&&pair.name!==priorSpanish.name);
   const name=manuallyChangedSpanish?pair.name:(original.nameEs||(!pair||wasAutomatic?hwpSpanishSongLabel(original.name):pair.name));
   if(manuallyChangedSpanish)original.nameEs=name;
-  const spanish={...(pair||{}),id:pair?.id||id,name,color:hwpPaleSongColor(original.color),
+  const override=String(original.spanishColor||"").trim();
+  const spanishColor=/^#[0-9a-f]{6}$/i.test(override)?override:hwpPaleSongColor(original.color);
+  const spanish={...(pair||{}),id:pair?.id||id,name,color:spanishColor,
    categoryId:"songs",language:"es",pairedLabelId:original.id};
   if(pair)labels[labels.indexOf(pair)]=spanish;else labels.push(spanish);
   valid.add(spanish.id);
  }
  return labels.filter(x=>!(x.language==="es"&&x.pairedLabelId&&!valid.has(x.id)));
+}
+function hwpSongLabelGroups(english){
+ const fold=value=>String(value||"").normalize("NFKD").replace(/[\\u0300-\\u036f]/g,"").trim().toLowerCase().replace(/\\s+/g," ");
+ const suffix=/\\s+(?:#\\s*)?(\\d{1,3}|[ivx]{1,6})$/i;
+ const groupMap=new Map();
+ const numbered=label=>suffix.test(String(label.name||""));
+ english.forEach((label,index)=>{
+  const key=fold(label.name).replace(suffix,"").trim();
+  if(!groupMap.has(key))groupMap.set(key,{key,title:String(label.name||"").trim().replace(suffix,""),items:[],first:index});
+  const group=groupMap.get(key);
+  if(!numbered(label))group.title=label.name;
+  group.items.push({...label,__index:index});
+ });
+ const ordered=(a,b)=>{
+  const x=Number.isInteger(a.order)?a.order:null,y=Number.isInteger(b.order)?b.order:null;
+  if(x!==null||y!==null){if(x===null)return 1;if(y===null)return -1;if(x!==y)return x-y}
+  return a.__index-b.__index;
+ };
+ const groups=[...groupMap.values()];
+ groups.forEach(group=>{
+  const roots=group.items.filter(x=>!numbered(x)).sort(ordered);
+  const numberedItems=group.items.filter(numbered).sort((a,b)=>{
+   const x=Number.isInteger(a.order)?a.order:null,y=Number.isInteger(b.order)?b.order:null;
+   if(x!==null||y!==null){if(x===null)return 1;if(y===null)return -1;if(x!==y)return x-y}
+   const na=Number((a.name.match(/\\d+$/)||[])[0]||0),nb=Number((b.name.match(/\\d+$/)||[])[0]||0);
+   return na-nb||a.__index-b.__index;
+  });
+  group.items=[...roots,...numberedItems].map(({__index,...x})=>x);
+  const ranks=group.items.filter(x=>Number.isInteger(x.order)).map(x=>x.order);
+  group.rank=ranks.length?Math.min(...ranks):null;
+ });
+ groups.sort((a,b)=>{
+  if(a.rank!==null||b.rank!==null){if(a.rank===null)return 1;if(b.rank===null)return -1;if(a.rank!==b.rank)return a.rank-b.rank}
+  return a.first-b.first;
+ });
+ return groups;
 }
 function hwpNormalizeLabels(labels,upgrade){
  let next=(Array.isArray(labels)?labels:[]).map(x=>({...x,categoryId:x.categoryId||hwpCategoryForLabel(x.name)}));
@@ -1271,7 +1309,7 @@ function HwpCloudAgent({getLatest}){
    });
    // Firebase callable workspace reads are lightweight; check for changes
    // without forcing an operator to refresh or reconnect.
-   pollId=window.setInterval(()=>{if(!document.hidden)void load()},30000);
+   pollId=window.setInterval(()=>{if(!document.hidden)void load()},15000);
   }).catch(()=>{if(alive)emit("offline")});
   return()=>{
    alive=false;ready.current=false;stop();
@@ -1463,12 +1501,15 @@ function HwpPairedLabelsEditor({items}){
  const {dispatch,state}=N();
  const categories=hwpNormalizeLabelCategories(state.doc.labelCategories);
  const [editing,setEditing]=(0,l.useState)(null);
- const [draft,setDraft]=(0,l.useState)({name:"",nameEs:"",color:"#2f7edb",categoryId:"songs"});
+ const [draft,setDraft]=(0,l.useState)({name:"",nameEs:"",color:"#2f7edb",spanishColor:"",categoryId:"songs"});
  const [error,setError]=(0,l.useState)("");
+ const [busy,setBusy]=(0,l.useState)(false);
+ const [notice,setNotice]=(0,l.useState)("");
  const [adding,setAdding]=(0,l.useState)(false);
  const base=items.filter(x=>!(x.language==="es"&&x.pairedLabelId));
  const songs=base.filter(x=>(x.categoryId||hwpCategoryForLabel(x.name))==="songs"&&x.language!=="es");
  const other=base.filter(x=>!songs.includes(x));
+ const families=hwpSongLabelGroups(songs);
  const paired=label=>items.find(x=>x.pairedLabelId===label.id||x.id===label.id+"_es");
  function commit(next){
   const labels=hwpPairSongLabels(next,items),lookup=new Map(labels.map(x=>[x.id,x]));
@@ -1485,47 +1526,94 @@ function HwpPairedLabelsEditor({items}){
   });
   dispatch({type:"patch-doc",history:"push",patch:{labels,presentations}});
  }
+ async function saveSongLabel(input){
+  const system=await hwpCloudBoot();
+  if(!system.auth.firebaseAuth.currentUser)throw Error("Sign in to shared HWP storage before editing song labels.");
+  const result=await system.auth.workspace({action:"saveSongLabel",...input});
+  if(result?.pending||result?.saved!==true)throw Error("The shared song labels could not be saved. No local changes were made.");
+  window.dispatchEvent(new Event("hwp-cloud-reload"));
+  return result;
+ }
  function start(label){
   const spanish=label?paired(label):null;
   setDraft({name:label?.name||"",nameEs:label?.nameEs||spanish?.name||"",
-   color:label?.color||"#2f7edb",categoryId:label?.categoryId||"songs"});
-  setEditing(label?.id||"new");setAdding(!label);setError("");
+   color:label?.color||"#2f7edb",spanishColor:label?.spanishColor||"",
+   categoryId:label?.categoryId||"songs"});
+  setEditing(label?.id||"new");setAdding(!label);setError("");setNotice("");
  }
  function discard(){setEditing(null);setAdding(false);setError("")}
- function apply(){
-  const en=draft.name.trim(),es=draft.nameEs.trim()||hwpSpanishSongLabel(draft.name.trim()),category=draft.categoryId;
+ async function apply(){
+  if(busy)return;
+  const en=draft.name.trim(),es=draft.nameEs.trim()||hwpSpanishSongLabel(en),category=draft.categoryId;
   if(!en){setError("Enter the English label name.");return}
-  const id=editing==="new"?"labels_"+w().replace(/[^a-zA-Z0-9_-]/g,""):editing;
-  if(items.some(item=>item.id!==id&&item.id!==id+"_es"&&item.language!=="es"&&item.name.toLowerCase()===en.toLowerCase())){
-   setError("A label with that English name already exists.");return;
+  const existing=editing!=="new"?items.find(item=>item.id===editing):null;
+  const id=existing?.id||"";
+  if(items.some(item=>item.id!==id&&item.id!==id+"_es"&&item.language!=="es"&&item.name.toLowerCase()===en.toLowerCase()&&item.categoryId===category)){
+   setError("A label with that name already exists in this category.");return;
   }
-  const original=items.find(item=>item.id===id)||{};
-  const oldPair=paired({id})||{};
-  const updated={...original,id,name:en,color:draft.color,categoryId:category};
-  let next=items.filter(item=>item.id!==id&&item.id!==oldPair.id&&item.pairedLabelId!==id);
-  if(category==="songs"){
-   updated.nameEs=es;updated.language="en";
-   const spanish={...oldPair,id:oldPair.id||id+"_es",name:es,
-    color:hwpPaleSongColor(draft.color),categoryId:"songs",language:"es",pairedLabelId:id};
-   next.push(updated,spanish);
-  }else{
-   delete updated.nameEs;delete updated.language;delete updated.pairedLabelId;
-   next.push(updated);
-  }
-  commit(next);discard();
+  setBusy(true);setError("");setNotice("");
+  try{
+   if(category==="songs"){
+    await saveSongLabel({operation:"upsert",label:{id,name:en,nameEs:es,color:draft.color,spanishColor:draft.spanishColor}});
+    setNotice("Saved in both HWP and HWW. Refreshing shared labels.");
+   }else if(existing?.categoryId==="songs"){
+    await saveSongLabel({operation:"moveCategory",label:{id,name:en,color:draft.color,categoryId:category}});
+    setNotice("Label moved out of Songs in both applications.");
+   }else{
+    const newId=id||"labels_"+w().replace(/[^a-zA-Z0-9_-]/g,"");
+    const updated={...(existing||{}),id:newId,name:en,color:draft.color,categoryId:category};
+    const previous=paired({id:newId});
+    commit([...items.filter(item=>item.id!==newId&&item.id!==previous?.id&&item.pairedLabelId!==newId),updated]);
+    setNotice("Label saved.");
+   }
+   discard();
+  }catch(error){setError(error?.message||"Could not save the shared label.");}
+  finally{setBusy(false)}
  }
- function remove(label){
-  const spanish=paired(label);
+ async function remove(label){
+  if(busy)return;
   if(state.doc.presentations.some(p=>p.hwwManaged&&(p.groups||[]).some(g=>
-    g.labelId===label.id||g.labelId===spanish?.id))){
+    g.labelId===label.id||g.labelId===paired(label)?.id))){
    setError("This label is used by a saved song. Reassign its slides before deleting the shared label.");
    return;
   }
-  const question=(label.categoryId==="songs"?"Delete "+label.name+" and its Spanish counterpart?":"Delete "+label.name+"?");
-  if(!window.confirm(question))return;
-  // Removing a pair never deletes the saved lyrics or song presentations.
-  commit(items.filter(x=>x.id!==label.id&&x.id!==spanish?.id&&x.pairedLabelId!==label.id));
-  discard();
+  const song=label.categoryId==="songs";
+  if(!window.confirm(song?"Delete "+label.name+" and its Spanish counterpart from HWP and HWW?":"Delete "+label.name+"?"))return;
+  setBusy(true);setError("");setNotice("");
+  try{
+   if(song){
+    await saveSongLabel({operation:"delete",label:{id:label.id}});
+    setNotice("The shared song label was deleted from both applications.");
+   }else commit(items.filter(x=>x.id!==label.id));
+   discard();
+  }catch(error){setError(error?.message||"Could not delete the shared label.")}
+  finally{setBusy(false)}
+ }
+ async function reorder(nextIds){
+  if(busy||!nextIds?.length)return;
+  setBusy(true);setError("");setNotice("");
+  try{
+   await saveSongLabel({operation:"reorder",labelIds:nextIds});
+   setNotice("The song label order is shared with HWW.");
+  }catch(error){setError(error?.message||"Could not reorder labels.")}
+  finally{setBusy(false)}
+ }
+ function moveFamily(groupIndex,direction){
+  const next=groupIndex+direction;
+  if(next<0||next>=families.length)return;
+  const copy=families.map(g=>g.items.map(item=>item.id));
+  [copy[groupIndex],copy[next]]=[copy[next],copy[groupIndex]];
+  void reorder(copy.flat());
+ }
+ function moveNumber(groupIndex,itemIndex,direction){
+  const group=families[groupIndex],next=itemIndex+direction;
+  if(next<1||next>=group.items.length)return;
+  // The unnumbered base label anchors its family.
+  if(!/\\d+$/.test(group.items[itemIndex].name)&&!/\\d+$/.test(group.items[next].name))return;
+  const order=families.map(g=>g.items.map(item=>item.id));
+  [order[groupIndex][itemIndex],order[groupIndex][next]]=
+   [order[groupIndex][next],order[groupIndex][itemIndex]];
+  void reorder(order.flat());
  }
  function displayRow(item){
   const song=item.categoryId==="songs",es=song?paired(item):null;
@@ -1539,7 +1627,7 @@ function HwpPairedLabelsEditor({items}){
      ]})
     ]}),
     song&&(0,M.jsxs)("div",{className:"hwp-linked-label-name hwp-linked-spanish",children:[
-     (0,M.jsx)("span",{className:"hwp-linked-swatch",style:{background:es?.color||hwpPaleSongColor(item.color)},"aria-hidden":true}),
+     (0,M.jsx)("span",{className:"hwp-linked-swatch",style:{background:es?.color||item.spanishColor||hwpPaleSongColor(item.color)},"aria-hidden":true}),
      (0,M.jsxs)("div",{children:[
       (0,M.jsx)("strong",{children:es?.name||item.nameEs||hwpSpanishSongLabel(item.name)}),
       (0,M.jsx)("small",{children:"Español · linked to English"})
@@ -1547,8 +1635,8 @@ function HwpPairedLabelsEditor({items}){
     ]})
    ]}),
    (0,M.jsxs)("div",{className:"hwp-linked-label-controls",children:[
-    (0,M.jsx)("button",{className:"btn",type:"button","aria-label":"Edit "+item.name+" and its Spanish label",title:"Edit paired labels",onClick:()=>start(item),children:"Edit"}),
-    (0,M.jsx)("button",{className:"color-delete",type:"button","aria-label":"Delete label "+item.name,title:"Delete label",onClick:()=>remove(item),children:"×"})
+    (0,M.jsx)("button",{className:"btn",type:"button","aria-label":"Edit "+item.name+" and its Spanish label",title:"Edit paired labels",onClick:()=>start(item),disabled:busy,children:"Edit"}),
+    (0,M.jsx)("button",{className:"color-delete",type:"button","aria-label":"Delete label "+item.name,title:"Delete label",onClick:()=>void remove(item),disabled:busy,children:"×"})
    ]})
   ]},item.id);
  }
@@ -1558,27 +1646,54 @@ function HwpPairedLabelsEditor({items}){
    draft.categoryId==="songs"&&(0,M.jsxs)("label",{children:[(0,M.jsx)("span",{children:"Spanish label"}),(0,M.jsx)("input",{type:"text",maxLength:100,value:draft.nameEs,placeholder:"Auto-generated if blank",onChange:e=>setDraft(x=>({...x,nameEs:e.target.value}))})]}),
    (0,M.jsxs)("label",{className:"hwp-linked-color-picker",children:[(0,M.jsx)("span",{children:"English color"}),(0,M.jsx)("input",{type:"color",value:draft.color,onChange:e=>setDraft(x=>({...x,color:e.target.value}))})]}),
    draft.categoryId==="songs"&&(0,M.jsxs)("div",{className:"hwp-linked-color-preview",children:[
-    (0,M.jsx)("span",{children:"Spanish color"}),
-    (0,M.jsx)("i",{className:"hwp-linked-swatch",style:{background:hwpPaleSongColor(draft.color)},title:"Automatic pale version"})
+    (0,M.jsx)("label",{children:[
+     (0,M.jsx)("span",{children:"Spanish color"}),
+     (0,M.jsx)("input",{type:"color","aria-label":"Spanish label color",
+      value:draft.spanishColor||hwpPaleSongColor(draft.color),
+      onChange:e=>setDraft(x=>({...x,spanishColor:e.target.value}))})
+    ]}),
+    (0,M.jsx)("button",{className:"btn",type:"button",disabled:!draft.spanishColor,
+      onClick:()=>setDraft(x=>({...x,spanishColor:""})),children:"Use pale default"})
    ]}),
    (0,M.jsxs)("label",{children:[(0,M.jsx)("span",{children:"Category"}),(0,M.jsx)("select",{value:draft.categoryId,onChange:e=>setDraft(x=>({...x,categoryId:e.target.value})),children:categories.map(cat=>(0,M.jsx)("option",{value:cat.id,children:cat.name},cat.id))})]})
   ]}),
   error&&(0,M.jsx)("p",{className:"hwp-linked-label-error",role:"alert",children:error}),
   (0,M.jsxs)("div",{className:"hwp-linked-label-form-actions",children:[
-   (0,M.jsx)("button",{className:"btn",onClick:discard,children:"Cancel"}),
-   (0,M.jsx)("button",{className:"btn primary",onClick:apply,children:"Save label"})
+   (0,M.jsx)("button",{className:"btn",onClick:discard,disabled:busy,children:"Cancel"}),
+   (0,M.jsx)("button",{className:"btn primary",onClick:()=>void apply(),disabled:busy,children:busy?"Saving…":"Save label"})
   ]})
  ]});
  return (0,M.jsxs)("div",{className:"stack hwp-linked-labels",children:[
   (0,M.jsx)(HwpLabelCategoryManager,{}),
+  error&&(0,M.jsx)("p",{className:"hwp-linked-label-error",role:"alert",children:error}),
+  notice&&(0,M.jsx)("p",{className:"hint",role:"status",children:notice}),
   (0,M.jsxs)("div",{className:"hwp-label-section-title hwp-label-list-heading",children:[
-   (0,M.jsxs)("div",{children:[(0,M.jsx)("h4",{children:"Shared labels"}),(0,M.jsx)("p",{children:"English and Spanish song labels are edited together. Spanish colors automatically use a pale version of the English color."})]}),
+   (0,M.jsxs)("div",{children:[(0,M.jsx)("h4",{children:"Shared labels"}),(0,M.jsx)("p",{children:"Song-category labels automatically sync with HWW, including paired Spanish names, optional Spanish colors, and ordering."})]}),
    (0,M.jsx)("span",{className:"hwp-label-section-count",children:base.length+" labels"})
   ]}),
   (0,M.jsxs)("section",{className:"hwp-linked-label-section",children:[
    (0,M.jsx)("h5",{children:"Songs · English / Español"}),
-   (0,M.jsx)("div",{className:"hwp-linked-label-list",children:songs.map(item=>
-     editing===item.id?(0,M.jsx)("div",{className:"hwp-linked-label-edit-row",children:editor},item.id):displayRow(item))})
+   (0,M.jsx)("div",{className:"hwp-linked-label-list hwp-linked-label-families",children:families.map((family,groupIndex)=>
+    (0,M.jsxs)("section",{className:"hwp-linked-label-family",children:[
+     (0,M.jsxs)("header",{className:"hwp-linked-label-family-head",children:[
+      (0,M.jsx)("strong",{children:family.title}),
+      (0,M.jsxs)("div",{className:"hwp-linked-label-family-actions",children:[
+       (0,M.jsx)("button",{type:"button",className:"btn",title:"Move label family up",disabled:busy||groupIndex===0,
+        onClick:()=>moveFamily(groupIndex,-1),children:"↑"}),
+       (0,M.jsx)("button",{type:"button",className:"btn",title:"Move label family down",disabled:busy||groupIndex===families.length-1,
+        onClick:()=>moveFamily(groupIndex,1),children:"↓"})
+      ]})
+     ]}),
+     ...family.items.map((item,itemIndex)=>(0,M.jsxs)("div",{className:"hwp-linked-label-family-row",children:[
+      editing===item.id?(0,M.jsx)("div",{className:"hwp-linked-label-edit-row",children:editor}):displayRow(item),
+      editing!==item.id&&itemIndex>0&&(0,M.jsxs)("div",{className:"hwp-linked-label-family-actions",children:[
+       (0,M.jsx)("button",{type:"button",className:"btn",title:"Move "+item.name+" up",disabled:busy||itemIndex===1,
+        onClick:()=>moveNumber(groupIndex,itemIndex,-1),children:"↑"}),
+       (0,M.jsx)("button",{type:"button",className:"btn",title:"Move "+item.name+" down",disabled:busy||itemIndex===family.items.length-1,
+        onClick:()=>moveNumber(groupIndex,itemIndex,1),children:"↓"})
+      ]})
+     ]},item.id))
+    ]},family.key))})
   ]}),
   (0,M.jsxs)("section",{className:"hwp-linked-label-section",children:[
    (0,M.jsx)("h5",{children:"Other labels"}),
