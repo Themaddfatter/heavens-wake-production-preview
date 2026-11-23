@@ -167,3 +167,20 @@ test("scripture labels follow current HWP label settings, never obsolete Reading
  assert.ok(html.includes("group.name===`Reading`?defaultLabel:null"),"legacy Reading groups migrate");
  assert.ok(html.includes("[`scripture`,`Scripture`,`Scripture`]"),"settings never suggest Reading by default");
 });
+
+test("audience and stage output hide translation badges while retaining saved edit tags",()=>{
+ const start=html.indexOf("function hwpOutputWithoutTranslationTag(model){");
+ const end=html.indexOf("function Oe(e){",start);
+ assert.ok(start>0&&end>start);
+ const scope=createContext({});
+ runInContext(html.slice(start,end),scope);
+ const saved={key:"slide-1",tags:["hwp_bible_translation_KJV","custom-tag"],objects:[
+  {id:"hwp_bible_badge_123",binding:"hwpBibleTranslationBadge",text:"KJV"},
+  {id:"verse-text",binding:"lyrics",text:"A Bible verse"}
+ ]};
+ const projected=scope.hwpOutputWithoutTranslationTag(saved);
+ assert.deepEqual(Array.from(projected.objects,o=>o.id),["verse-text"]);
+ assert.equal(saved.objects.length,2,"saved presentation remains untouched");
+ assert.equal(saved.tags.length,2,"editing tags remain intact");
+ assert.ok(html.includes("hwpOutputWithoutTranslationTag(hwpBibleDisplaySlide"),"both current and next output slides must filter badges");
+});
