@@ -63,7 +63,7 @@ export function createHwpLocalMediaSync({
   async function runSync() {
     if (running) return running;
     running = (async () => {
-      await persistence().catch(() => false); // best effort, never a silent guarantee
+      const persistent = (await persistence().catch(() => false)) === true; // never assume persistence
       const entries = await listRemote();
       if (!Array.isArray(entries)) throw new TypeError('Invalid cloud media listing.');
       const state = await index();
@@ -103,7 +103,7 @@ export function createHwpLocalMediaSync({
         completed++;
         onStatus({ status: 'downloaded', id: item.id, completed, total: entries.length });
       }
-      return { completed, skipped, total: entries.length, persistent: true };
+      return { completed, skipped, total: entries.length, persistent };
     })().finally(() => { running = null; });
     return running;
   }
