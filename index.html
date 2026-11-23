@@ -541,7 +541,7 @@ function hwpServiceThemeType(playlist){
  if(raw.includes("sunday english")||raw.includes("domingo inglés")||raw.includes("domingo ingles"))return "sunday-english";
  if(raw.includes("wednesday")||raw.includes("miércoles")||raw.includes("miercoles"))return "wednesday";
  if(raw.includes("consecration")||raw.includes("consagración")||raw.includes("consagracion")||raw.includes("tuesday")||raw.includes("thursday"))return "consecration";
- return HWP_SERVICE_THEME_TYPES.some(type=>type.id===raw)?raw:"sunday-english";
+ return HWP_SERVICE_THEME_TYPES.some(type=>type.id===raw)?raw:null;
 }
 function hwpServiceThemeOptions(playlists){
  const result=HWP_SERVICE_THEME_TYPES.slice();
