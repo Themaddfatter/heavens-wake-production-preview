@@ -1619,3 +1619,6 @@
  padding:9px 14px;cursor:pointer;border-radius:7px;font-weight:700}
 .slides-head .pres-name:is(strong) {font-size:14px;white-space:nowrap;
  overflow:hidden;text-overflow:ellipsis;max-width:45%;min-width:0}
+
+.hwp-cloud-indicator:is(button) {appearance:none;background:transparent;border:0;color:inherit;cursor:pointer;font:inherit;padding:3px 6px;border-radius:5px}
+.hwp-cloud-indicator:is(button):hover,.hwp-cloud-indicator:is(button):focus-visible {outline:1px solid currentColor;outline-offset:1px}
