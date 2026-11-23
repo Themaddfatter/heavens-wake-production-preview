@@ -118,3 +118,14 @@ test("Bible instructions and alternate translation popup button are not displaye
   "Choose up to four translations. Each will be grouped on separate slides with its own heading and abbreviation tag."
  ])assert.equal(html.includes(text),false,text);
 });
+
+
+test("selected songs are grouped under the first song in service order",()=>{
+ let p=fixture();
+ const selected=[get("song-a",p).id,get("song-b",p).id,get("song-c",p).id];
+ p=selected.slice(1).reduce((current,id)=>ctx.hwpServiceCreateMedley(current,id,selected[0],presentations),p);
+ const members=p.items.filter(row=>row.medleyParentId===selected[0]);
+ assert.deepEqual(Array.from(members,row=>row.presentationId),["song-b","song-c"]);
+ assert.ok(html.includes('Create medley from selected songs'));
+ assert.ok(html.includes('create-service-medley-from-selection'));
+});
