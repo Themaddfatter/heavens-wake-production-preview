@@ -1048,3 +1048,61 @@
  height:9px!important;min-height:9px!important;margin:0!important;
  border:0!important;box-sizing:border-box!important;
 }
+
+
+/* Scripture translation sections: presentation-editor organization only.
+   Like bilingual song headings, nothing in this divider projects to the audience. */
+.thumb-grid .hwp-scripture-translation-divider{
+ grid-column:1 / -1;
+ width:100%;
+ min-width:0;
+ display:flex;
+ align-items:center;
+ justify-content:flex-start;
+ box-sizing:border-box;
+ margin:19px 0 8px;
+ padding:12px 5px 0;
+ border-top:2px solid #829dbb;
+ background:transparent;
+ color:#cfe5f8;
+ pointer-events:none;
+}
+.thumb-grid .hwp-scripture-translation-divider.first{
+ margin:4px 0 7px;
+ min-height:29px;
+ border-top:0;
+ padding-top:0;
+}
+.thumb-grid .hwp-scripture-translation-divider span{
+ display:block;
+ font:800 12px/1.4 system-ui,-apple-system,sans-serif;
+ letter-spacing:.105em;
+ text-transform:uppercase;
+ white-space:normal;
+ overflow-wrap:anywhere;
+ text-align:left;
+}
+:root[data-hwp-appearance="light"] .thumb-grid .hwp-scripture-translation-divider{
+ color:#315779;
+ border-top-color:#6685a5;
+}
+:root:not([data-hwp-appearance="light"]) .thumb-grid .hwp-scripture-translation-divider{
+ color:#d8eafb;
+ border-top-color:#90aaca;
+}
+.settings-pane .hwp-bible-presentation-options{
+ padding:13px;
+ border:1px solid var(--line);
+ border-radius:11px;
+ background:var(--surface,rgba(127,127,127,.055));
+ gap:12px;
+}
+.settings-pane .hwp-bible-presentation-options h4{
+ margin:0;
+ font-size:14px;
+ font-weight:750;
+}
+.settings-pane .hwp-bible-presentation-options .hint{
+ margin:0;
+ font-size:12px;
+}
