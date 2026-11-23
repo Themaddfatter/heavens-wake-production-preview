@@ -675,3 +675,43 @@
  .settings-pane .hwp-label-row .color-delete{grid-column:4;grid-row:1/3}
  .settings-pane .hwp-label-category-add .btn{width:100%}
 }
+
+
+/* HWP show mode: Quick Scripture Adder belongs beneath the right-side preview. */
+.app[data-mode="show"] .preview{display:flex;flex-direction:column;min-height:0;overflow-y:auto;overflow-x:hidden}
+.preview .hwp-preview-scripture{display:flex;flex-direction:column;flex:none;min-width:0;margin:4px 10px 10px;padding:15px 0 8px;border-top:1px solid var(--line-2)}
+.preview .hwp-preview-scripture h3{margin:0 0 10px;padding:0 3px;font-size:14px;font-weight:750;line-height:1.3;color:var(--text)}
+.preview .hwp-preview-scripture .lookup{display:grid;grid-template-columns:minmax(0,1fr) minmax(78px,96px);gap:9px;padding:0;background:transparent;border:0;min-height:0;align-items:center}
+.preview .hwp-preview-scripture .lookup-field{min-width:0;width:100%;gap:0}
+.preview .hwp-preview-scripture .lookup-field span{display:none}
+.preview .hwp-preview-scripture .lookup input,
+.preview .hwp-preview-scripture .lookup select{width:100%;max-width:100%;min-width:0;min-height:35px;box-sizing:border-box;background:var(--field,var(--bg-2));color:var(--text);border:1px solid var(--line-2);border-radius:6px;padding:6px 8px;font-size:12px}
+.preview .hwp-preview-scripture .lookup input::placeholder{color:var(--faint);opacity:1}
+.preview .hwp-preview-scripture .lookup-preview{grid-column:1/-1;min-width:0;max-height:90px;margin:0;overflow-y:auto;white-space:normal;overflow-wrap:anywhere;font-size:12px;line-height:1.4}
+.preview .hwp-preview-scripture .lookup .btn{min-width:0;min-height:34px;width:100%;padding:5px 7px;font-size:12px;white-space:normal;text-align:center}
+
+/* Center service headers match the left Service sidebar, at full center width. */
+.app[data-mode="show"] .slides h3.all-service-header{
+  display:flex;align-items:center;justify-content:center;box-sizing:border-box;
+  width:100%;min-height:26px;margin:7px 0 9px;padding:2px 12px;
+  border:2px solid var(--service-border,#e2a04a);border-radius:8px;
+  text-align:center;font-size:13px;font-weight:800;line-height:1.3;letter-spacing:.025em;
+  text-decoration:none;overflow-wrap:anywhere;
+}
+.app[data-mode="show"] .slides h3.all-service-header::before,
+.app[data-mode="show"] .slides h3.all-service-header::after{content:"~";display:inline;flex:none;margin:0 7px;font-weight:700;opacity:.85}
+
+/* Compact, fully-visible plus control in Settings > Labels. */
+.settings-pane .color-manager .hwp-label-add-row{grid-template-columns:21px 34px minmax(0,1fr) minmax(105px,145px) 35px}
+.settings-pane .hwp-label-add-row .hwp-add-label-icon{
+  display:inline-flex;align-items:center;justify-content:center;
+  width:32px;min-width:32px;height:32px;min-height:32px;padding:0;
+  box-sizing:border-box;border-radius:7px;font-size:22px;font-weight:550;line-height:1;overflow:hidden;
+}
+@media(max-width:760px){
+  .settings-pane .color-manager .hwp-label-add-row{grid-template-columns:20px 32px minmax(70px,1fr) minmax(85px,118px) 35px;gap:5px}
+}
+@media(max-width:500px){
+  .settings-pane .color-manager .hwp-label-add-row{grid-template-columns:19px 30px minmax(0,1fr) 35px;gap:6px}
+  .settings-pane .hwp-label-add-row .hwp-add-label-icon{grid-column:4;grid-row:1/3;justify-self:center}
+}
