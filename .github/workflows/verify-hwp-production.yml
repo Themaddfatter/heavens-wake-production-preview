@@ -123,7 +123,7 @@ jobs:
               && grep -Fq "hwp-style.css" "$RUNNER_TEMP/hwp-home.html" \
               && grep -Fq "hwp-access.css" "$RUNNER_TEMP/hwp-home.html" \
               && grep -Fq "function HwpAccessGate" "$RUNNER_TEMP/hwp-home.html" \
-              && grep -Fq "Scripture Quick Add" "$RUNNER_TEMP/hwp-home.html" \
+              && grep -Fq "Quick Scripture" "$RUNNER_TEMP/hwp-home.html" \
               && grep -Fq "hwp-logo.png" "$RUNNER_TEMP/hwp-home.html" \
               && curl --fail --silent --show-error --location --max-time 25 "$domain/hwp-logo.png?hwp_verify=$GITHUB_SHA" -o "$RUNNER_TEMP/hwp-logo.png" \
               && test -s "$RUNNER_TEMP/hwp-logo.png" \
