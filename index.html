@@ -1,4 +1,4 @@
-<!doctype html><html lang="en"><head><meta charset="UTF-8"/><meta name="hwp-release" content="hwp-stage-media-controls-v3"/><meta name="hwp-startup-guard" content="20261123"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/><meta name="description" content="Heaven's Wake Production Labels & Tags browser preview"/><title>Heaven's Wake Production — Working Browser Version</title><link rel="icon" type="image/png" href="./hwp-logo.png?v=hwp-service-medleys-v3"/><link rel="preload" as="image" href="./hwp-logo.png"/><link rel="stylesheet" href="./hwp-style.css?v=hwp-service-medleys-v3"/><link rel="stylesheet" href="./hwp-access.css?v=hwp-stage-media-controls-v3"/></head><body><script>try{document.documentElement.dataset.hwpAppearance=localStorage.getItem("hwp-appearance")==="light"?"light":"dark"}catch(e){}</script><div id="root"><div id="hwp-boot-placeholder" style="box-sizing:border-box;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;background:#071d16;color:#f3f8f4;font:600 19px Arial,sans-serif;text-align:center"><img src="./hwp-logo.png" alt="Heaven's Wake Production" style="max-width:210px;max-height:130px;object-fit:contain;margin-bottom:24px"><div>Opening Heaven's Wake Production…</div></div></div><script>
+<!doctype html><html lang="en"><head><meta charset="UTF-8"/><meta name="hwp-release" content="hwp-cloud-sync-details-v1"/><meta name="hwp-startup-guard" content="20261123"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/><meta name="description" content="Heaven's Wake Production Labels & Tags browser preview"/><title>Heaven's Wake Production — Working Browser Version</title><link rel="icon" type="image/png" href="./hwp-logo.png?v=hwp-service-medleys-v3"/><link rel="preload" as="image" href="./hwp-logo.png"/><link rel="stylesheet" href="./hwp-style.css?v=hwp-service-medleys-v3"/><link rel="stylesheet" href="./hwp-access.css?v=hwp-cloud-sync-details-v1"/></head><body><script>try{document.documentElement.dataset.hwpAppearance=localStorage.getItem("hwp-appearance")==="light"?"light":"dark"}catch(e){}</script><div id="root"><div id="hwp-boot-placeholder" style="box-sizing:border-box;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;background:#071d16;color:#f3f8f4;font:600 19px Arial,sans-serif;text-align:center"><img src="./hwp-logo.png" alt="Heaven's Wake Production" style="max-width:210px;max-height:130px;object-fit:contain;margin-bottom:24px"><div>Opening Heaven's Wake Production…</div></div></div><script>
 (function(){
  var startupError="";
  function record(event){
@@ -1447,7 +1447,15 @@ function HwpCloudAgent({getLatest}){
  latest.current=state.doc;
  function emit(status){
   window.hwpCloudLastStatus=status;
+  if(status==="connected")window.hwpCloudLastError="";
   window.dispatchEvent(new CustomEvent("hwp-cloud-status",{detail:status}));
+ }
+ function reportError(error,fallback){
+  const code=String(error?.code||"");
+  const message=String(error?.message||fallback);
+  const detail=code&&!message.includes(code)?code+": "+message:message;
+  window.hwpCloudLastError=detail;
+  window.dispatchEvent(new CustomEvent("hwp-cloud-error",{detail}));
  }
  (0,l.useEffect)(()=>{
   let alive=true,stop=()=>{},pollId=null,bootRetryId=null,bootBusy=false;
@@ -1566,12 +1574,12 @@ function HwpCloudAgent({getLatest}){
    }catch(e){
     if(alive){
      emit(navigator.onLine?"error":"offline");
-     window.dispatchEvent(new CustomEvent("hwp-cloud-error",{detail:e?.message||"Could not connect to shared storage."}));
+     reportError(e,"Could not connect to shared storage.");
     }
    }finally{loading.current=false}
   }
   refresh.current=load;
-  function reload(){paused.current=false;if(!engine.current)bootCloud();else void load()}
+  function reload(){paused.current=false;emit("syncing");if(!engine.current)bootCloud();else void load()}
   function pause(){paused.current=true;ready.current=false;window.clearTimeout(timer.current)}
   function onOnline(){if(!paused.current){if(!engine.current)bootCloud();else void load()}}
   function onVisible(){if(!document.hidden)void load()}
@@ -1606,7 +1614,7 @@ function HwpCloudAgent({getLatest}){
    bootBusy=false;
    if(!alive)return;
    emit(navigator.onLine?"error":"offline");
-   window.dispatchEvent(new CustomEvent("hwp-cloud-error",{detail:error?.message||"Could not initialize Firebase sync."}));
+   reportError(error,"Could not initialize Firebase sync.");
    bootRetryId=window.setTimeout(bootCloud,15000);
   });
   }
@@ -1653,7 +1661,7 @@ function HwpCloudAgent({getLatest}){
    }else if(!navigator.onLine){emit("offline")}
    else{
     emit("error");
-    window.dispatchEvent(new CustomEvent("hwp-cloud-error",{detail:e?.message||"Shared storage could not save the latest changes."}));
+    reportError(e,"Shared storage could not save the latest changes.");
    }
   }finally{
    working.current=false;window.hwpCloudBusy=false;
@@ -1715,7 +1723,56 @@ async function hwpBackfillPublishedServices(){
   console.warn("Published service sync will retry:",error?.code||"unavailable");
  }finally{hwpServiceBackfillActive=false}
 }
-function HwpCloudIndicator(){const [value,setValue]=(0,l.useState)(()=>window.hwpCloudLastStatus||`signed-out`);(0,l.useEffect)(()=>{const handler=e=>setValue(e.detail);window.addEventListener(`hwp-cloud-status`,handler);return()=>window.removeEventListener(`hwp-cloud-status`,handler)},[]);const labels={connected:`Saved`,syncing:`Saving`,offline:`Offline`,error:`Sync issue`,conflict:`Sync paused`,attention:`Check sync`,setup:`Set up sync`,"signed-out":`Local only`};return (0,M.jsx)(`button`,{type:`button`,className:`hwp-cloud-indicator`,role:`status`,title:`Shared storage: ${labels[value]||`Local only`}. Click to reconnect.`,onClick:()=>window.dispatchEvent(new CustomEvent(`hwp-cloud-reload`)),children:labels[value]||`Local only`})}
+function HwpCloudIndicator(){
+ const [value,setValue]=(0,l.useState)(()=>window.hwpCloudLastStatus||"signed-out"),
+  [error,setError]=(0,l.useState)(()=>window.hwpCloudLastError||""),
+  [open,setOpen]=(0,l.useState)(false),
+  [retrying,setRetrying]=(0,l.useState)(false);
+ (0,l.useEffect)(()=>{
+  const onStatus=event=>{
+   setValue(event.detail);
+   if(event.detail==="connected"){setError("");window.hwpCloudLastError="";}
+   if(event.detail!=="syncing")setRetrying(false);
+  };
+  const onError=event=>{
+   const detail=String(event.detail||"Cloud sync failed without a detailed error.");
+   window.hwpCloudLastError=detail;
+   setError(detail);setRetrying(false);
+  };
+  window.addEventListener("hwp-cloud-status",onStatus);
+  window.addEventListener("hwp-cloud-error",onError);
+  return()=>{window.removeEventListener("hwp-cloud-status",onStatus);window.removeEventListener("hwp-cloud-error",onError)};
+ },[]);
+ const labels={connected:"Saved",syncing:"Saving",offline:"Offline",error:"Sync issue",conflict:"Sync paused",attention:"Check sync",setup:"Set up sync","signed-out":"Local only"};
+ const label=labels[value]||"Local only";
+ const message=value==="connected"?"Shared library connected. Changes can synchronize across authorized devices.":value==="offline"?"This device is offline. Local work remains on this computer until reconnection.":value==="conflict"?"The shared library changed on another device. Local work is preserved; do not overwrite either copy.":value==="signed-out"?"Sign in with an authorized Ministry Connect account to connect shared storage.":value==="syncing"?"Trying to connect to shared storage. Keep this window open until a result appears.":"Shared storage could not connect or save. Your local library has not been deleted.";
+ function retrySync(){
+  setRetrying(true);
+  setValue("syncing");
+  window.dispatchEvent(new Event("hwp-cloud-reload"));
+ }
+ return (0,M.jsxs)(M.Fragment,{children:[
+  (0,M.jsx)("button",{type:"button",className:"hwp-cloud-indicator",role:"status",title:"Open shared storage status and diagnostics","aria-label":"Shared storage status: "+label+". Open details.",onClick:()=>setOpen(true),children:label}),
+  open&&(0,M.jsx)("div",{className:"hwp-cloud-panel-backdrop",onMouseDown:()=>setOpen(false),children:(0,M.jsxs)("section",{className:"hwp-cloud-panel",role:"dialog","aria-modal":true,"aria-label":"Shared storage status",onMouseDown:event=>event.stopPropagation(),children:[
+   (0,M.jsxs)("div",{className:"hwp-cloud-panel-heading",children:[
+    (0,M.jsx)("strong",{children:"Shared storage"}),
+    (0,M.jsx)("button",{type:"button",className:"hwp-cloud-panel-close",title:"Close sync status","aria-label":"Close sync status",onClick:()=>setOpen(false),children:"×"})
+   ]}),
+   (0,M.jsx)("p",{className:"hwp-cloud-panel-status",role:"status","aria-live":"polite",children:"Status: "+label}),
+   (0,M.jsx)("p",{className:"hwp-cloud-panel-message",children:message}),
+   !!error&&value!=="connected"&&(0,M.jsxs)("div",{className:"hwp-cloud-panel-error",children:[
+    (0,M.jsx)("strong",{children:"Last error"}),
+    (0,M.jsx)("p",{children:error})
+   ]}),
+   value==="error"&&!error&&(0,M.jsx)("p",{className:"hwp-cloud-panel-error",children:"The cloud request failed without a detailed response. Select Retry connection to check again."}),
+   (0,M.jsxs)("div",{className:"hwp-cloud-panel-actions",children:[
+    (0,M.jsx)("button",{type:"button",className:"btn primary",onClick:retrySync,children:retrying?"Retry requested…":"Retry connection"}),
+    (0,M.jsx)("button",{type:"button",className:"btn",onClick:()=>setOpen(false),children:"Close"})
+   ]}),
+   (0,M.jsx)("p",{className:"hwp-cloud-panel-footnote",children:"Retrying does not replace or delete the local presentation library."})
+  ]})})
+ ]});
+}
 function HwpCloudSettings(){
  const {state,dispatch}=N();
  const [email,setEmail]=(0,l.useState)(``),[password,setPassword]=(0,l.useState)(``),[user,setUser]=(0,l.useState)(null),[status,setStatus]=(0,l.useState)(`Connecting…`),[error,setError]=(0,l.useState)(``),[remote,setRemote]=(0,l.useState)(null),[members,setMembers]=(0,l.useState)(null),[allowed,setAllowed]=(0,l.useState)([]);

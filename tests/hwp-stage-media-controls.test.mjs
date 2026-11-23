@@ -103,3 +103,21 @@ test('Existing background labels normalize idempotently without replacing media 
  assert.equal(next.doc.presentations[0].slides.find(x=>x.id==='s3').background.mediaId,'motion');
  assert.equal(normalize(next,{type:'hwp-prepare-background-labels'},Vi,'pres_background'),next);
 });
+
+test('Sync issue opens diagnostic details and a working retry action',()=>{
+ const start=html.indexOf('function HwpCloudIndicator()');
+ const end=html.indexOf('function HwpCloudSettings()',start);
+ const component=html.slice(start,end);
+ assert.ok(start>=0&&end>start);
+ assert.ok(component.includes('aria-label":"Shared storage status"'));
+ assert.ok(component.includes('children:"Retry connection"')||component.includes(':"Retry connection"'));
+ assert.ok(component.includes('onClick:retrySync'));
+ assert.ok(component.includes('window.dispatchEvent(new Event("hwp-cloud-reload"))'));
+ assert.ok(component.includes('hwp-cloud-panel-error'));
+ assert.ok(component.includes('setError(detail)'));
+ assert.ok(component.includes('onClick:()=>setOpen(true)'));
+ assert.ok(html.includes('window.hwpCloudLastError=detail;'));
+ assert.ok(html.includes('emit("syncing");if(!engine.current)bootCloud();else void load()'));
+ assert.ok(css.includes('.hwp-cloud-panel-backdrop'));
+ assert.ok(html.includes('name="hwp-release" content="hwp-cloud-sync-details-v1"'));
+});

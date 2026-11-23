@@ -1626,3 +1626,17 @@
 /* Keep Send to folders reachable near the viewport edge. */
 .hwp-media-context.near-right .hwp-media-submenu {left:auto;right:100%;}
 .hwp-media-context.narrow .hwp-media-submenu {left:auto;right:0;top:auto;bottom:100%;max-width:min(190px,80vw);}
+
+/* Shared sync status: a visible, actionable explanation instead of a silent retry. */
+.hwp-cloud-panel-backdrop{position:fixed;inset:0;z-index:18000;background:rgba(9,22,35,.44);display:flex;justify-content:flex-end;align-items:flex-start;padding:70px 16px 16px;box-sizing:border-box}
+.hwp-cloud-panel{box-sizing:border-box;width:min(410px,100%);max-height:calc(100vh - 90px);overflow-y:auto;border:1px solid var(--line,#8296aa);border-radius:12px;background:var(--bg-2,#fff);color:var(--text,#122c43);padding:18px;box-shadow:0 18px 50px #0007;font:500 14px/1.5 system-ui,sans-serif}
+.hwp-cloud-panel-heading{display:flex;justify-content:space-between;align-items:center;gap:12px;font-size:17px}
+.hwp-cloud-panel-close{border:0;background:transparent;color:inherit;cursor:pointer;font-size:26px;line-height:1;padding:1px 5px}
+.hwp-cloud-panel-status{font-weight:750;margin:10px 0}
+.hwp-cloud-panel-message{margin:0 0 12px;line-height:1.5}
+.hwp-cloud-panel-error{border:1px solid #cb815c;border-radius:8px;padding:10px 12px;background:rgba(192,103,56,.1);overflow-wrap:anywhere;white-space:pre-wrap}
+.hwp-cloud-panel-error p{margin:5px 0 0}
+.hwp-cloud-panel-actions{display:flex;flex-wrap:wrap;gap:8px;margin:15px 0}
+.hwp-cloud-panel-actions .btn{cursor:pointer}
+.hwp-cloud-panel-footnote{color:var(--dim,#64748b);font-size:12px;margin:10px 0 0}
+@media(max-width:520px){.hwp-cloud-panel-backdrop{padding:62px 10px 12px}.hwp-cloud-panel{width:100%;max-height:calc(100vh - 75px)}}
