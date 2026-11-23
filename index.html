@@ -939,6 +939,119 @@ function HwpLabelCategoryManager(){
   ]})
  ]});
 }
+function HwpPairedLabelsEditor({items}){
+ const {dispatch,state}=N();
+ const categories=hwpNormalizeLabelCategories(state.doc.labelCategories);
+ const [editing,setEditing]=(0,l.useState)(null);
+ const [draft,setDraft]=(0,l.useState)({name:"",nameEs:"",color:"#2f7edb",categoryId:"songs"});
+ const [error,setError]=(0,l.useState)("");
+ const [adding,setAdding]=(0,l.useState)(false);
+ const base=items.filter(x=>!(x.language==="es"&&x.pairedLabelId));
+ const songs=base.filter(x=>(x.categoryId||hwpCategoryForLabel(x.name))==="songs"&&x.language!=="es");
+ const other=base.filter(x=>!songs.includes(x));
+ const paired=label=>items.find(x=>x.pairedLabelId===label.id||x.id===label.id+"_es");
+ function commit(next){dispatch({type:"patch-doc",history:"push",patch:{labels:hwpPairSongLabels(next,items)}})}
+ function start(label){
+  const spanish=label?paired(label):null;
+  setDraft({name:label?.name||"",nameEs:label?.nameEs||spanish?.name||"",
+   color:label?.color||"#2f7edb",categoryId:label?.categoryId||"songs"});
+  setEditing(label?.id||"new");setAdding(!label);setError("");
+ }
+ function discard(){setEditing(null);setAdding(false);setError("")}
+ function apply(){
+  const en=draft.name.trim(),es=draft.nameEs.trim(),category=draft.categoryId;
+  if(!en){setError("Enter the English label name.");return}
+  if(category==="songs"&&!es){setError("Enter its Spanish counterpart.");return}
+  const id=editing==="new"?"labels_"+w().replace(/[^a-zA-Z0-9_-]/g,""):editing;
+  if(items.some(item=>item.id!==id&&item.id!==id+"_es"&&item.language!=="es"&&item.name.toLowerCase()===en.toLowerCase())){
+   setError("A label with that English name already exists.");return;
+  }
+  const original=items.find(item=>item.id===id)||{};
+  const oldPair=paired({id})||{};
+  const updated={...original,id,name:en,color:draft.color,categoryId:category};
+  let next=items.filter(item=>item.id!==id&&item.id!==oldPair.id&&item.pairedLabelId!==id);
+  if(category==="songs"){
+   updated.nameEs=es;updated.language="en";
+   const spanish={...oldPair,id:oldPair.id||id+"_es",name:es,
+    color:hwpPaleSongColor(draft.color),categoryId:"songs",language:"es",pairedLabelId:id};
+   next.push(updated,spanish);
+  }else{
+   delete updated.nameEs;delete updated.language;delete updated.pairedLabelId;
+   next.push(updated);
+  }
+  commit(next);discard();
+ }
+ function remove(label){
+  const spanish=paired(label);
+  const question=(label.categoryId==="songs"?"Delete "+label.name+" and its Spanish counterpart?":"Delete "+label.name+"?");
+  if(!window.confirm(question))return;
+  // Removing a pair never deletes the saved lyrics or song presentations.
+  commit(items.filter(x=>x.id!==label.id&&x.id!==spanish?.id&&x.pairedLabelId!==label.id));
+  discard();
+ }
+ function displayRow(item){
+  const song=item.categoryId==="songs",es=song?paired(item):null;
+  return (0,M.jsxs)("div",{className:"hwp-linked-label-row",children:[
+   (0,M.jsxs)("div",{className:"hwp-linked-label-details",children:[
+    (0,M.jsxs)("div",{className:"hwp-linked-label-name",children:[
+     (0,M.jsx)("span",{className:"hwp-linked-swatch",style:{background:item.color},"aria-hidden":true}),
+     (0,M.jsxs)("div",{children:[
+      (0,M.jsx)("strong",{children:item.name}),
+      (0,M.jsx)("small",{children:"English"+(!song?" · "+(categories.find(x=>x.id===item.categoryId)?.name||"Standard"):"")})
+     ]})
+    ]}),
+    song&&(0,M.jsxs)("div",{className:"hwp-linked-label-name hwp-linked-spanish",children:[
+     (0,M.jsx)("span",{className:"hwp-linked-swatch",style:{background:es?.color||hwpPaleSongColor(item.color)},"aria-hidden":true}),
+     (0,M.jsxs)("div",{children:[
+      (0,M.jsx)("strong",{children:es?.name||item.nameEs||hwpSpanishSongLabel(item.name)}),
+      (0,M.jsx)("small",{children:"Español · linked to English"})
+     ]})
+    ]})
+   ]}),
+   (0,M.jsxs)("div",{className:"hwp-linked-label-controls",children:[
+    (0,M.jsx)("button",{className:"btn",type:"button","aria-label":"Edit "+item.name+" and its Spanish label",title:"Edit paired labels",onClick:()=>start(item),children:"Edit"}),
+    (0,M.jsx)("button",{className:"color-delete",type:"button","aria-label":"Delete label "+item.name,title:"Delete label",onClick:()=>remove(item),children:"×"})
+   ]})
+  ]},item.id);
+ }
+ const editor=(0,M.jsxs)("div",{className:"hwp-linked-label-form",children:[
+  (0,M.jsxs)("div",{className:"hwp-linked-label-form-fields",children:[
+   (0,M.jsxs)("label",{children:[(0,M.jsx)("span",{children:"English label"}),(0,M.jsx)("input",{type:"text",maxLength:100,value:draft.name,onChange:e=>setDraft(x=>({...x,name:e.target.value}))})]}),
+   draft.categoryId==="songs"&&(0,M.jsxs)("label",{children:[(0,M.jsx)("span",{children:"Spanish label"}),(0,M.jsx)("input",{type:"text",maxLength:100,value:draft.nameEs,onChange:e=>setDraft(x=>({...x,nameEs:e.target.value}))})]}),
+   (0,M.jsxs)("label",{className:"hwp-linked-color-picker",children:[(0,M.jsx)("span",{children:"English color"}),(0,M.jsx)("input",{type:"color",value:draft.color,onChange:e=>setDraft(x=>({...x,color:e.target.value}))})]}),
+   draft.categoryId==="songs"&&(0,M.jsxs)("div",{className:"hwp-linked-color-preview",children:[
+    (0,M.jsx)("span",{children:"Spanish color"}),
+    (0,M.jsx)("i",{className:"hwp-linked-swatch",style:{background:hwpPaleSongColor(draft.color)},title:"Automatic pale version"})
+   ]}),
+   (0,M.jsxs)("label",{children:[(0,M.jsx)("span",{children:"Category"}),(0,M.jsx)("select",{value:draft.categoryId,onChange:e=>setDraft(x=>({...x,categoryId:e.target.value})),children:categories.map(cat=>(0,M.jsx)("option",{value:cat.id,children:cat.name},cat.id))})]})
+  ]}),
+  error&&(0,M.jsx)("p",{className:"hwp-linked-label-error",role:"alert",children:error}),
+  (0,M.jsxs)("div",{className:"hwp-linked-label-form-actions",children:[
+   (0,M.jsx)("button",{className:"btn",onClick:discard,children:"Cancel"}),
+   (0,M.jsx)("button",{className:"btn primary",onClick:apply,children:"Save label"})
+  ]})
+ ]});
+ return (0,M.jsxs)("div",{className:"stack hwp-linked-labels",children:[
+  (0,M.jsx)(HwpLabelCategoryManager,{}),
+  (0,M.jsxs)("div",{className:"hwp-label-section-title hwp-label-list-heading",children:[
+   (0,M.jsxs)("div",{children:[(0,M.jsx)("h4",{children:"Shared labels"}),(0,M.jsx)("p",{children:"English and Spanish song labels are edited together. Spanish colors automatically use a pale version of the English color."})]}),
+   (0,M.jsx)("span",{className:"hwp-label-section-count",children:base.length+" labels"})
+  ]}),
+  (0,M.jsxs)("section",{className:"hwp-linked-label-section",children:[
+   (0,M.jsx)("h5",{children:"Songs · English / Español"}),
+   (0,M.jsx)("div",{className:"hwp-linked-label-list",children:songs.map(item=>
+     editing===item.id?(0,M.jsx)("div",{className:"hwp-linked-label-edit-row",children:editor},item.id):displayRow(item))})
+  ]}),
+  (0,M.jsxs)("section",{className:"hwp-linked-label-section",children:[
+   (0,M.jsx)("h5",{children:"Other labels"}),
+   (0,M.jsx)("div",{className:"hwp-linked-label-list",children:other.map(item=>
+     editing===item.id?(0,M.jsx)("div",{className:"hwp-linked-label-edit-row",children:editor},item.id):displayRow(item))})
+  ]}),
+  adding?(0,M.jsx)("div",{className:"hwp-linked-label-edit-row",children:editor}):
+   (0,M.jsx)("button",{className:"btn primary hwp-linked-add-label",onClick:()=>start(null),children:"+ New label"})
+ ]});
+}
+
 function Ji({kind,items}){
   const {dispatch,state}=N();
   const categories=hwpNormalizeLabelCategories(state.doc.labelCategories);
@@ -970,6 +1083,7 @@ function Ji({kind,items}){
     (0,M.jsx)("circle",{cx:5,cy:15,r:1.5}),(0,M.jsx)("circle",{cx:11,cy:15,r:1.5})
   ]});
   const trash=(0,M.jsx)("svg",{width:16,height:16,viewBox:"0 0 24 24",fill:"none",stroke:"currentColor",strokeWidth:1.8,strokeLinecap:"round",strokeLinejoin:"round","aria-hidden":"true",children:(0,M.jsx)("path",{d:"M3 6h18M8 6V4h8v2M6 6l1 15h10l1-15M10 10v7M14 10v7"})});
+  if(kind==="labels")return (0,M.jsx)(HwpPairedLabelsEditor,{items});
   return (0,M.jsxs)("div",{className:"stack color-manager",children:[
     kind==="labels"&&(0,M.jsx)(HwpLabelCategoryManager,{}),
     kind==="labels"?(0,M.jsxs)("div",{className:"hwp-label-section-title hwp-label-list-heading",children:[(0,M.jsxs)("div",{children:[(0,M.jsx)("h4",{children:"Manage labels"}),(0,M.jsx)("p",{children:"Drag to reorder · Changes save automatically"})]}),(0,M.jsx)("span",{className:"hwp-label-section-count",children:items.length+" labels"})]}):(0,M.jsx)("p",{className:"hint",children:`Drag the grip to rearrange ${kind}. The order is saved automatically.`}),
