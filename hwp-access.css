@@ -994,3 +994,35 @@
  .settings-pane .hwp-linked-label-controls{justify-content:flex-end}
  .settings-pane .hwp-linked-label-form-fields{grid-template-columns:1fr}
 }
+
+/* Fixed-size drag targets: no reflow or jumping under the cursor. */
+.service-list .service-standalone-drop.dragging,
+.service-list .service-standalone-drop.dragging.over{
+ height:7px!important;min-height:7px!important;margin:1px 0!important;padding:0!important;
+ border:0!important;border-radius:3px!important;box-sizing:border-box!important;
+ background:transparent!important;box-shadow:none!important;
+}
+.service-list .service-header-drop.dragging,
+.service-list .service-header-drop.dragging.over{
+ height:7px!important;min-height:7px!important;margin:1px 0 1px 15px!important;
+ width:calc(100% - 15px)!important;padding:0!important;border:0!important;
+ box-sizing:border-box!important;background:transparent!important;box-shadow:none!important;
+}
+.service-list .service-standalone-drop.dragging.over,
+.service-list .service-header-drop.dragging.over{background:rgba(38,153,215,.35)!important;outline:2px solid #299ae6!important;outline-offset:-2px!important}
+.service-list .service-header.drop-before,.service-list .service-row.service-presentation.drop-before{margin-top:0!important}
+.service-list .service-header.drop-after,.service-list .service-row.service-presentation.drop-after{margin-bottom:0!important}
+.service-list .service-header.drop-before::before,.service-list .service-row.service-presentation.drop-before::before{top:-3px!important}
+.service-list .service-header.drop-after::after,.service-list .service-row.service-presentation.drop-after::after{bottom:-3px!important}
+.service-list .service-header.drop-before::before,.service-list .service-header.drop-after::after,
+.service-list .service-row.service-presentation.drop-before::before,.service-list .service-row.service-presentation.drop-after::after{
+ height:3px!important;border:0!important;border-radius:2px!important;background:#2697db!important;
+ box-shadow:0 0 0 1px rgba(236,247,255,.7)!important;pointer-events:none!important;
+}
+.hwp-translation-count{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;margin:12px 0}
+.hwp-translation-count .btn{min-width:0;text-align:center}
+.hwp-translation-progress{padding:9px 12px;font-size:12px;font-weight:650;opacity:.9;background:rgba(113,151,198,.12);border-radius:7px;margin:4px 0 9px}
+.hwp-translation-options{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;max-height:39vh;overflow-y:auto;margin-bottom:10px}
+.hwp-translation-options .btn{display:flex;flex-wrap:wrap;align-items:center;gap:5px;justify-content:space-between;min-width:0;text-align:left}
+.hwp-translation-options .btn span{font-size:11px;opacity:.78}
+@media(max-width:580px){.hwp-translation-options{grid-template-columns:1fr}}
