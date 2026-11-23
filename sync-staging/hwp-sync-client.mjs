@@ -15,11 +15,18 @@ export function createHwpSyncClient({workspaceCall,mediaCall,cloudMedia=null,fet
  async function upload(blob,name){
   if(!(blob instanceof Blob)||!blob.size)throw new HwpSyncError('The local file is missing.','missing-file');
   if(cloudMedia){
-   const result=await cloudMedia.remote.upload(blob,name);
-   if(!result?.id)throw new HwpSyncError('Firebase upload did not return an ID.','upload-failed');
-   // Begin local synchronization of the uploaded immutable object.
-   void cloudMedia.local.runSync().catch(()=>{});
-   return {id:result.id};
+   try {
+     const result=await cloudMedia.remote.upload(blob,name);
+     if(!result?.id)throw new HwpSyncError('Firebase upload did not return an ID.','upload-failed');
+     // Begin local synchronization of the uploaded immutable object.
+     void cloudMedia.local.runSync().catch(()=>{});
+     return {id:result.id};
+   }catch(error){
+     // Until initial Storage rules are live, preserve the existing signed-media
+     // gateway rather than break autosave. All other cloud errors remain visible.
+     if(error?.code!=='storage/unauthorized' && error?.code!=='storage/permission-denied')
+       throw error;
+   }
   }
   const sign=await mediaCall({action:'signUpload',name,type:blob.type,size:blob.size});
   if(!sign?.id||!sign?.uploadUrl)throw new HwpSyncError('Could not prepare the media upload.','upload-failed');
