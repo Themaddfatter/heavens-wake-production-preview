@@ -48,7 +48,7 @@ jobs:
           NODE
 
       - name: Run Bible and local media regression tests
-        run: node --test tests/hwp-service-medleys.test.mjs tests/hwp-bible-presentations.test.mjs sync-staging/hwp-local-media-sync.test.mjs sync-staging/hwp-cloud-media.test.mjs sync-staging/hwp-recovery.test.mjs
+        run: node --test tests/hwp-service-medleys.test.mjs tests/hwp-bible-presentations.test.mjs tests/hwp-song-labels.test.mjs sync-staging/hwp-local-media-sync.test.mjs sync-staging/hwp-cloud-media.test.mjs sync-staging/hwp-recovery.test.mjs
 
       - name: Confirm live HWP Bible and service medley release
         shell: bash
@@ -71,7 +71,10 @@ jobs:
               && grep -Fq '.bible-side .hwp-bible-inline-versions' "$RUNNER_TEMP/hwp-access.css" \
                             && grep -Fq 'function hwpServiceCreateMedley' "$RUNNER_TEMP/hwp-home.html" \
               && grep -Fq 'hwpServiceMedleyTitle(item,presentation,pl?.items)' "$RUNNER_TEMP/hwp-home.html" \
-              && grep -Fq 'hwpServiceZone(item)' "$RUNNER_TEMP/hwp-home.html" \
+              && grep -Fq 'hwpServiceZone(item)' "$RUNNER_TEMP/hwp-home.html"
+              && grep -Fq 'function hwpSongLabelGroups' "$RUNNER_TEMP/hwp-home.html"
+              && grep -Fq 'async function saveSongLabel(input)' "$RUNNER_TEMP/hwp-home.html"
+              && grep -Fq 'action:"saveSongLabel"' "$RUNNER_TEMP/hwp-home.html" \
               && grep -Fq '.service-presentation.service-medley-child' "$RUNNER_TEMP/hwp-access.css" \
               && grep -Fq '.all-service-presentation.service-medley-child > h3.all-pres-bar' "$RUNNER_TEMP/hwp-access.css" \
               && grep -Fq 'function hwpBibleTranslationBadge' "$RUNNER_TEMP/hwp-home.html" \
