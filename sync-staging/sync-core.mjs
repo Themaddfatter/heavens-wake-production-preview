@@ -39,10 +39,16 @@ export async function recoverMissingLocalMedia({ remoteDoc, localDocs, readLocal
     throw new TypeError('Local recovery adapters are required.');
   const doc = structuredClone(remoteDoc);
   const byId = new Map(doc.media.map(item => [item.id, item]));
+  // Keep explicit deletions authoritative even if old local snapshots still
+  // contain the original IDB blob. Never delete the underlying safety copy.
+  const deletedIds = new Set([
+    ...(Array.isArray(remoteDoc.deletedMediaIds) ? remoteDoc.deletedMediaIds : []),
+    ...localDocs.flatMap(source => Array.isArray(source?.deletedMediaIds) ? source.deletedMediaIds : [])
+  ]);
   const candidates = new Map();
   for (const source of localDocs) {
     for (const item of Array.isArray(source?.media) ? source.media : []) {
-      if (typeof item?.id !== 'string' || !item.id ||
+      if (typeof item?.id !== 'string' || !item.id || deletedIds.has(item.id) ||
           typeof item.src !== 'string' || !item.src.startsWith('idb:')) continue;
       const saved = byId.get(item.id);
       if (saved && !String(saved.src || '').startsWith('idb:')) continue;

@@ -24,8 +24,10 @@ export function createHwpSyncClient({workspaceCall,mediaCall,cloudMedia=null,fet
    }catch(error){
      // Never silently switch new Firebase files to a retired provider.
      // The IndexedDB original remains intact and can be retried.
-     if(error?.code==='storage/unauthorized' || error?.code==='storage/permission-denied')
-       throw new HwpSyncError('Firebase Storage denied this upload. The original file remains on this computer.','cloud-storage-denied');
+     if(error?.code==='storage/unauthorized' || error?.code==='storage/permission-denied') {
+       const detail=String(error?.hwpReason||'Storage authorization rejected this upload. Check your signed-in account permissions and verified email.');
+       throw new HwpSyncError('Firebase Storage denied this upload. '+detail+' The original file remains on this computer.','cloud-storage-denied');
+     }
      throw error;
    }
   }

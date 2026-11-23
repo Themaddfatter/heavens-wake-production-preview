@@ -121,3 +121,17 @@ test('Sync issue opens diagnostic details and a working retry action',()=>{
  assert.ok(css.includes('.hwp-cloud-panel-backdrop'));
  assert.ok(html.includes('name="hwp-release" content="hwp-cloud-sync-details-v1"'));
 });
+
+test('deleted media stays deleted and stale backups cannot auto-resurrect images',()=>{
+ const from=html.indexOf('function HwpCloudAgent(');
+ const to=html.indexOf('function HwpCloudIndicator()',from);
+ const agent=html.slice(from,to);
+ assert.ok(agent.includes('currentDoc=getLatest().doc'));
+ assert.ok(agent.includes('engine.current.recoverMedia(remote.workspace,[currentDoc],remote.revision)'));
+ assert.ok(!agent.includes('previousLocalBackup?.doc'));
+ assert.ok(agent.includes('localRevision!==remote.revision'));
+ assert.ok(html.includes('deletedMediaIds:[...new Set([...(e.doc.deletedMediaIds||[]),t.id])].slice(-5000)'));
+ assert.ok(agent.includes('if(currentKey!==signature.current)'));
+ assert.ok(agent.includes('else emit("syncing");'));
+ assert.ok(html.includes('name="hwp-release" content="hwp-media-deletion-safety-v1"'));
+});

@@ -46,7 +46,13 @@ export function createHwpFirebaseMediaRemote({ storage, auth, sdk }) {
     return sdk.getBlob(byId(item?.id));
   }
   async function upload(blob, displayName) {
-    const uid = signedIn().uid;
+    const user = signedIn(),uid=user.uid;
+    // Firebase may retain an old email-verification token after verification.
+    // Refresh it once before a write; never bypass the Storage rules.
+    if(user.emailVerified===false) {
+      try { await user.reload?.(); await user.getIdToken?.(true); }
+      catch { /* The real Storage request still enforces authentication. */ }
+    }
     if (!(blob instanceof Blob) || !blob.size || blob.size > 4 * 1024 * 1024 * 1024
       || !MEDIA_TYPE.test(blob.type)) throw new TypeError('Choose a supported media file (up to 4 GB).');
     const id = crypto.randomUUID();
@@ -55,7 +61,16 @@ export function createHwpFirebaseMediaRemote({ storage, auth, sdk }) {
       customMetadata: { ownerUid: uid, displayName: String(displayName || id).slice(0, 160) }
     };
     const task = sdk.uploadBytesResumable(byId(id), blob, metadata);
-    await new Promise((resolve, reject) => task.on('state_changed', null, reject, resolve));
+    try {
+      await new Promise((resolve, reject) => task.on('state_changed', null, reject, resolve));
+    } catch (error) {
+      if (error?.code === 'storage/unauthorized' || error?.code === 'storage/permission-denied') {
+        error.hwpReason = user.emailVerified===false
+          ? 'This Firebase account has an unverified email. Complete email verification if your account requires it.'
+          : 'The account or the media metadata did not satisfy the current Firebase Storage rules.';
+      }
+      throw error;
+    }
     const meta = await sdk.getMetadata(byId(id));
     return { id, name: metadata.customMetadata.displayName, size: Number(meta.size),
       version: String(meta.generation || meta.updated || '') };

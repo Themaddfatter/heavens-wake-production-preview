@@ -38,3 +38,29 @@ test('detects newer cloud revision and never replaces it',async()=>{
   commit:async()=>({conflict:true,revision:8}),expectedRevision:7
  }),/cloud library changed/i);
 });
+
+test('a deleted image is never restored from a stale local backup',async()=>{
+ const remote={media:[photo('kept','cloud:existing')],deletedMediaIds:['deleted'],presentations:[],mediaFolders:[],libraries:[]};
+ const oldBackup={media:[photo('deleted','idb:old-image')],presentations:[{id:'pres_background',slides:[slide('old-slide','deleted')]}]};
+ let uploads=0,saves=0;
+ const result=await recoverMissingLocalMedia({remoteDoc:remote,localDocs:[oldBackup],expectedRevision:9,
+  readLocalMedia:async()=>new Blob(['old'],{type:'image/png'}),
+  uploadMedia:async()=>{uploads++;return {id:'unexpected'}},
+  commit:async()=>{saves++;return {saved:true,revision:10}}
+ });
+ assert.deepEqual(result,{recovered:0,unavailable:0});
+ assert.equal(uploads,0);
+ assert.equal(saves,0);
+ assert.equal(remote.media.some(m=>m.id==='deleted'),false);
+});
+test('a locally deleted ID also blocks old-media recovery',async()=>{
+ const remote={media:[],presentations:[],mediaFolders:[],libraries:[]};
+ const oldDoc={media:[photo('deleted','idb:old-image')],deletedMediaIds:['deleted'],presentations:[]};
+ let uploaded=0;
+ const result=await recoverMissingLocalMedia({remoteDoc,localDocs:[oldDoc],expectedRevision:3,
+  readLocalMedia:async()=>new Blob(['old'],{type:'image/png'}),
+  uploadMedia:async()=>{uploaded++;return {id:'never'}},
+  commit:async()=>{throw Error('Should not save')}
+ });
+ assert.equal(result.recovered,0); assert.equal(uploaded,0);
+});

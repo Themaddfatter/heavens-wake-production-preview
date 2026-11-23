@@ -70,3 +70,16 @@ test('non-permission Firebase errors do not silently fall back to another provid
  await assert.rejects(client.upload(new Blob(['abc'],{type:'image/png'}),'intro.png'),/Cloud service unavailable/);
  assert.equal(oldCalls,0);
 });
+
+test('permission denial preserves the supplied diagnostic reason',async()=>{
+ const client=createHwpSyncClient({
+  workspaceCall:async()=>({revision:0}),mediaCall:async()=>{throw Error('legacy must not be used')},
+  cloudMedia:{
+   remote:{upload:async()=>{throw Object.assign(new Error('Forbidden'),{
+    code:'storage/unauthorized',hwpReason:'This Firebase account has an unverified email.'
+   })},listRemote:async()=>[]},
+   local:{runSync:async()=>({}),localEntry:async()=>null,playback:async()=>null}
+  }
+ });
+ await assert.rejects(client.upload(new Blob(['abc'],{type:'image/png'}),'photo.png'),/unverified email.*original file remains/i);
+});
