@@ -80,6 +80,14 @@ jobs:
               && grep -Fq 'function hwpBibleTranslationBadge' "$RUNNER_TEMP/hwp-home.html" \
               && grep -Fq 'function hwpScriptureTranslationStart' "$RUNNER_TEMP/hwp-home.html" \
               && grep -Fq 'hwp-scripture-translation-divider' "$RUNNER_TEMP/hwp-access.css" \
+              && grep -Fq 'function HwpStageMessageComposer' "$RUNNER_TEMP/hwp-home.html" \
+              && grep -Fq 'function HwpStageFlash' "$RUNNER_TEMP/hwp-home.html" \
+              && grep -Fq 'function hwpOutputWithoutTranslationTag' "$RUNNER_TEMP/hwp-home.html" \
+              && grep -Fq 'function HwpServiceThemeSettings' "$RUNNER_TEMP/hwp-home.html" \
+              && grep -Fq 'function hwpApplyServiceThemeToPlaylist' "$RUNNER_TEMP/hwp-home.html" \
+              && grep -Fq '.preview.hwp-preview-redesign .program-frame' "$RUNNER_TEMP/hwp-access.css" \
+              && grep -Fq '.stage-layout .hwp-stage-flash' "$RUNNER_TEMP/hwp-access.css" \
+              && grep -Fq '.hwp-service-theme-editor .hwp-theme-header-row' "$RUNNER_TEMP/hwp-access.css" \
               && test -s "$RUNNER_TEMP/hwp-logo.png"; then
                 echo "Verified Bible and service medley release is published to $domain"
                 exit 0
