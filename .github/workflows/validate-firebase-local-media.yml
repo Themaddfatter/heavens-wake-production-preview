@@ -12,7 +12,7 @@ permissions:
 jobs:
   test-local-media:
     if: github.event_name == 'workflow_dispatch' || github.event.pull_request.head.repo.full_name == github.repository
-    runs-on: [self-hosted, Linux, X64, zion-wsl]
+    runs-on: [self-hosted, hwp-wsl]
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
