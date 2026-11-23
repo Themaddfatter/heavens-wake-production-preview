@@ -48,7 +48,7 @@ jobs:
           NODE
 
       - name: Run Bible and local media regression tests
-        run: node --test tests/hwp-bible-presentations.test.mjs sync-staging/hwp-local-media-sync.test.mjs sync-staging/hwp-cloud-media.test.mjs sync-staging/hwp-recovery.test.mjs
+        run: node --test tests/hwp-service-medleys.test.mjs tests/hwp-bible-presentations.test.mjs sync-staging/hwp-local-media-sync.test.mjs sync-staging/hwp-cloud-media.test.mjs sync-staging/hwp-recovery.test.mjs
 
       - name: Confirm latest HWP Bible release is on custom domain
         shell: bash
