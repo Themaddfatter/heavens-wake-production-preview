@@ -95,7 +95,9 @@ function hwpPairSongLabels(input,previous=[]){
   const pair=labels.find(x=>x.categoryId==="songs"&&(x.pairedLabelId===original.id||x.id===id));
   const priorSpanish=previous.find(x=>x.pairedLabelId===original.id||x.id===id);
   const wasAutomatic=priorSpanish&&prior&&priorSpanish.name===hwpSpanishSongLabel(prior.name);
-  const name=original.nameEs||(!pair||wasAutomatic?hwpSpanishSongLabel(original.name):pair.name);
+  const manuallyChangedSpanish=Boolean(pair&&priorSpanish&&pair.name!==priorSpanish.name);
+  const name=manuallyChangedSpanish?pair.name:(original.nameEs||(!pair||wasAutomatic?hwpSpanishSongLabel(original.name):pair.name));
+  if(manuallyChangedSpanish)original.nameEs=name;
   const spanish={...(pair||{}),id:pair?.id||id,name,color:hwpPaleSongColor(original.color),
    categoryId:"songs",language:"es",pairedLabelId:original.id};
   if(pair)labels[labels.indexOf(pair)]=spanish;else labels.push(spanish);
