@@ -100,7 +100,7 @@ test("Bible creation, settings controls and import still use the existing transl
  assert.ok(html.includes("function HwpBibleTranslationDialog({available,onChoose,onClose,busy,error,viewTranslation,defaultCount=1})"));
  assert.ok(html.includes("defaultCount:e.doc.settings.bible.defaultTranslationCount||1"));
  assert.ok(html.includes("translationSets,perSlide:e.session.versesPerSlide"));
- assert.ok(html.includes("scriptureSets.length>1?"+String.fromCharCode(96)+"MUL"+String.fromCharCode(96)));
+ assert.ok(html.includes('scriptureSets.map(block=>hwpBibleAbbreviation(block.translation)).join(" / ")'));
  assert.ok(html.includes("hwpDefineBibleTranslationTags(e.doc.tags,s)"));
  assert.ok(html.includes('case'+String.fromCharCode(96)+'hwp-sync-bible-styles'+String.fromCharCode(96)));
  assert.ok(html.includes("Apply translation tags and badges to existing Scripture slides"));
@@ -212,7 +212,8 @@ test("slide editor media-fit choices reach correctly sized image and video outpu
 test("logo output switches immediately with cached media and image/video prewarm",()=>{
  assert.ok(html.includes('outMs:e.logoOn?0:c,inMs:e.logoOn?0:l'));
  assert.ok(html.includes('const hwpResolvedLocalMedia=new Map()'));
- assert.ok(html.includes('hwpLocalMediaUrl(e).then('));
+ assert.ok(html.includes('function hwpFastResolve(src)')); assert.ok(html.includes('hwpLocalMediaUrl(src)'));
+ assert.ok(html.includes('const hwpFastMediaUrls=new Map()'));
  assert.ok(html.includes('function HwpLogoPrewarm({media})'));
  assert.ok(html.includes('preload:"auto",muted:true,playsInline:true'));
  assert.ok(html.includes('loading:"eager",decoding:"async"'));
