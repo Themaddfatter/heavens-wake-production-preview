@@ -142,3 +142,16 @@ test('production dynamically loads versioned media-safety modules',()=>{
 });
 
 test("Operator workflow changes are present",()=>{for(const part of ["+ Create Template","Create and edit","hwpPresentationView","Type a message first.","hwpMergeServiceScriptures","hwpNormalizeMediaFolders","Choose existing media","Create a medley with the first selected song"])assert.ok(html.includes(part),part);assert.ok(!html.slice(html.indexOf("function HwpStageMessageComposer()"),html.indexOf("function Ni()")).includes("disabled:"));});
+
+test("Folder helpers preserve media and presentation contents while moving, copying and deleting folders",()=>{
+ const start=html.indexOf("function hwpReorderFolderBlock("),end=html.indexOf("function hwpNormalizeMediaFolders(",start),library=html.indexOf("function hwpLibraryFolders(doc)"),libraryEnd=html.indexOf("let hwpLibraryClipboard=",library);
+ assert.ok(start>0&&end>start&&libraryEnd>library);
+ const tools=new Function(html.slice(start,end)+html.slice(library,libraryEnd)+';let serial=0;function w(){return "new-"+(++serial)};function Ut(slide){return {...structuredClone(slide),id:w(),objects:[]}};return {hwpMediaFolderEdit,hwpLibraryFolderEdit,hwpLibraryFolders,hwpFolderContains};')();
+ const doc={mediaFolders:[{id:"folder_stills",name:"Photos"},{id:"folder_motion",name:"Videos"},{id:"folder_audio",name:"Audio"},{id:"f",name:"Folder"}],media:[{id:"m",kind:"image",folderId:"f",src:"idb:m"}]};
+ const removed=tools.hwpMediaFolderEdit(doc,{kind:"remove",ids:["f","folder_stills"]});assert.equal(removed.media[0].folderId,"folder_stills");assert.ok(removed.mediaFolders.some(f=>f.id==="folder_stills"));assert.equal(doc.media[0].folderId,"f");
+ const copied=tools.hwpMediaFolderEdit(doc,{kind:"paste",folders:[{name:"Folder",items:doc.media}],items:[]});assert.equal(copied.media.length,2);assert.equal(copied.media[1].src,"idb:m");assert.notEqual(copied.media[1].id,"m");
+ const p={id:"p",name:"Song",category:"song",slides:[{id:"slide",objects:[]}],groups:[]},lib={presentations:[p],media:[],hwpFolders:[{id:"custom",name:"Custom"}]};
+ const moved=tools.hwpLibraryFolderEdit(lib,{kind:"move",ids:["p"],target:"custom"});assert.ok(tools.hwpFolderContains(moved,{id:"custom"},p));assert.ok(!tools.hwpFolderContains(moved,{id:"songs",auto:"song"},p));
+ const deleted=tools.hwpLibraryFolderEdit(moved,{kind:"remove",ids:["custom"]});assert.equal(deleted.presentations.length,1);assert.equal(deleted.hwpFolderPlacement.p,"unassigned");
+});
+test("Bible editions are loaded on request without blocking sign-in",()=>{assert.ok(html.includes("function hwpLoadBibleFile(name)"));assert.ok(html.includes("HWP_BIBLE_FILES.has(m[1])"));assert.ok(!html.includes('<script src="./hwp-bibles/kjv.js">'));assert.ok(html.includes("action:'access'"));});

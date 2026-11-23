@@ -65,6 +65,10 @@ jobs:
                 "$domain/hwp-logo.png?hwp_release=$GITHUB_SHA" -o "$RUNNER_TEMP/hwp-logo.png" \
               && grep -Fq 'name="hwp-release" content="hwp-media-deletion-safety-v1"' "$RUNNER_TEMP/hwp-home.html" \
               && grep -Fq '+ Create Template' "$RUNNER_TEMP/hwp-home.html" \
+              && grep -Fq 'function hwpMediaFolderEdit' "$RUNNER_TEMP/hwp-home.html" \
+              && grep -Fq 'function hwpLibraryFolderEdit' "$RUNNER_TEMP/hwp-home.html" \
+              && grep -Fq 'function hwpLoadBibleFile' "$RUNNER_TEMP/hwp-home.html" \
+              && grep -Fq 'hwp-operator-workflow-v2' "$RUNNER_TEMP/hwp-home.html" \
               && grep -Fq 'hwpPresentationView' "$RUNNER_TEMP/hwp-home.html" \
               && grep -Fq 'function HwpAccessGate' "$RUNNER_TEMP/hwp-home.html" \
                             && grep -Fq 'function HwpBibleInlineTranslationPicker' "$RUNNER_TEMP/hwp-home.html" \

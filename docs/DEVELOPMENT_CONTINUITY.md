@@ -171,3 +171,11 @@ Requests below are **not** asserted to be broken in the latest release; compare 
 - Verified release marker: `hwp-media-deletion-safety-v1`. Run source and emulator-free regression tests, then verify the production deployment. Authenticated Firebase upload success still requires real-account testing; a static page test cannot confirm it.
 
 - Cache note: dynamic HWP sync module imports and the controller's `sync-core` dependency use the v1 release query string to bypass stale GitHub Pages browser caching. Production release verification now checks those live module bodies as well as the HTML/stylesheet marker.
+
+
+## 2026-11-23 — HWP operator workflow v2
+- Permanent + Create Template button, named general/announcement/sermon/welcome/prayer/photo/video/background/song/scripture templates. Category persists. Stage SM ON/OFF accent state and empty-message alert; non-trash Clear All icon; single/all presentation toggle. Background photo/video chooser lists existing media, song slide uses song theme, bulk Scripture accepts one reference per line and translation aliases.
+- Scripture merges preserve original library sources and service/cue order. Medley confirmation uses first selected song; green group outlines.
+- Media: type-specific uploads, old Uploads migration, batch context menu actions, folder rename/copy/paste/duplicate/delete and multi-folder drag reorder. Required Photos/Videos/Audio folders protected. Custom folder deletion returns unselected contents to type folders. Library context operations and moves persist folder placement/order. Folder deletion preserves presentations.
+- Login: five embedded Bible bundles load on request, failed loads retry, initial media synchronization briefly deferred; Ministry Connect access check unchanged. Real-account sign-in timing remains to be measured.
+- Validation: all inline scripts parsed; eight isolated folder behavior checks passed. CI/live content and authenticated browser verification are separate.
