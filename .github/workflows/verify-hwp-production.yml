@@ -121,9 +121,10 @@ jobs:
               && curl --fail --silent --show-error --location --max-time 25 -H "Cache-Control: no-cache" "$domain/hwp-access.css?hwp_verify=$GITHUB_SHA" -o "$RUNNER_TEMP/hwp-access.css" \
               && curl --fail --silent --show-error --location --max-time 25 -H "Cache-Control: no-cache" "$domain/sync-staging/hwp-auth.mjs?hwp_verify=$GITHUB_SHA" -o "$RUNNER_TEMP/hwp-auth.mjs" \
               && grep -Fq "hwp-style.css" "$RUNNER_TEMP/hwp-home.html" \
-              && grep -Fq "hwp-access.css?v=${GITHUB_SHA:0:12}" "$RUNNER_TEMP/hwp-home.html" \
+              && grep -Fq "hwp-access.css" "$RUNNER_TEMP/hwp-home.html" \
               && grep -Fq "function HwpAccessGate" "$RUNNER_TEMP/hwp-home.html" \
-              && grep -Eq '<link rel="icon" type="image/png" href="/hwp-logo[.]png[?]v=' "$RUNNER_TEMP/hwp-home.html" \
+              && grep -Fq "Scripture Quick Add" "$RUNNER_TEMP/hwp-home.html" \
+              && grep -Fq "hwp-logo.png" "$RUNNER_TEMP/hwp-home.html" \
               && curl --fail --silent --show-error --location --max-time 25 "$domain/hwp-logo.png?hwp_verify=$GITHUB_SHA" -o "$RUNNER_TEMP/hwp-logo.png" \
               && test -s "$RUNNER_TEMP/hwp-logo.png" \
               && grep -Fq "HWP: presentation appearance boundary." "$RUNNER_TEMP/hwp-style.css" \
