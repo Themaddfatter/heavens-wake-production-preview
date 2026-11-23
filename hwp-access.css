@@ -425,3 +425,92 @@
 :root[data-hwp-appearance="light"] .templates-panel :is(h3,.template-meta em) {
   color:#805209;
 }
+
+/* HWP toolbar height and Services header hierarchy — 2026-11-22 */
+/* Only the operator layout changes; projected slides and user-selected
+   service/header colors are not altered. */
+.app[data-mode="show"],
+.app[data-mode="edit"],
+.app[data-mode="reflow"],
+.app[data-mode="bible"] {
+  grid-template-rows:62px minmax(0,1fr);
+}
+.toolbar {
+  min-height:62px;
+  padding-top:3px;
+  padding-bottom:3px;
+}
+@media (max-width:980px) {
+  /* Keep the mobile footer/preview rows intact and allow wrapped controls. */
+  .app[data-mode="show"] {
+    grid-template-rows:minmax(62px,auto) minmax(0,1fr) 56px;
+  }
+  .app[data-mode="edit"] {
+    grid-template-rows:minmax(62px,auto) minmax(0,1fr) 40vh;
+  }
+  .app[data-mode="reflow"],
+  .app[data-mode="bible"] {
+    grid-template-rows:minmax(62px,auto) minmax(0,1fr);
+  }
+}
+/* Headers are visibly distinct from presentation rows, and retain their
+   saved background/text colors, selection and drag/drop controls. */
+.service-list .service-header,
+.service-list .service-boundary {
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  min-height:44px;
+  padding:10px 12px;
+  margin:8px 0 7px;
+  border:2px solid var(--service-border,#e2a04a);
+  border-radius:8px;
+  text-align:center;
+  font-weight:800;
+  font-size:13px;
+  line-height:1.3;
+  letter-spacing:.025em;
+  text-decoration:none;
+}
+.service-list .service-header strong {
+  display:flex;
+  flex:0 1 auto;
+  min-width:0;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  font-size:inherit;
+  font-weight:800;
+  line-height:inherit;
+  text-align:center;
+  text-decoration:none;
+  overflow-wrap:anywhere;
+}
+/* Decorative tildes do not change the actual saved header names. */
+.service-list .service-header strong::before,
+.service-list .service-header strong::after {
+  content:"~";
+  display:inline;
+  flex:none;
+  font-weight:700;
+  opacity:.85;
+  pointer-events:none;
+}
+/* Boundary headers must keep their existing drag-insertion pseudo-elements.
+   The tilde disappears only on the edge actively showing a drop marker. */
+.service-list .service-boundary:not(.drop-before)::before,
+.service-list .service-boundary:not(.drop-after)::after {
+  content:"~";
+  position:static;
+  display:inline;
+  flex:none;
+  width:auto;
+  height:auto;
+  border:0;
+  background:none;
+  box-shadow:none;
+  opacity:.85;
+  font-weight:700;
+  pointer-events:none;
+}
