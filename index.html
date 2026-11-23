@@ -232,7 +232,10 @@ function hwpPairSongLabels(input,previous=[]){
   const manuallyChangedSpanish=Boolean(pair&&priorSpanish&&pair.name!==priorSpanish.name);
   const name=manuallyChangedSpanish?pair.name:(original.nameEs||(!pair||wasAutomatic?hwpSpanishSongLabel(original.name):pair.name));
   if(manuallyChangedSpanish)original.nameEs=name;
-  const override=String(original.spanishColor||"").trim();
+  const legacySpanish=original.spanishColor===undefined&&pair&&/^#[0-9a-f]{6}$/i.test(pair.color||"")
+   &&pair.color.toLowerCase()!==hwpPaleSongColor(prior?.color||original.color).toLowerCase()?pair.color:"";
+  const override=String(original.spanishColor??legacySpanish).trim();
+  if(legacySpanish)original.spanishColor=legacySpanish;
   const spanishColor=/^#[0-9a-f]{6}$/i.test(override)?override:hwpPaleSongColor(original.color);
   const spanish={...(pair||{}),id:pair?.id||id,name,color:spanishColor,
    categoryId:"songs",language:"es",pairedLabelId:original.id};
@@ -1816,10 +1819,23 @@ function HwpPairedLabelsEditor({items}){
   window.dispatchEvent(new Event("hwp-cloud-reload"));
   return result;
  }
+ async function changeSpanishColor(label,color){
+  if(busy)return;
+  setBusy(true);setError("");setNotice("");
+  try{
+   const spanish=paired(label),nameEs=label.nameEs||spanish?.name||hwpSpanishSongLabel(label.name);
+   await saveSongLabel({operation:"upsert",label:{
+    id:label.id,name:label.name,nameEs,color:label.color,spanishColor:color
+   }});
+   setNotice(color?"Spanish label color saved in HWP and HWW.":"Spanish label color reset to the pale English version.");
+  }catch(error){setError(error?.message||"Could not save the Spanish label color.")}
+  finally{setBusy(false)}
+ }
  function start(label){
   const spanish=label?paired(label):null;
   setDraft({name:label?.name||"",nameEs:label?.nameEs||spanish?.name||"",
-   color:label?.color||"#2f7edb",spanishColor:label?.spanishColor||"",
+   color:label?.color||"#2f7edb",
+   spanishColor:label?.spanishColor??(spanish?.color&&spanish.color.toLowerCase()!==hwpPaleSongColor(label?.color||"#2f7edb").toLowerCase()?spanish.color:""),
    categoryId:label?.categoryId||"songs"});
   setEditing(label?.id||"new");setAdding(!label);setError("");setNotice("");
  }
@@ -1914,6 +1930,12 @@ function HwpPairedLabelsEditor({items}){
      (0,M.jsxs)("div",{children:[
       (0,M.jsx)("strong",{children:es?.name||item.nameEs||hwpSpanishSongLabel(item.name)}),
       (0,M.jsx)("small",{children:"Español · linked to English"})
+     ]}),
+     (0,M.jsxs)("label",{className:"hwp-inline-spanish-color",title:"Choose a separate color for this Spanish label",children:[
+      (0,M.jsx)("span",{children:"Spanish color"}),
+      (0,M.jsx)("input",{type:"color","aria-label":"Spanish color for "+item.name,
+       value:item.spanishColor||es?.color||hwpPaleSongColor(item.color),disabled:busy,
+       onChange:event=>void changeSpanishColor(item,event.target.value)})
      ]})
     ]})
    ]}),
