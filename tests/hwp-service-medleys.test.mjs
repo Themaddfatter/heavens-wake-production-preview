@@ -129,3 +129,36 @@ test("selected songs are grouped under the first song in service order",()=>{
  assert.ok(html.includes('Create medley from selected songs'));
  assert.ok(html.includes('create-service-medley-from-selection'));
 });
+
+
+const upcomingStart=html.indexOf("function hwpTodayServiceDay(");
+const upcomingEnd=html.indexOf("function Nr(){",upcomingStart);
+assert.ok(upcomingStart>=0&&upcomingEnd>upcomingStart,"upcoming published service filter is present");
+const upcoming=createContext({Intl,Date,String,Array,Number});
+runInContext(html.slice(upcomingStart,upcomingEnd),upcoming);
+
+test("only today's and future published Ministry Connect schedules are shown in HWP",()=>{
+ const today="2026-11-23";
+ const entries=[
+  {id:"old",name:"Sunday — Nov 22, 2026",hwpScheduleId:"s1",hwpScheduleDay:"2026-11-22",hwpSchedulePublished:true},
+  {id:"today",name:"Monday — Nov 23, 2026",hwpScheduleId:"s2",hwpScheduleDay:today,hwpSchedulePublished:true},
+  {id:"future",name:"Wednesday — Nov 25, 2026",hwpScheduleId:"s3",hwpScheduleDay:"2026-11-25",hwpSchedulePublished:true},
+  {id:"draft",hwpScheduleId:"s4",hwpScheduleDay:"2026-11-24",hwpSchedulePublished:false},
+  {id:"legacy-old",hwpScheduleId:"s5",name:"Saturday — Nov 21, 2026"},
+  {id:"legacy-next",hwpScheduleId:"s6",name:"Friday — Nov 27, 2026"},
+  {id:"unknown-date",hwpScheduleId:"s7",name:"Published but undated"},
+  {id:"manual",name:"Manual service"}
+ ];
+ const visible=upcoming.hwpVisibleServices(entries,today);
+ assert.deepEqual(Array.from(visible,x=>x.id),["today","future","legacy-next","manual"]);
+ assert.equal(upcoming.hwpActiveService(entries,"old",today).id,"today");
+ assert.equal(upcoming.hwpActiveService(entries,"future",today).id,"future");
+ assert.equal(entries.length,8,"past services remain stored");
+});
+test("HWP service dates use America/Los_Angeles and do not expire during their day",()=>{
+ assert.equal(upcoming.hwpTodayServiceDay(new Date("2026-11-24T07:59:00Z")),"2026-11-23");
+ assert.equal(upcoming.hwpTodayServiceDay(new Date("2026-11-24T08:01:00Z")),"2026-11-24");
+ const current={id:"today",hwpScheduleId:"s2",hwpScheduleDay:"2026-11-23",hwpSchedulePublished:true};
+ assert.equal(upcoming.hwpVisibleServices([current],"2026-11-23").length,1);
+ assert.equal(upcoming.hwpVisibleServices([current],"2026-11-24").length,0);
+});
