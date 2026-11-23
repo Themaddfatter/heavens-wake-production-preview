@@ -74,3 +74,32 @@ test('Cloud status retries on errors while local playback remains available',()=
  assert.ok(cloud.includes('cloudMedia.local.localEntry(id)'),'local playback before remote');
  assert.ok(local.includes("navigator.storage.getDirectory()"),'local disk browser storage');
 });
+
+test('Background label definitions are persistent and motion backgrounds are classified as video',()=>{
+ includes('["Photo Background",','new photo background label');
+ includes('["Video Background",','new video background label');
+ includes('case"hwp-prepare-background-labels":','explicit one-time preparation');
+ includes('hwp-prepare-background-labels",history:"none"','prepare when background section is opened');
+ includes('kind===`video`||kind===`motion`','animated backgrounds use Video Background');
+});
+test('Existing background labels normalize idempotently without replacing media or slides',()=>{
+ const from=html.indexOf('case"hwp-prepare-background-labels":');
+ const to=html.indexOf('case`set-slide-label`:',from);
+ const viStart=html.indexOf('function Vi(e,t){'),viEnd=html.indexOf('function Hi(',viStart);
+ assert.ok(from>0&&to>from&&viStart>0&&viEnd>viStart);
+ const Vi=new Function(html.slice(viStart,viEnd)+';return Vi;')();
+ const normalize=new Function('e','t','Vi','ge','switch(t.type){'+html.slice(from,to)+'default:return e}');
+ const bg={id:'pres_background',groups:[{id:'photo',name:'Old Photo',color:'#444444'},{id:'mixed',name:'Old Mix',color:'#444444'}],
+  slides:[{id:'s1',groupId:'photo',background:{type:'media',mediaId:'pic'}},
+   {id:'s2',groupId:'mixed',background:{type:'media',mediaId:'pic'}},
+   {id:'s3',groupId:'mixed',background:{type:'media',mediaId:'motion'}}],
+  arrangements:[{id:'default',order:['photo','mixed']}]};
+ const state={doc:{media:[{id:'pic',kind:'image'},{id:'motion',kind:'motion'}],labels:[],presentations:[bg]}};
+ const next=normalize(state,{type:'hwp-prepare-background-labels'},Vi,'pres_background');
+ assert.equal(next.doc.labels.length,2);
+ assert.equal(next.doc.presentations[0].groups.find(x=>x.id==='photo').name,'Photo Background');
+ assert.equal(next.doc.presentations[0].slides.find(x=>x.id==='s3').groupId,'mixed__hwp_video');
+ assert.equal(next.doc.presentations[0].slides.map(x=>x.id).join(','),'s1,s2,s3');
+ assert.equal(next.doc.presentations[0].slides.find(x=>x.id==='s3').background.mediaId,'motion');
+ assert.equal(normalize(next,{type:'hwp-prepare-background-labels'},Vi,'pres_background'),next);
+});
