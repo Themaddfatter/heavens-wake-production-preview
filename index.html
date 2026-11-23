@@ -950,7 +950,21 @@ function HwpPairedLabelsEditor({items}){
  const songs=base.filter(x=>(x.categoryId||hwpCategoryForLabel(x.name))==="songs"&&x.language!=="es");
  const other=base.filter(x=>!songs.includes(x));
  const paired=label=>items.find(x=>x.pairedLabelId===label.id||x.id===label.id+"_es");
- function commit(next){dispatch({type:"patch-doc",history:"push",patch:{labels:hwpPairSongLabels(next,items)}})}
+ function commit(next){
+  const labels=hwpPairSongLabels(next,items),lookup=new Map(labels.map(x=>[x.id,x]));
+  const presentations=state.doc.presentations.map(p=>{
+   if(!p.hwwManaged)return p;
+   let changed=false;
+   const groups=(p.groups||[]).map(group=>{
+    const label=lookup.get(group.labelId);
+    if(!label||label.categoryId!=="songs"||(group.name===label.name&&group.color===label.color))return group;
+    changed=true;
+    return {...group,name:label.name,color:label.color};
+   });
+   return changed?{...p,groups}:p;
+  });
+  dispatch({type:"patch-doc",history:"push",patch:{labels,presentations}});
+ }
  function start(label){
   const spanish=label?paired(label):null;
   setDraft({name:label?.name||"",nameEs:label?.nameEs||spanish?.name||"",
@@ -982,6 +996,11 @@ function HwpPairedLabelsEditor({items}){
  }
  function remove(label){
   const spanish=paired(label);
+  if(state.doc.presentations.some(p=>p.hwwManaged&&(p.groups||[]).some(g=>
+    g.labelId===label.id||g.labelId===spanish?.id))){
+   setError("This label is used by a saved song. Reassign its slides before deleting the shared label.");
+   return;
+  }
   const question=(label.categoryId==="songs"?"Delete "+label.name+" and its Spanish counterpart?":"Delete "+label.name+"?");
   if(!window.confirm(question))return;
   // Removing a pair never deletes the saved lyrics or song presentations.
