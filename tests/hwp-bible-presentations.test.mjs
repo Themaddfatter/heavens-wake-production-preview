@@ -105,3 +105,35 @@ test("Bible creation, settings controls and import still use the existing transl
  assert.ok(html.includes('case'+String.fromCharCode(96)+'hwp-sync-bible-styles'+String.fromCharCode(96)));
  assert.ok(html.includes("Apply translation tags and badges to existing Scripture slides"));
 });
+
+
+test("ordinary Bible screen has directly usable multi-translation selection",()=>{
+ assert.ok(html.includes('function HwpBibleInlineTranslationPicker('));
+ assert.ok(html.includes('"Number of Bible translations"'));
+ assert.ok(html.includes('"Bible translation "+(index+1)'));
+ assert.ok(html.includes('onCreate:versions=>y(versions)'));
+ assert.ok(html.includes('children:"More translation choices"'));
+ const available=[{id:"KJV"},{id:"ESV"},{id:"NIV"},{id:"RVR1960"}];
+ const chosen=vm.hwpBibleChosenTranslations(available,["ESV","ESV","NIV","RVR1960"],4);
+ assert.deepEqual(Array.from(chosen),["ESV","KJV","NIV","RVR1960"]);
+ assert.deepEqual(Array.from(vm.hwpBibleChosenTranslations(available,["KJV"],2)),["KJV","ESV"]);
+});
+
+test("old Scripture slides visibly receive badges without mutating saved data",()=>{
+ const old=slide("NIV","legacy-bible-slide");
+ assert.equal(old.objects.length,1);
+ const projected={key:old.id,width:1920,height:1080,background:{type:"none"},objects:old.objects.slice()};
+ const displayed=vm.hwpBibleDisplaySlide(projected,old,defaults);
+ assert.equal(displayed.objects.length,2);
+ assert.equal(displayed.objects.at(-1).text,"NIV");
+ assert.equal(displayed.objects.at(-1).fill.color,"#ffffff");
+ assert.equal(displayed.objects.at(-1).textStyle.color,"#000000");
+ assert.equal(old.objects.length,1,"stored library must remain untouched");
+ assert.equal(projected.objects.length,1,"projection input must remain untouched");
+ const hidden=vm.hwpBibleDisplaySlide(projected,old,{...defaults,translationBadgeVisible:false});
+ assert.equal(hidden.objects.length,1);
+ const nonBible={id:"song",objects:[{id:"lyrics"}]};
+ assert.equal(vm.hwpBibleDisplaySlide(projected,nonBible,defaults),projected);
+ assert.ok(html.includes("hwpBibleDisplaySlide(De(r,c.slide"));
+ assert.ok(html.includes("hwpBibleVisibleObjects(e.slide,i.doc.settings.bible,o.width,o.height)"));
+});
