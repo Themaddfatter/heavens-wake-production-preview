@@ -1048,3 +1048,45 @@
  height:9px!important;min-height:9px!important;margin:0!important;
  border:0!important;box-sizing:border-box!important;
 }
+
+/* Bible translations: straight, full-width dividers above each version's slides.
+   These are operator-grid headings and never project to the audience. */
+.thumb-grid .hwp-bible-translation-divider{
+ grid-column:1/-1;
+ width:100%;
+ min-height:39px;
+ display:flex;
+ align-items:flex-end;
+ margin:15px 0 9px;
+ padding:11px 5px 2px;
+ border-top:2px solid var(--hwp-bible-divider-line,#7590ad);
+ border-radius:0;
+ background:transparent;
+ box-sizing:border-box;
+ pointer-events:none;
+}
+:root[data-hwp-appearance="light"] .thumb-grid .hwp-bible-translation-divider{
+ color:var(--hwp-bible-divider-text,#28486d);
+}
+:root:not([data-hwp-appearance="light"]) .thumb-grid .hwp-bible-translation-divider{
+ color:var(--hwp-bible-divider-text,#d8eafb);
+}
+.thumb-grid .hwp-bible-translation-divider span{
+ display:block;
+ text-align:left;
+ color:inherit;
+ background:transparent;
+ font:800 12px/1.4 system-ui,-apple-system,sans-serif;
+ letter-spacing:.105em;
+ text-transform:uppercase;
+}
+.hwp-bible-presentation-settings{
+ display:grid;
+ gap:11px;
+ padding:15px;
+ margin:12px 0;
+ border:1px solid var(--border,#576275);
+ border-radius:12px;
+}
+.hwp-bible-presentation-settings h4{margin:0}
+.hwp-bible-presentation-settings .tag-chip{justify-self:start;font-style:normal}
