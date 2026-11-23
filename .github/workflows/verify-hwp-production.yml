@@ -63,7 +63,7 @@ jobs:
                 "$domain/hwp-access.css?hwp_release=$GITHUB_SHA" -o "$RUNNER_TEMP/hwp-access.css" \
               && curl --fail --silent --show-error --location --max-time 20 -H "Cache-Control: no-cache" \
                 "$domain/hwp-logo.png?hwp_release=$GITHUB_SHA" -o "$RUNNER_TEMP/hwp-logo.png" \
-              && grep -Fq 'name="hwp-release" content="hwp-stage-media-controls-v1"' "$RUNNER_TEMP/hwp-home.html" \
+              && grep -Fq 'name="hwp-release" content="hwp-stage-media-controls-v2"' "$RUNNER_TEMP/hwp-home.html" \
               && grep -Fq 'function HwpAccessGate' "$RUNNER_TEMP/hwp-home.html" \
                             && grep -Fq 'function HwpBibleInlineTranslationPicker' "$RUNNER_TEMP/hwp-home.html" \
               && grep -Fq 'Number of Bible translations' "$RUNNER_TEMP/hwp-home.html" \

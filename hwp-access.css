@@ -1622,3 +1622,7 @@
 
 .hwp-cloud-indicator:is(button) {appearance:none;background:transparent;border:0;color:inherit;cursor:pointer;font:inherit;padding:3px 6px;border-radius:5px}
 .hwp-cloud-indicator:is(button):hover,.hwp-cloud-indicator:is(button):focus-visible {outline:1px solid currentColor;outline-offset:1px}
+
+/* Keep Send to folders reachable near the viewport edge. */
+.hwp-media-context.near-right .hwp-media-submenu {left:auto;right:100%;}
+.hwp-media-context.narrow .hwp-media-submenu {left:auto;right:0;top:auto;bottom:100%;max-width:min(190px,80vw);}
