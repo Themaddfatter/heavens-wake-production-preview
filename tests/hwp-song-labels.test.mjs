@@ -61,3 +61,24 @@ test('Other HWP label categories still use local workspace edits',()=>{
  assert.match(editor,/else if\(existing\?\.categoryId==="songs"\)/);
  assert.match(editor,/const updated=\{\.\.\.\(existing\|\|\{\}\)/);
 });
+
+test('manually colored legacy Spanish labels are preserved without preventing a pale reset',()=>{
+ const english={id:'verse-en',categoryId:'songs',name:'Verse 1',color:'#305070'};
+ const spanish={id:'verse-es',pairedLabelId:'verse-en',categoryId:'songs',name:'Verso 1',language:'es',color:'#ff9900'};
+ const kept=context.hwpPairSongLabels([english,spanish]);
+ assert.equal(kept.find(x=>x.id==='verse-en').spanishColor,'#ff9900');
+ assert.equal(kept.find(x=>x.id==='verse-es').color,'#ff9900');
+ const reset=context.hwpPairSongLabels([{...english,spanishColor:''},spanish]);
+ assert.equal(reset.find(x=>x.id==='verse-es').color,context.hwpPaleSongColor(english.color));
+ const custom=context.hwpPairSongLabels([{...english,spanishColor:'#2244dd'},spanish]);
+ assert.equal(custom.find(x=>x.id==='verse-es').color,'#2244dd');
+});
+test('Spanish color can be changed directly on the paired label row and saved in the shared HWW catalog',()=>{
+ const editor=html.slice(html.indexOf('function HwpPairedLabelsEditor({items})'),html.indexOf('function Ji({kind,items})'));
+ assert.ok(editor.includes('function changeSpanishColor(label,color)'));
+ assert.ok(editor.includes('spanishColor:color'));
+ assert.ok(editor.includes('onChange:event=>void changeSpanishColor(item,event.target.value)'));
+ assert.ok(editor.includes('title:"Choose a separate color for this Spanish label"'));
+ assert.ok(editor.includes('value:draft.spanishColor||hwpPaleSongColor(draft.color)'));
+ assert.ok(editor.includes('onClick:()=>setDraft(x=>({...x,spanishColor:""}))'));
+});
