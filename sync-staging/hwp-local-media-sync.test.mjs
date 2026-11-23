@@ -10,7 +10,7 @@ class FakeFile {
   constructor() { this.data = null; }
   async getFile() {
     if (!this.data) throw new DOMException('No file', 'NotFoundError');
-    return this.data;
+    return new Blob([this.data]); // OPFS File can report no useful MIME type
   }
   async createWritable() {
     let staged = null;
@@ -57,6 +57,7 @@ test('downloads a cloud video to a local OPFS file, then skips identical revisio
   assert.deepEqual(await client.readiness([ID]), { ready: true, missing: [], checked: 1 });
   const media = await client.playback(ID);
   assert.ok(media.url.startsWith('blob:'));
+  assert.equal(media.file.type, 'video/mp4', 'local playback must preserve video type');
   media.release();
   version = 'cloud-revision-2';
   await client.runSync();
