@@ -570,7 +570,7 @@ function HwpSongLanguageSeparator(){
   (0,M.jsx)("span",{className:"hwp-song-language-en",children:"ENGLISH"}),
   (0,M.jsx)("svg",{viewBox:"0 0 1000 108",preserveAspectRatio:"none","aria-hidden":true,
    children:(0,M.jsx)("line",{x1:0,y1:15,x2:1000,y2:93})}),
-  (0,M.jsx)("span",{className:"hwp-song-language-es",children:"ESPAÑOL"})
+  (0,M.jsx)("span",{className:"hwp-song-language-es",children:"SPANISH · ESPAÑOL"})
  ]});
 }
 function Wi({cue:e,cues:t,onMenu:n,onLabel:r,onTake}){let{state:i,dispatch:a}=N(),o=i.doc.presentations.find(t=>t.id===e.presentationId),s=o.id===`pres_background`?i.live.backgroundSlideId===e.slide.id:Hi(t,e,i.live),c=pe(e.slide),l=i.doc.labels.find(t=>t.name.toLowerCase()===e.group.name.toLowerCase())?.color??e.group.color,u=(e.slide.tags??[]).map(e=>i.doc.tags.find(t=>t.id===e)).filter(e=>!!e);return(0,M.jsxs)(M.Fragment,{children:[
@@ -959,9 +959,8 @@ function HwpPairedLabelsEditor({items}){
  }
  function discard(){setEditing(null);setAdding(false);setError("")}
  function apply(){
-  const en=draft.name.trim(),es=draft.nameEs.trim(),category=draft.categoryId;
+  const en=draft.name.trim(),es=draft.nameEs.trim()||hwpSpanishSongLabel(draft.name.trim()),category=draft.categoryId;
   if(!en){setError("Enter the English label name.");return}
-  if(category==="songs"&&!es){setError("Enter its Spanish counterpart.");return}
   const id=editing==="new"?"labels_"+w().replace(/[^a-zA-Z0-9_-]/g,""):editing;
   if(items.some(item=>item.id!==id&&item.id!==id+"_es"&&item.language!=="es"&&item.name.toLowerCase()===en.toLowerCase())){
    setError("A label with that English name already exists.");return;
@@ -1017,7 +1016,7 @@ function HwpPairedLabelsEditor({items}){
  const editor=(0,M.jsxs)("div",{className:"hwp-linked-label-form",children:[
   (0,M.jsxs)("div",{className:"hwp-linked-label-form-fields",children:[
    (0,M.jsxs)("label",{children:[(0,M.jsx)("span",{children:"English label"}),(0,M.jsx)("input",{type:"text",maxLength:100,value:draft.name,onChange:e=>setDraft(x=>({...x,name:e.target.value}))})]}),
-   draft.categoryId==="songs"&&(0,M.jsxs)("label",{children:[(0,M.jsx)("span",{children:"Spanish label"}),(0,M.jsx)("input",{type:"text",maxLength:100,value:draft.nameEs,onChange:e=>setDraft(x=>({...x,nameEs:e.target.value}))})]}),
+   draft.categoryId==="songs"&&(0,M.jsxs)("label",{children:[(0,M.jsx)("span",{children:"Spanish label"}),(0,M.jsx)("input",{type:"text",maxLength:100,value:draft.nameEs,placeholder:"Auto-generated if blank",onChange:e=>setDraft(x=>({...x,nameEs:e.target.value}))})]}),
    (0,M.jsxs)("label",{className:"hwp-linked-color-picker",children:[(0,M.jsx)("span",{children:"English color"}),(0,M.jsx)("input",{type:"color",value:draft.color,onChange:e=>setDraft(x=>({...x,color:e.target.value}))})]}),
    draft.categoryId==="songs"&&(0,M.jsxs)("div",{className:"hwp-linked-color-preview",children:[
     (0,M.jsx)("span",{children:"Spanish color"}),
