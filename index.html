@@ -1484,10 +1484,10 @@ function HwpLabelCategoryManager(){
   ]}),
   (0,M.jsx)("div",{className:"hwp-label-categories-list",children:categories.map(cat=>(0,M.jsxs)("div",{className:"hwp-label-category-item",children:[
     (0,M.jsx)("span",{className:"hwp-label-category-dot",style:{background:({standard:"#8190a1",songs:"#4379b8",scripture:"#ad8b4a",photo:"#638eae",video:"#916cb7"})[cat.id]||"#478c87"},"aria-hidden":"true"}),
-    (0,M.jsx)("input",{type:"text",value:editing[cat.id]??cat.name,disabled:cat.id==="standard",spellCheck:false,maxLength:60,"aria-label":"Category "+cat.name,
+    (0,M.jsx)("input",{type:"text",value:editing[cat.id]??cat.name,disabled:cat.id==="standard"||cat.id==="songs",spellCheck:false,maxLength:60,"aria-label":"Category "+cat.name,
      onChange:e=>setEditing(v=>({...v,[cat.id]:e.target.value})),onBlur:()=>rename(cat),onKeyDown:e=>{if(e.key==="Enter"){e.preventDefault();e.currentTarget.blur()}else if(e.key==="Escape"){setEditing(v=>{const next={...v};delete next[cat.id];return next});e.currentTarget.blur()}}}),
     (0,M.jsx)("span",{className:"hwp-label-category-count",children:count(cat.id)+" "+(count(cat.id)===1?"label":"labels")}),
-    cat.id==="standard"?(0,M.jsx)("span",{className:"hwp-label-standard-pill",children:"Default"}):
+    (cat.id==="standard"||cat.id==="songs")?(0,M.jsx)("span",{className:"hwp-label-standard-pill",children:cat.id==="songs"?"Synced":"Default"}):
       (0,M.jsx)("button",{type:"button",className:"hwp-label-category-delete",title:"Delete "+cat.name,"aria-label":"Delete "+cat.name,
        onClick:()=>{if(window.confirm("Delete "+cat.name+"? Its labels will move to Standard."))commit(categories.filter(c=>c.id!==cat.id),state.doc.labels.map(x=>(x.categoryId||hwpCategoryForLabel(x.name))===cat.id?{...x,categoryId:"standard"}:x))},children:trash})
   ]},cat.id))}),
