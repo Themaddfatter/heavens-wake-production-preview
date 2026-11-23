@@ -1316,3 +1316,63 @@
  opacity:1!important;
  cursor:pointer;
 }
+
+
+/* Synchronized Song labels: keep numbered family members and language pairs together. */
+.settings-pane .hwp-linked-label-families{gap:13px}
+.settings-pane .hwp-linked-label-family{
+ min-width:0;
+ overflow:hidden;
+ border:1px solid var(--line);
+ border-radius:11px;
+ background:var(--field);
+}
+.settings-pane .hwp-linked-label-family-head{
+ display:flex;
+ align-items:center;
+ justify-content:space-between;
+ gap:10px;
+ padding:9px 13px;
+ border-bottom:1px solid var(--line);
+}
+.settings-pane .hwp-linked-label-family-head strong{font-size:13px;font-weight:750;overflow-wrap:anywhere}
+.settings-pane .hwp-linked-label-family-actions{display:inline-flex;gap:5px;align-items:center;flex:none}
+.settings-pane .hwp-linked-label-family-actions .btn{
+ min-height:29px;
+ min-width:31px;
+ padding:4px 7px;
+ border-radius:7px;
+ font-size:14px;
+ line-height:1;
+}
+.settings-pane .hwp-linked-label-family-actions .btn:disabled{opacity:.4;cursor:default}
+.settings-pane .hwp-linked-label-family-row{
+ display:flex;
+ align-items:center;
+ gap:5px;
+ padding:0 10px;
+ min-width:0;
+ border-bottom:1px solid var(--line);
+}
+.settings-pane .hwp-linked-label-family-row:last-child{border-bottom:0}
+.settings-pane .hwp-linked-label-family-row>.hwp-linked-label-row,
+.settings-pane .hwp-linked-label-family-row>.hwp-linked-label-edit-row{
+ flex:1;
+ min-width:0;
+ margin:5px 0;
+}
+.settings-pane .hwp-linked-color-preview{display:flex;flex-direction:column;align-items:start;gap:8px}
+.settings-pane .hwp-linked-color-preview label{display:flex;flex-direction:column;gap:7px}
+.settings-pane .hwp-linked-color-preview label>span{font-size:12px;font-weight:650}
+.settings-pane .hwp-linked-color-preview>.btn{
+ min-height:27px;
+ padding:5px 8px;
+ font-size:11px;
+ font-weight:650;
+}
+@media(max-width:600px){
+ .settings-pane .hwp-linked-label-family-row{flex-wrap:wrap;gap:2px}
+ .settings-pane .hwp-linked-label-family-row>.hwp-linked-label-row,
+ .settings-pane .hwp-linked-label-family-row>.hwp-linked-label-edit-row{flex-basis:100%}
+ .settings-pane .hwp-linked-label-family-row>.hwp-linked-label-family-actions{margin-left:auto;margin-bottom:7px}
+}
