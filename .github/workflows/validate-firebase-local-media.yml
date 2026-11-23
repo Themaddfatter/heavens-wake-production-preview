@@ -1,0 +1,30 @@
+name: Validate HWP Firebase local media synchronization
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'sync-staging/**'
+      - 'index.html'
+      - '.github/workflows/validate-firebase-local-media.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  test-local-media:
+    if: github.event_name == 'workflow_dispatch' || github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: [self-hosted, hwp-wsl]
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify local playback, no overwrite, Firebase priority and legacy fallback
+        run: node --test sync-staging/hwp-local-media-sync.test.mjs sync-staging/hwp-cloud-media.test.mjs
+      - name: Verify connector scripts and one-time Firebase browser bootstrap
+        run: |
+          node --check sync-staging/hwp-auth.mjs
+          node --check sync-staging/hwp-sync-client.mjs
+          node --check sync-staging/hwp-firebase-media-remote.mjs
+          node --check sync-staging/hwp-local-media-sync.mjs
+          node -e "const fs=require('fs');const h=fs.readFileSync('index.html','utf8');if(!h.includes('hwp-firebase-media-remote.mjs')||!h.includes('hwp-local-media-sync.mjs')||!h.includes('cloudMedia:{remote,local}'))process.exit(1)"
