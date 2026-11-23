@@ -1204,6 +1204,7 @@ function HwpCloudAgent({getLatest}){
      ready.current=true;
      emit("connected");
      void hwpBackfillExistingWorshipSongs();
+     void hwpBackfillPublishedServices();
      void run.current();
     }else{emit("offline")}
    }catch(e){
@@ -1230,7 +1231,7 @@ function HwpCloudAgent({getLatest}){
    stop=system.auth.observe(user=>{
     if(!alive)return;
     if(!user){
-     hwpWorshipBackfillComplete=false;hwpWorshipBackfillRetryAt=0;
+     hwpWorshipBackfillComplete=false;hwpWorshipBackfillRetryAt=0;hwpServiceBackfillDone=false;hwpServiceBackfillRetryAt=0;
      ready.current=false;paused.current=false;signature.current=null;
      window.hwpExpectedSharedDoc=null;emit("signed-out");return;
     }
@@ -1329,6 +1330,21 @@ async function hwpBackfillExistingWorshipSongs(){
   hwpWorshipBackfillRetryAt=Date.now()+60000;
   console.warn("HWW song library backfill will retry:",error?.code||error?.message||"unknown");
  }finally{hwpWorshipBackfillActive=false}
+}
+let hwpServiceBackfillDone=false,hwpServiceBackfillActive=false,hwpServiceBackfillRetryAt=0;
+async function hwpBackfillPublishedServices(){
+ if(hwpServiceBackfillDone||hwpServiceBackfillActive||Date.now()<hwpServiceBackfillRetryAt)return;
+ hwpServiceBackfillActive=true;
+ try{
+  const system=await hwpCloudBoot();
+  const result=await system.auth.workspace({action:"backfillServices"});
+  if(result?.complete){hwpServiceBackfillRetryAt=Date.now()+60000;return}
+  hwpServiceBackfillRetryAt=Date.now()+(result?.pending?30000:5000);
+  if(result?.serviceId)window.dispatchEvent(new Event("hwp-cloud-reload"));
+ }catch(error){
+  hwpServiceBackfillRetryAt=Date.now()+60000;
+  console.warn("Published service sync will retry:",error?.code||"unavailable");
+ }finally{hwpServiceBackfillActive=false}
 }
 function HwpCloudIndicator(){const [value,setValue]=(0,l.useState)(()=>window.hwpCloudLastStatus||`signed-out`);(0,l.useEffect)(()=>{const handler=e=>setValue(e.detail);window.addEventListener(`hwp-cloud-status`,handler);return()=>window.removeEventListener(`hwp-cloud-status`,handler)},[]);const labels={connected:`Saved`,syncing:`Saving`,offline:`Offline`,error:`Sync issue`,conflict:`Sync paused`,attention:`Check sync`,setup:`Set up sync`,"signed-out":`Local only`};return (0,M.jsx)(`span`,{className:`hwp-cloud-indicator`,role:`status`,title:`Shared storage: ${labels[value]||`Local only`}`,children:labels[value]||`Local only`})}
 function HwpCloudSettings(){
