@@ -1,4 +1,4 @@
-import {migrateLocalLibrary,recoverMissingLocalMedia} from './sync-core.mjs';
+import {migrateLocalLibrary,recoverMissingLocalMedia} from './sync-core.mjs?v=hwp-media-deletion-safety-v1';
 // Explicit initialization prevents a second device's sample library from replacing cloud data.
 export function createHwpController({client, readLocalMedia}) {
  if(!client||typeof readLocalMedia!=='function')throw new TypeError('Sync adapters are required');

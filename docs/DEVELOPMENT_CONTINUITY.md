@@ -169,3 +169,5 @@ Requests below are **not** asserted to be broken in the latest release; compare 
 - When another device advances the cloud while this device has pending unsaved edits, the client pauses rather than replacing local changes. Cloud READs cannot falsely mark a pending upload as Saved.
 - On Firebase Storage upload authorization errors, diagnostic details include email-verification state when available. An unverified sign-in is refreshed once before upload; no access checks or Storage rules are bypassed.
 - Verified release marker: `hwp-media-deletion-safety-v1`. Run source and emulator-free regression tests, then verify the production deployment. Authenticated Firebase upload success still requires real-account testing; a static page test cannot confirm it.
+
+- Cache note: dynamic HWP sync module imports and the controller's `sync-core` dependency use the v1 release query string to bypass stale GitHub Pages browser caching. Production release verification now checks those live module bodies as well as the HTML/stylesheet marker.

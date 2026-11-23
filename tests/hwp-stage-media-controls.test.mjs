@@ -135,3 +135,8 @@ test('deleted media stays deleted and stale backups cannot auto-resurrect images
  assert.ok(agent.includes('else emit("syncing");'));
  assert.ok(html.includes('name="hwp-release" content="hwp-media-deletion-safety-v1"'));
 });
+
+test('production dynamically loads versioned media-safety modules',()=>{
+ for(const name of ['hwp-sync-client','hwp-sync-controller','hwp-firebase-media-remote'])
+  assert.ok(html.includes("import('./sync-staging/"+name+".mjs?v=hwp-media-deletion-safety-v1')"),name);
+});

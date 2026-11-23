@@ -82,6 +82,12 @@ jobs:
               && grep -Fq 'hwp-scripture-translation-divider' "$RUNNER_TEMP/hwp-access.css" \
               && grep -Fq 'deletedMediaIds:' "$RUNNER_TEMP/hwp-home.html" \
               && grep -Fq 'engine.current.recoverMedia(remote.workspace,[currentDoc],remote.revision)' "$RUNNER_TEMP/hwp-home.html" \
+              && curl --fail --silent --show-error --location --max-time 20 -H "Cache-Control: no-cache" \
+                "$domain/sync-staging/sync-core.mjs?hwp_release=$GITHUB_SHA" -o "$RUNNER_TEMP/hwp-sync-core.mjs" \
+              && curl --fail --silent --show-error --location --max-time 20 -H "Cache-Control: no-cache" \
+                "$domain/sync-staging/hwp-firebase-media-remote.mjs?hwp_release=$GITHUB_SHA" -o "$RUNNER_TEMP/hwp-firebase-media-remote.mjs" \
+              && grep -Fq 'const deletedIds = new Set(' "$RUNNER_TEMP/hwp-sync-core.mjs" \
+              && grep -Fq 'user.emailVerified===false' "$RUNNER_TEMP/hwp-firebase-media-remote.mjs" \
               && grep -Fq 'function HwpCloudIndicator' "$RUNNER_TEMP/hwp-home.html" \
               && grep -Fq 'hwp-cloud-panel-backdrop' "$RUNNER_TEMP/hwp-access.css" \
               && grep -Fq 'function HwpStageMessageComposer' "$RUNNER_TEMP/hwp-home.html" \
