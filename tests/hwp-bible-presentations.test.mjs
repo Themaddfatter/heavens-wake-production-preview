@@ -112,7 +112,9 @@ test("ordinary Bible screen has directly usable multi-translation selection",()=
  assert.ok(html.includes('"Number of Bible translations"'));
  assert.ok(html.includes('"Bible translation "+(index+1)'));
  assert.ok(html.includes('onCreate:versions=>y(versions)'));
- assert.ok(html.includes('children:"More translation choices"'));
+ assert.equal(html.includes('children:"More translation choices"'),false);
+ assert.equal(html.includes("Click a verse, then shift-click to extend the range."),false);
+ assert.equal(html.includes("Choose up to four translations. Each will be grouped on separate slides with its own heading and abbreviation tag."),false);
  const available=[{id:"KJV"},{id:"ESV"},{id:"NIV"},{id:"RVR1960"}];
  const chosen=vm.hwpBibleChosenTranslations(available,["ESV","ESV","NIV","RVR1960"],4);
  assert.deepEqual(Array.from(chosen),["ESV","KJV","NIV","RVR1960"]);
