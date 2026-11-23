@@ -64,6 +64,8 @@ jobs:
               && curl --fail --silent --show-error --location --max-time 20 -H "Cache-Control: no-cache" \
                 "$domain/hwp-logo.png?hwp_release=$GITHUB_SHA" -o "$RUNNER_TEMP/hwp-logo.png" \
               && grep -Fq 'name="hwp-release" content="hwp-media-deletion-safety-v1"' "$RUNNER_TEMP/hwp-home.html" \
+              && grep -Fq '+ Create Template' "$RUNNER_TEMP/hwp-home.html" \
+              && grep -Fq 'hwpPresentationView' "$RUNNER_TEMP/hwp-home.html" \
               && grep -Fq 'function HwpAccessGate' "$RUNNER_TEMP/hwp-home.html" \
                             && grep -Fq 'function HwpBibleInlineTranslationPicker' "$RUNNER_TEMP/hwp-home.html" \
               && grep -Fq 'Number of Bible translations' "$RUNNER_TEMP/hwp-home.html" \

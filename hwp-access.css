@@ -1640,3 +1640,6 @@
 .hwp-cloud-panel-actions .btn{cursor:pointer}
 .hwp-cloud-panel-footnote{color:var(--dim,#64748b);font-size:12px;margin:10px 0 0}
 @media(max-width:520px){.hwp-cloud-panel-backdrop{padding:62px 10px 12px}.hwp-cloud-panel{width:100%;max-height:calc(100vh - 75px)}}
+
+/* HWP operator workflow update */
+.service-presentation.hwp-medley-start,.service-presentation.hwp-medley-middle,.service-presentation.hwp-medley-end,.all-service-presentation.hwp-medley-start,.all-service-presentation.hwp-medley-middle,.all-service-presentation.hwp-medley-end{border-left:2px solid #43e38a!important;border-right:2px solid #43e38a!important;box-shadow:0 0 8px #43e38555!important;margin-top:0!important;margin-bottom:0!important}.hwp-medley-start{border-top:2px solid #43e38a!important;border-radius:6px 6px 0 0!important}.hwp-medley-end{border-bottom:2px solid #43e38a!important;border-radius:0 0 6px 6px!important}.hwp-medley-middle{border-radius:0!important}.slides-head .seg button.active{background:var(--amber)!important;color:#111!important}.hwp-choice .hwp-media-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:8px}
