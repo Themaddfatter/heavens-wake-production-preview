@@ -119,7 +119,7 @@ test('Sync issue opens diagnostic details and a working retry action',()=>{
  assert.ok(html.includes('window.hwpCloudLastError=detail;'));
  assert.ok(html.includes('emit("syncing");if(!engine.current)bootCloud();else void load()'));
  assert.ok(css.includes('.hwp-cloud-panel-backdrop'));
- assert.ok(html.includes('name="hwp-release" content="hwp-cloud-sync-details-v1"'));
+ assert.ok(html.includes('name="hwp-release" content="hwp-media-deletion-safety-v1"'));
 });
 
 test('deleted media stays deleted and stale backups cannot auto-resurrect images',()=>{
