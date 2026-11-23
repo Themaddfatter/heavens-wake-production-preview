@@ -903,6 +903,26 @@ function HwpCloudAgent({getLatest}){
     const localRevision=await g("hwpCloudRevision");
     const remote=await engine.current.inspect();
     if(!alive||paused.current)return;
+    // Recover media held in this browser or a previous local safety copy
+    // BEFORE replacing the local presentation library with a cloud revision.
+    if(remote.revision>0 && remote.workspace){
+      const previousLocalBackup=await g("hwpLocalLibraryBackup").catch(()=>null);
+      const localSources=[getLatest().doc,previousLocalBackup?.doc].filter(Boolean);
+      if(localSources.some(doc=>Array.isArray(doc.media)&&
+         doc.media.some(item=>typeof item.src==="string"&&item.src.startsWith("idb:")))){
+        const recovered=await engine.current.recoverMedia(remote.workspace,localSources,remote.revision);
+        if(recovered.recovered>0){
+          window.hwpCloudMediaRecovered=(window.hwpCloudMediaRecovered||0)+recovered.recovered;
+          emit("syncing");
+          window.setTimeout(()=>{if(alive)void refresh.current()},200);
+          return;
+        }
+        if(recovered.unavailable>0){
+          window.hwpCloudMediaUnavailable=recovered.unavailable;
+          console.warn("Some old local HWP uploads are missing from this browser. Local backup preserved.");
+        }
+      }
+    }
     if(remote.revision===0){
      // Create the shared workspace on first authorized sign-in; no setup button needed.
      emit("syncing");
