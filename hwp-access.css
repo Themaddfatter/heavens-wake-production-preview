@@ -1026,3 +1026,25 @@
 .hwp-translation-options .btn{display:flex;flex-wrap:wrap;align-items:center;gap:5px;justify-content:space-between;min-width:0;text-align:left}
 .hwp-translation-options .btn span{font-size:11px;opacity:.78}
 @media(max-width:580px){.hwp-translation-options{grid-template-columns:1fr}}
+
+/* Reserve compact drop targets even before dragging, so dragging never changes
+   row heights or pushes neighboring presentations away from the pointer. */
+.service-list .service-standalone-drop,
+.service-list .service-standalone-drop.dragging,
+.service-list .service-standalone-drop.dragging.over{
+ height:8px!important;min-height:8px!important;margin:1px 0!important;
+ padding:0!important;border:0!important;box-sizing:border-box!important;
+}
+.service-list .service-header-drop,
+.service-list .service-header-drop.dragging,
+.service-list .service-header-drop.dragging.over{
+ height:8px!important;min-height:8px!important;margin:1px 0 1px 15px!important;
+ width:calc(100% - 15px)!important;padding:0!important;border:0!important;
+ box-sizing:border-box!important;
+}
+.service-list .outside-drop-zone,
+.service-list .outside-drop-zone.dragging,
+.service-list .outside-drop-zone.outside-after.dragging{
+ height:9px!important;min-height:9px!important;margin:0!important;
+ border:0!important;box-sizing:border-box!important;
+}
