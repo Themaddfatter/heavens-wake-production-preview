@@ -742,3 +742,56 @@
 :root[data-hwp-appearance="light"] .templates-panel .template-card{background:#f9fbfe}
 .logical-root video.fill-abs,.hwp-media-background video.fill-abs,.hwp-stage-sidebar video.fill-abs{display:block;position:absolute;inset:0;width:100%;height:100%;max-width:100%;max-height:100%}
 @media(max-width:550px){.templates-panel{padding:10px;max-height:calc(100dvh - 100px)}.templates-panel .template-card{grid-template-columns:minmax(86px,35%) minmax(0,1fr)}}
+
+
+/* Bilingual HWW song presentation language separation: operator thumbnails only. */
+.thumb-cell[data-hwp-song-lang] {
+  position: relative;
+}
+.thumb-cell[data-hwp-song-start="en"]::before,
+.thumb-cell[data-hwp-song-start="es"]::before {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 29px;
+  padding: 5px 8px;
+  margin-bottom: 6px;
+  border-radius: 6px;
+  font: 700 11px/1.35 system-ui, sans-serif;
+  letter-spacing: .085em;
+  grid-column: 1 / -1;
+  text-transform: uppercase;
+}
+.thumb-cell[data-hwp-song-start="en"]::before {
+  content: "ENGLISH SLIDES";
+  color: #e8f2ff;
+  background: #194a79;
+  border: 1px solid #477faf;
+}
+.thumb-cell[data-hwp-song-start="es"]::before {
+  content: "DIAPOSITIVAS EN ESPAÑOL";
+  color: #23375b;
+  background: #d9e8fa;
+  border: 1px solid #98b9df;
+}
+.thumb-cell[data-hwp-song-start="es"] {
+  padding-top: 13px;
+  border-top: 2px solid #97b8e2;
+}
+.thumb-cell[data-hwp-song-lang="es"] .thumb-label {
+  outline: 1px solid rgba(114,148,191,.64);
+  outline-offset: -1px;
+}
+.thumb-cell[data-hwp-song-lang="en"] .thumb-label::after,
+.thumb-cell[data-hwp-song-lang="es"] .thumb-label::after {
+  display: inline-block;
+  flex-shrink: 0;
+  font: 700 10px/1.2 system-ui, sans-serif;
+  letter-spacing: .05em;
+  border-radius: 4px;
+  padding: 2px 5px;
+}
+.thumb-cell[data-hwp-song-lang="en"] .thumb-label::after {content: "EN";background: #18446f;color:#fff}
+.thumb-cell[data-hwp-song-lang="es"] .thumb-label::after {content: "ES";background: #f2f7ff;color:#24395d}
