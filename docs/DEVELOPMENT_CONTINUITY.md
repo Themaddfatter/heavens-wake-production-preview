@@ -106,3 +106,14 @@ Requests below are **not** asserted to be broken in the latest release; compare 
 ## 2026-11-22 — Labels plus button, scripture panel, center service headers
 - Updated `index.html` and `hwp-access.css`: Settings > Labels add action uses a bounded icon-only `+` control with an accessible name; Tags retains its Add text. Reused the existing live Scripture form inside the right Preview pane below a dividing rule; removed its old bottom-center instance. Kept the translation lookup, Send live, and Add to service handlers unchanged. Center service header bands now match the left-pane border, centered text, decorative tildes, and saved background/text colors, extending across the center column.
 - Validation before commit: all nonempty inline JavaScript blocks compile, the Scripture component occurs exactly once in Show mode, and changes are scoped to UI presentation. Deployment and authenticated-browser verification pending after commit.
+
+
+## 2026-11-22 — Bible translation separators, abbreviation tags and controls (FEATURE BRANCH — NOT LIVE)
+- Branch: `feature/bible-translation-tags-dividers-20261122`.
+- Preserved normal Bible > Create presentation and right-click menus for choosing one through four distinct translations; each translation gets its own slides, respects the Bible page's verses-per-slide choice, produces one presentation in Sermon, and uses `MUL` for multiple translations.
+- In the operator slide grid, a full-width straight-line divider now appears before each translation section, with the abbreviation and full translation name (or either alone, based on settings). It is never an audience/projection slide.
+- Each imported Scripture slide gets a persistent global tag named for its own translation abbreviation, not a tag inserted into the slide text. Defaults are white background (`#ffffff`) and black text (`#000000`). The tag is created once per translation and reused.
+- Settings > Bible now controls divider visibility, title format, line/text colors, thumbnail tag visibility, and tag background/text colors. The settings color changes update existing auto-generated translation tags. Tags stay attached if their thumbnail display is hidden.
+- Changing an existing slide's translation through the existing translation action now removes the old generated Bible translation tag and attaches the correct new one.
+- No cloud APIs, license keys, Bible translations or song synchronization were altered. Static source checks validated 12 expected invariants; runtime/browser checks and full JavaScript compilation remain unverified.
+- **Not deployed:** Only the feature branch was pushed. No GitHub workflow was dispatched, no pull request was opened, and production `main` was not changed. The HWP production workflow runs on `main` updates and uses a self-hosted PC runner; merge/deployment requires safe readiness confirmation.
