@@ -71,9 +71,9 @@ jobs:
               && grep -Fq '.bible-side .hwp-bible-inline-versions' "$RUNNER_TEMP/hwp-access.css" \
                             && grep -Fq 'function hwpServiceCreateMedley' "$RUNNER_TEMP/hwp-home.html" \
               && grep -Fq 'hwpServiceMedleyTitle(item,presentation,pl?.items)' "$RUNNER_TEMP/hwp-home.html" \
-              && grep -Fq 'hwpServiceZone(item)' "$RUNNER_TEMP/hwp-home.html"
-              && grep -Fq 'function hwpSongLabelGroups' "$RUNNER_TEMP/hwp-home.html"
-              && grep -Fq 'async function saveSongLabel(input)' "$RUNNER_TEMP/hwp-home.html"
+              && grep -Fq 'hwpServiceZone(item)' "$RUNNER_TEMP/hwp-home.html" \
+              && grep -Fq 'function hwpSongLabelGroups' "$RUNNER_TEMP/hwp-home.html" \
+              && grep -Fq 'async function saveSongLabel(input)' "$RUNNER_TEMP/hwp-home.html" \
               && grep -Fq 'action:"saveSongLabel"' "$RUNNER_TEMP/hwp-home.html" \
               && grep -Fq '.service-presentation.service-medley-child' "$RUNNER_TEMP/hwp-access.css" \
               && grep -Fq '.all-service-presentation.service-medley-child > h3.all-pres-bar' "$RUNNER_TEMP/hwp-access.css" \
