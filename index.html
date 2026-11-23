@@ -1338,7 +1338,7 @@ async function hwpBackfillPublishedServices(){
  try{
   const system=await hwpCloudBoot();
   const result=await system.auth.workspace({action:"backfillServices"});
-  if(result?.complete){hwpServiceBackfillDone=true;return}
+  if(result?.complete){hwpServiceBackfillRetryAt=Date.now()+60000;return}
   hwpServiceBackfillRetryAt=Date.now()+(result?.pending?30000:5000);
   if(result?.serviceId)window.dispatchEvent(new Event("hwp-cloud-reload"));
  }catch(error){
