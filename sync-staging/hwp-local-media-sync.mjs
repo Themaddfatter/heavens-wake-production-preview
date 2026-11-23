@@ -119,5 +119,20 @@ export function createHwpLocalMediaSync({
     for (const id of ids) if (!await localEntry(id)) missing.push(id);
     return { ready: missing.length === 0, missing, checked: ids.length };
   }
-  return { runSync, playback, readiness, localEntry, index };
+  // An online check can distinguish locally playable media from current media.
+  // If the cloud cannot be reached, callers should show an offline warning and
+  // may separately use readiness() to confirm what is physically on the disk.
+  async function readinessAgainstCloud(ids) {
+    const remote = await listRemote();
+    if (!Array.isArray(remote)) throw new TypeError('Invalid cloud media listing.');
+    const versions = new Map(remote.filter(x => validId(x?.id)).map(x => [x.id, x.version]));
+    const missing = [], outdated = [];
+    for (const id of ids) {
+      const local = await localEntry(id);
+      if (!local) missing.push(id);
+      else if (!versions.has(id) || local.version !== versions.get(id)) outdated.push(id);
+    }
+    return { ready: missing.length === 0 && outdated.length === 0, missing, outdated, checked: ids.length };
+  }
+  return { runSync, playback, readiness, readinessAgainstCloud, localEntry, index };
 }
