@@ -10,3 +10,14 @@ test('starts and stops a capture without retaining the stream token',async()=>{
  globalThis.MediaRecorder=class {static isTypeSupported(){return true}state='inactive';start(){this.state='recording'}stop(){this.state='inactive';this.onstop?.()}};
  let status=[];const session=await startRelayStream({token:'secret',destinations:['rtmp://example.test/live/key'],onStatus:s=>status.push(s)});assert.equal(JSON.parse(sent[0]).token,'secret');assert.deepEqual(status,['Sending to relay']);session.stop();assert.equal(trackStopped,true);assert.equal(status.at(-1),'stopped');
 });
+
+test('a relay disconnect stops capture and reports its reason',async()=>{
+ let stopped=false, socket;
+ const track={stop(){stopped=true}};
+ Object.defineProperty(globalThis,'navigator',{configurable:true,value:{mediaDevices:{getDisplayMedia:async()=>({getTracks:()=>[track],getVideoTracks:()=>[track]})}}});
+ globalThis.WebSocket=class {static OPEN=1;readyState=1;bufferedAmount=0;constructor(){socket=this;queueMicrotask(()=>this.onopen())}send(value){if(typeof value==='string')queueMicrotask(()=>this.onmessage({data:'{"status":"accepting-media"}'}))}close(){this.readyState=3}};
+ globalThis.MediaRecorder=class {static isTypeSupported(){return true}state='inactive';start(){this.state='recording'}stop(){this.state='inactive';this.onstop?.()}};
+ const status=[];await startRelayStream({token:'secret',destinations:['rtmp://example.test/live/key'],onStatus:s=>status.push(s)});
+ socket.readyState=3;socket.onclose({reason:'Relay request failed'});
+ assert.equal(stopped,true);assert.equal(status.at(-1),'Relay request failed');
+});
