@@ -10,9 +10,6 @@ class DestinationTests(unittest.TestCase):
             with self.subTest(value=value), self.assertRaises(ValueError):
                 destination(value)
 
-if __name__ == '__main__':
-    unittest.main()
-
 class AuthenticationTests(unittest.IsolatedAsyncioTestCase):
     async def test_rejects_wrong_origin_and_token(self):
         import json
@@ -51,3 +48,6 @@ class SessionTests(unittest.IsolatedAsyncioTestCase):
                 if not relay.ACTIVE: break
                 await asyncio.sleep(.05)
             self.assertFalse(relay.ACTIVE)
+
+if __name__ == '__main__':
+    unittest.main()
