@@ -1,0 +1,43 @@
+name: Release OBS-style HWP livestream workspace
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/release-obs-docks.yml']
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: hwp-obs-docks-release
+  cancel-in-progress: false
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+      - name: Integrate and validate UI
+        run: |
+          set -euo pipefail
+          node scripts/hwp-obs-docks.mjs
+          node --test tests/hwp-service-medleys.test.mjs tests/hwp-bible-presentations.test.mjs tests/hwp-song-labels.test.mjs tests/hwp-stage-media-controls.test.mjs
+          grep -Fq 'background:#f7b500;color:#17130a' index.html
+          grep -Fq 'function HwpObsDocks' index.html
+          grep -Fq 'hwp-livestream-docks.css?v=1' index.html
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          if ! git diff --cached --quiet; then git commit -m "Release taxi-yellow hotkeys and OBS-style lower livestream docks"; fi
+          git push origin HEAD:main
+      - name: Verify live deployment
+        run: |
+          set -euo pipefail
+          for attempt in $(seq 1 30); do
+            if curl -fsSL --max-time 15 "https://production.sioncdo.com/?obs_release=$(git rev-parse HEAD)" -o /tmp/hwp-obs.html && curl -fsSL --max-time 15 "https://production.sioncdo.com/hwp-livestream-docks.css?v=1" -o /tmp/hwp-obs.css && grep -Fq 'name="hwp-livestream-layout" content="hwp-obs-docks-v1"' /tmp/hwp-obs.html && grep -Fq 'background:#f7b500;color:#17130a' /tmp/hwp-obs.html && grep -Fq '.hwp-obs-dock-title' /tmp/hwp-obs.css; then
+              echo "Verified live hotkey badge and dock layout"; exit 0
+            fi
+            sleep 10
+          done
+          echo "Live deployment not confirmed"; exit 1
