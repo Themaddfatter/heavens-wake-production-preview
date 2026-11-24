@@ -84,6 +84,25 @@
 .hwp-mixer-gain-track .hwp-mixer-scale{width:25px}
 .hwp-mixer-gain-dialog .hwp-mixer-gain-track input.hwp-mixer-fader{width:8px;min-width:8px;min-height:0;height:100%;flex:none;align-self:stretch}
 .hwp-mixer-gain-dialog>p{margin:0;font-size:11px;line-height:1.4}
+</style><style id="hwp-mixer-calibrated-db-v1">
+.hwp-mixer-track{box-sizing:border-box;min-height:220px;padding:10px 0;gap:3px;align-items:stretch}
+.hwp-mixer-track.hwp-mixer-gain-track{min-height:160px;gap:0}
+.hwp-mixer-calibrated{--hwp-fader-cap-height:36px;--hwp-fader-cap-width:30px;position:relative;display:flex;flex:0 1 auto;gap:5px;align-items:stretch;min-width:0;min-height:0}
+.hwp-mixer-calibrated .hwp-mixer-calibrated-scale{position:relative;width:24px;flex:none;min-height:0}
+.hwp-mixer-calibrated-slider{position:relative;width:32px;flex:none;min-height:0}
+.hwp-mixer-calibrated .hwp-mixer-travel{position:absolute;top:calc(var(--hwp-fader-cap-height)/2);bottom:calc(var(--hwp-fader-cap-height)/2);left:0;right:0;pointer-events:none}
+.hwp-mixer-calibrated-scale .hwp-mixer-travel>span{position:absolute;right:0;transform:translateY(-50%);line-height:10px;white-space:nowrap}
+.hwp-mixer-calibrated-scale .hwp-mixer-travel>span::after{content:"";position:absolute;left:calc(100% + 2px);top:50%;width:3px;border-top:1px solid currentColor;opacity:.6}
+.hwp-mixer-calibrated-rail{position:absolute;inset:0 auto 0 50%;transform:translateX(-50%);width:8px;background:var(--line);border-radius:5px}
+.hwp-mixer-calibrated-thumb{position:absolute;left:50%;transform:translate(-50%,-50%);width:var(--hwp-fader-cap-width);height:var(--hwp-fader-cap-height);box-sizing:border-box;border:1px solid #68727c;border-radius:5px;background:linear-gradient(#dce0e6,#9ca5ad 46%,#9ca5ad 54%,#dce0e6 55%,#98a2ad);box-shadow:0 2px 4px #0005}
+.hwp-mixer-calibrated-thumb::after{content:"";position:absolute;top:50%;left:1px;right:1px;height:2px;transform:translateY(-50%);background:#303942}
+.hwp-mixer-track .hwp-mixer-calibrated-slider input.hwp-mixer-calibrated-input,.hwp-mixer-gain-dialog .hwp-mixer-gain-track .hwp-mixer-calibrated-slider input.hwp-mixer-calibrated-input{position:absolute;inset:0;appearance:none;-webkit-appearance:none;writing-mode:vertical-lr;direction:rtl;width:100%;height:100%;min-width:0;min-height:0;max-width:none;box-sizing:border-box;margin:0;padding:0;border:0;opacity:0;cursor:ns-resize;touch-action:none}
+.hwp-mixer-calibrated-input::-webkit-slider-runnable-track{width:100%;height:100%;background:transparent;border:0}
+.hwp-mixer-calibrated-input::-webkit-slider-thumb{box-sizing:border-box;width:var(--hwp-fader-cap-width);height:var(--hwp-fader-cap-height);margin:0}
+.hwp-mixer-calibrated-input::-moz-range-track{width:100%;height:100%;background:transparent;border:0}
+.hwp-mixer-calibrated-input::-moz-range-thumb{box-sizing:border-box;width:var(--hwp-fader-cap-width);height:var(--hwp-fader-cap-height);margin:0}
+.hwp-mixer-calibrated-slider:focus-within .hwp-mixer-calibrated-thumb{outline:2px solid var(--amber);outline-offset:2px}
+.hwp-mixer-track>.hwp-mixer-meter{margin-left:0}
 </style></head><body><script>try{document.documentElement.dataset.hwpAppearance=localStorage.getItem("hwp-appearance")==="light"?"light":"dark"}catch(e){}</script><div id="root"><div id="hwp-boot-placeholder" style="box-sizing:border-box;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;background:#071d16;color:#f3f8f4;font:600 19px Arial,sans-serif;text-align:center"><img src="./hwp-logo.png" alt="Heaven's Wake Production" style="max-width:210px;max-height:130px;object-fit:contain;margin-bottom:24px"><div>Opening Heaven's Wake Production…</div></div></div><script>
 (function(){
  var startupError="";
@@ -3101,6 +3120,18 @@ function hwpMixerInitial(){
  try{const v=JSON.parse(localStorage.getItem('hwp-mixer-layout-v1')||'null');if(v&&v.channels?.length===40&&v.buses?.length===17)return {...v,favorites:Array.isArray(v.favorites)?v.favorites:[]};}catch{}
  return {channels,buses,favorites:[]};
 }
+function hwpMixerDbPosition(value,min,max){return (max-Math.max(min,Math.min(max,Number(value))))/(max-min)*100}
+function hwpMixerCalibratedFader({min,max,step,value,ticks,label,valueText,onChange,formatTick}){
+ const h=hwpMixerNode,pos=v=>hwpMixerDbPosition(v,min,max)+'%';
+ return h('div',{className:'hwp-mixer-calibrated'},
+  h('div',{className:'hwp-mixer-scale hwp-mixer-calibrated-scale','aria-hidden':true},
+   h('div',{className:'hwp-mixer-travel'},...ticks.map(v=>h('span',{key:v,style:{top:pos(v)}},formatTick(v))))),
+  h('div',{className:'hwp-mixer-calibrated-slider'},
+   h('div',{className:'hwp-mixer-travel','aria-hidden':true},
+    h('div',{className:'hwp-mixer-calibrated-rail'}),
+    h('div',{className:'hwp-mixer-calibrated-thumb',style:{top:pos(value)}})),
+   h('input',{type:'range',className:'hwp-mixer-fader hwp-mixer-calibrated-input',min,max,step,value,'aria-label':label,'aria-valuetext':valueText,onChange:e=>onChange(Number(e.target.value)),onDoubleClick:()=>onChange(0)})));
+}
 function HwpSoundMixer({data,setData,mix,setMix}){
  const h=hwpMixerNode, [category,setCategory]=l.useState('All Channels'),[editor,setEditor]=l.useState(null),[cue,setCue]=l.useState([]),[multiple,setMultiple]=l.useState(false),[volume,setVolume]=l.useState(50),[width,setWidth]=l.useState('Standard'),[hex,setHex]=l.useState('');
  const current=data.buses[mix],categories=['All Channels',...new Set([...hwpMixerCategories,...data.channels.map(c=>c.category)])],channels=data.channels.filter(c=>category==='All Channels'||c.category===category);
@@ -3126,8 +3157,7 @@ function HwpSoundMixer({data,setData,mix,setMix}){
     btn(name,()=>master?setEditor({type:'buses'}):openChannel(c.id),'hwp-mixer-name',{title:master?'Monitor settings':'Channel settings: '+name,style:{background:color,color:hwpAccentInk(color),borderColor:color}}),
     btn('CUE',()=>selectCue(id),cue.includes(id)?'cued':'',{'aria-pressed':cue.includes(id),'aria-label':'Cue '+name}),
     h('div',{className:'hwp-mixer-value'},fmt(level)),
-    h('div',{className:'hwp-mixer-track'},h('div',{className:'hwp-mixer-scale'},...[10,0,-10,-20,-40,-60,-80].map(v=>h('span',{key:v,style:{top:(10-v)/90*100+'%'}},v===-80?'−∞':v))),
-    h('input',{type:'range',className:'hwp-mixer-fader',min:-80,max:10,step:.5,value:level,'aria-label':name+' fader','aria-valuetext':fmt(level),onChange:e=>change(Number(e.target.value)),onDoubleClick:()=>change(0)}),
+    h('div',{className:'hwp-mixer-track'},hwpMixerCalibratedFader({min:-80,max:10,step:.5,value:level,ticks:[10,0,-10,-20,-40,-60,-80],label:name+' fader',valueText:fmt(level),onChange:change,formatTick:v=>v===-80?'−∞':v>0?'+'+v:String(v)}),
     h('div',{className:'hwp-mixer-meter',title:'Meter unavailable — mixer disconnected','aria-label':'No live meter signal'})),
     btn(on?'ON':'MUTED',toggle,on?'':'muted',{'aria-label':(on?'Mute ':'Unmute ')+name,'aria-pressed':!on}),
     master?btn('Mix settings',()=>setEditor({type:'buses'})):h('div',{className:'hwp-mixer-channel-tools'},channelTool('Gain',name,()=>setEditor({type:'gain',id:c.id})),channelTool('Edit',name,()=>openChannel(c.id))),
@@ -3154,8 +3184,7 @@ function HwpSoundMixer({data,setData,mix,setMix}){
    return h('div',{className:'hwp-mixer-gain-strip',key},
     h('strong',{},label),h('span',{className:'hwp-mixer-sub'},description),
     h('output',{className:'hwp-mixer-value','aria-live':'off'},display),
-    h('div',{className:'hwp-mixer-track hwp-mixer-gain-track'},h('div',{className:'hwp-mixer-scale','aria-hidden':true},...ticks.map(v=>h('span',{key:v,style:{top:(max-v)/(max-min)*100+'%'}},v>0?'+'+v:String(v)))),
-     h('input',{type:'range',className:'hwp-mixer-fader',min,max,step,value,'aria-label':description+' gain','aria-valuetext':display,onChange:e=>change(Number(e.target.value)),onDoubleClick:()=>change(0)})));
+    h('div',{className:'hwp-mixer-track hwp-mixer-gain-track'},hwpMixerCalibratedFader({min,max,step,value,ticks,label:description+' gain',valueText:display,onChange:change,formatTick:v=>v>0?'+'+v:String(v)})));
   };
   body=[h('div',{className:'hwp-mixer-gain-identity',style:{borderLeftColor:c.color}},(c.id<32?'CH '+String(c.id+1).padStart(2,'0'):'ST '+String(c.id-31).padStart(2,'0'))+' · '+c.name),
    h('div',{className:'hwp-mixer-gain-bank'},c.id<32?gainFader('A.GAIN','Analog input','ag',-6,66,1,[66,48,36,24,12,0,-6]):null,gainFader('D.GAIN','Digital input','dg',-96,24,.5,[24,12,0,-24,-48,-72,-96])),
