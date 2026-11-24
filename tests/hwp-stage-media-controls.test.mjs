@@ -285,7 +285,7 @@ test('Visual camera editor supports source resizing, cropping, and independent s
 });
 test('Visual workspace uses shared live composition and independent object inspector',()=>{
  for(const marker of ['hwp-visual-editor-release','function HwpVisualCameraCanvas','function HwpVisualHandles','function HwpVisualLayoutHandles','function HwpVisualInspector','function HwpVisualCustomOverlay','hwp-visual-columns','onLayerChange:patchLayout','+ Text','+ Shape','+ Media'])includes(marker,marker);
- assert.ok(html.includes('M.jsx(HwpFullscreenButton,{}),(0,M.jsx)(\x60button\x60,{className:\x60iconbtn settings-gear\x60'));
+ assert.ok(html.includes('M.jsx(HwpFullscreenButton,{}),!livestream&&M.jsx(\x60button\x60,{className:F(\x60iconbtn hwp-template-icon\x60'));
  assert.ok(html.includes('document.fullscreenElement)await document.exitFullscreen()'));
  assert.ok(html.includes('HwpFullscreenButton,{}),(0,M.jsx)(\x60button\x60,{onClick:()=>x().postMessage'));
 });
@@ -467,11 +467,33 @@ test('Full stage layout migrates previously hardcoded elements into editable lay
  assert.ok(stage.includes('render:model=>render(model.message)'));
  assert.ok(stage.includes('message?.text'));
  assert.ok(html.includes('gridTemplateRows:`minmax(0,1fr)`,padding:0,gap:0'));
- const editorStart=html.indexOf('function Lr({onClose,selectedSlide=false})');
+ const editorStart=html.indexOf('function Lr({selectedSlide=true})');
  const editor=html.slice(editorStart,html.indexOf('function Rr(',editorStart));
  assert.ok(editor.includes('editorPreview:true,previewMessage'));
  assert.ok(editor.includes('hwpStageEditorSnapshot(state,selectedSlide)'));
- assert.ok(html.includes('setStageLayoutEditor(key===`stage`)'));
- assert.ok(html.includes('selectedSlide:true,onClose:()=>setStageLayoutEditor(false)'));
+ assert.ok(html.includes('editorTextOutput:key,stageSlideContent:false,selectedObjectIds:[]'));
+ assert.ok(html.includes('hwpTextOutput(e)===`stage`&&!i.stageSlideContent?M.jsx(Lr,{selectedSlide:true})'));
  assert.ok(html.includes('!e.stageLayout&&(0,M.jsxs)(`header`'));
+});
+
+
+test('Unified stage view keeps layout layers and stage-only slide content in one editor',()=>{
+ const start=html.indexOf('function Lr({selectedSlide=true})');
+ const editor=html.slice(start,html.indexOf('function Rr(',start));
+ assert.ok(editor.includes('hwp-stage-integrated'));
+ assert.ok(editor.includes('HwpEditorOutputControls'));
+ assert.ok(editor.includes('stageSlideContent:true'));
+ assert.ok(editor.includes('Pe([target],base.filter'));
+ assert.ok(editor.includes('hwp-stage-snap-guide'));
+ assert.ok(editor.includes('Preview slide'));
+ assert.ok(!editor.includes('modal-back'));
+ assert.ok(!html.includes('onClick:()=>g(!0),children:`Stage`'));
+});
+test('Stage message accents and companion preview bounds match actual output state',()=>{
+ assert.ok(html.includes('.hwp-stage-message-actions button:not(.active){background:var(--bg-2)!important'));
+ assert.ok(html.includes('.hwp-stage-message-actions button.active{background:var(--amber)!important'));
+ assert.ok(!html.includes('.preview.hwp-preview-redesign .hwp-stage-send,'));
+ assert.ok(html.includes('style:{aspectRatio:programRatio}'));
+ assert.ok(html.includes('hwp-live-monitor-box>.scaled-host{position:absolute;inset:0;width:100%;height:100%;aspect-ratio:auto}'));
+ assert.ok(html.includes('hwp-template-icon'));
 });
