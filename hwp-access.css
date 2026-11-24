@@ -1657,3 +1657,61 @@
 
 /* Presentation clicks retain a normal arrow; native drag-and-drop remains enabled. */
 .service-list .service-row.service-presentation[draggable],.service-list .service-row.service-presentation[draggable]:active,.service-list .service-row.service-presentation[draggable] .service-copy,.service-list .service-row.service-presentation[draggable] .hwp-service-drag-grip{cursor:default!important}
+
+
+/* Stable HWP header slots: state changes never redistribute surrounding controls.
+   Empty workspace-specific slots remain reserved; overlays do not occupy tracks. */
+.app > .toolbar {
+  display:grid;
+  grid-template-columns:100px 42px 74px 164px minmax(0,1fr) 268px minmax(0,1fr) 42px 42px 104px 44px 44px 44px;
+  grid-template-rows:minmax(0,1fr);
+  column-gap:6px;
+  row-gap:0;
+  align-items:center;
+  justify-items:center;
+  min-width:0;
+  box-sizing:border-box;
+}
+.app > .toolbar > :is(.brand,[aria-label="Search library"],.hwchat-cluster,span[aria-hidden="true"],.hwp-production-modes,.modes,.screen-btn,.hwp-cloud-indicator,.hwp-fullscreen-toggle,.hwp-template-icon,.settings-gear) {
+  grid-row:1;
+  box-sizing:border-box;
+  justify-self:center;
+  flex:none;
+}
+.app > .toolbar > .brand {grid-column:1;width:100%;min-width:0;justify-content:center}
+.app > .toolbar > .brand img {max-width:100%!important}
+.app > .toolbar > [aria-label="Search library"] {grid-column:2;width:42px;height:42px;padding:0;justify-content:center}
+.app > .toolbar > :is(.hwchat-cluster,span[aria-hidden="true"]) {grid-column:3;width:74px;min-width:74px;max-width:74px;justify-content:center}
+.app > .toolbar > .hwp-production-modes {grid-column:4;justify-self:start;margin:0!important}
+.app > .toolbar > .modes {
+  grid-column:6;position:relative;left:auto;top:auto;transform:none;
+  display:grid;grid-template-columns:repeat(4,minmax(0,1fr));
+  width:100%;min-width:0;gap:2px;box-sizing:border-box;
+}
+.app > .toolbar > .modes > button {width:100%;min-width:0;box-sizing:border-box;white-space:nowrap;padding:6px 3px;justify-content:center}
+.app[data-mode="mixer"] > .toolbar > .modes {visibility:hidden;pointer-events:none}
+.app > .toolbar > .spacer {display:none}
+.app > .toolbar > [aria-label="Audience screen"] {grid-column:8}
+.app > .toolbar > [aria-label="Stage screen"] {grid-column:9}
+.app > .toolbar > .screen-btn {width:42px;min-width:42px;padding:0 4px;justify-content:center}
+.app > .toolbar > .hwp-cloud-indicator {grid-column:10}
+.app > .toolbar > .hwp-fullscreen-toggle {grid-column:11;width:44px;min-width:44px;height:42px;padding:0;justify-content:center}
+.app > .toolbar > .hwp-template-icon {grid-column:12}
+.app > .toolbar > .settings-gear {grid-column:13}
+.app > .toolbar > :is(.iconbtn,.screen-btn) > svg {flex:none}
+/* Narrow windows use the same slots and order, with horizontal access rather
+   than wrapping or moving buttons when a workspace or status changes. */
+@media(max-width:1080px) {
+  .app > .toolbar {
+    grid-template-columns:84px 38px 74px 124px minmax(0,1fr) 244px minmax(0,1fr) 38px 38px 104px 40px 44px 44px;
+    column-gap:4px;padding-inline:6px;
+  }
+  .app > .toolbar > [aria-label="Search library"],
+  .app > .toolbar > .screen-btn {width:38px;min-width:38px}
+  .app > .toolbar > .hwp-fullscreen-toggle {width:40px;min-width:40px}
+  .app > .toolbar > .hwp-production-modes {gap:3px}
+  .app > .toolbar > .hwp-production-modes > .iconbtn {width:36px;min-width:36px;height:36px}
+}
+@media(max-width:940px) {
+  .app > .toolbar {overflow-x:auto;overflow-y:hidden;scrollbar-width:thin}
+}
