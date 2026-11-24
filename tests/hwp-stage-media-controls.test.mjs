@@ -437,7 +437,7 @@ test('Template preview is independent of active song, live media and existing pr
  assert.equal(edited.live,state.live);
  assert.equal(edited.doc.themes[0].hwpStandalonePreview,true);
  const templateStart=html.indexOf('function hwpTemplatePreviewObjects('),templateEnd=html.indexOf('function ye(',templateStart);
- const preview=new Function(html.slice(templateStart,templateEnd)+';return hwpTemplatePreviewObjects')([{kind:'text',binding:'lyrics',text:'Real lyrics',textStyle:{fontSize:80},hwpTextLinks:{stage:false},hwpTextScreens:{stage:{text:'Real stage',textStyle:{fontSize:100},contentEdited:true}}}],'song')[0];
+ const preview=new Function(html.slice(templateStart,templateEnd)+';return hwpTemplatePreviewObjects')()([{kind:'text',binding:'lyrics',text:'Real lyrics',textStyle:{fontSize:80},hwpTextLinks:{stage:false},hwpTextScreens:{stage:{text:'Real stage',textStyle:{fontSize:100},contentEdited:true}}}],'song')[0];
  assert.ok(!preview.text.includes('Real'));
  assert.equal(preview.hwpTextScreens.stage.text,preview.text);
  assert.equal(preview.hwpTextScreens.stage.textStyle.fontSize,100);
