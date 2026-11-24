@@ -285,7 +285,7 @@ test('Visual camera editor supports source resizing, cropping, and independent s
 });
 test('Visual workspace uses shared live composition and independent object inspector',()=>{
  for(const marker of ['hwp-visual-editor-release','function HwpVisualCameraCanvas','function HwpVisualHandles','function HwpVisualLayoutHandles','function HwpVisualInspector','function HwpVisualCustomOverlay','hwp-visual-columns','onLayerChange:patchLayout','+ Text','+ Shape','+ Media'])includes(marker,marker);
- assert.ok(html.includes('M.jsx(HwpFullscreenButton,{}),(0,M.jsx)(\x60button\x60,{className:\x60iconbtn settings-gear\x60'));
+ assert.ok(html.includes('M.jsx(HwpFullscreenButton,{}),!livestream&&M.jsx(\x60button\x60,{className:F(\x60iconbtn hwp-template-icon\x60'));
  assert.ok(html.includes('document.fullscreenElement)await document.exitFullscreen()'));
  assert.ok(html.includes('HwpFullscreenButton,{}),(0,M.jsx)(\x60button\x60,{onClick:()=>x().postMessage'));
 });
