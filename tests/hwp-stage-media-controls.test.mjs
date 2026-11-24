@@ -266,3 +266,25 @@ test('Text box controls are wired to the livestream camera preview only',()=>{
  const audience=html.slice(html.indexOf('function tr({snap:e'),html.indexOf('function nr(',html.indexOf('function tr({snap:e')));
  assert.ok(!audience.includes('HwpStreamTextOverlay'));
 });
+
+test('Visual camera editor supports source resizing, cropping, and independent source transforms',()=>{
+ const start=html.indexOf('function hwpVisualFrame('),end=html.indexOf('function HwpVisualHandles(',start);
+ const {hwpVisualFrame,hwpVisualResize,hwpVisualCrop}=new Function(html.slice(start,end)+';return {hwpVisualFrame,hwpVisualResize,hwpVisualCrop}')();
+ const startFrame={x:10,y:10,w:30,h:30};
+ const resized=hwpVisualResize(startFrame,'nw',5,5);
+ assert.equal(resized.x,15);assert.equal(resized.w,25);
+ assert.equal(startFrame.x,10);
+ const crop=hwpVisualCrop({zoom:1},'w',25,0);
+ assert.equal(crop.cropX,.25);assert.equal(crop.cropW,.75);
+ assert.equal(hwpVisualFrame({zoom:2}).w,200);
+ const source={sourceFrame:{x:-25,y:-25,w:150,h:150}};
+ const from=html.indexOf('function hwpLiveViewStyle('),to=html.indexOf('function hwpLiveLayoutFor(',from);
+ const style=new Function(html.slice(from,to)+';return hwpLiveViewStyle')();
+ assert.equal(style(source).left,'-25%');assert.equal(style(source).width,'150%');
+});
+test('Visual workspace uses shared live composition and independent object inspector',()=>{
+ for(const marker of ['hwp-visual-editor-release','function HwpVisualCameraCanvas','function HwpVisualHandles','function HwpVisualLayoutHandles','function HwpVisualInspector','function HwpVisualCustomOverlay','hwp-visual-columns','onLayerChange:patchLayout','+ Text','+ Shape','+ Media'])includes(marker,marker);
+ assert.ok(html.includes('M.jsx(HwpFullscreenButton,{}),(0,M.jsx)(\x60button\x60,{className:\x60iconbtn settings-gear\x60'));
+ assert.ok(html.includes('document.fullscreenElement)await document.exitFullscreen()'));
+ assert.ok(html.includes('HwpFullscreenButton,{}),(0,M.jsx)(\x60button\x60,{onClick:()=>x().postMessage'));
+});
