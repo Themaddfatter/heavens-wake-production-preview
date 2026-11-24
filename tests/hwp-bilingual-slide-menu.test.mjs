@@ -1,0 +1,10 @@
+import {test} from 'node:test';
+import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
+import vm from 'node:vm';
+const source=readFileSync('index.html','utf8');
+const start=source.indexOf('function hwpSpanishSongLabel('),end=source.indexOf('function hwpPaleSongColor(',start);
+const ctx={zi:[],hwpCategoryForLabel:()=> 'songs',pe:s=>s.text||''};vm.createContext(ctx);vm.runInContext(source.slice(start,end),ctx);
+const labels=[{id:'chorus2',name:'Chorus 2',categoryId:'songs'},{id:'chorus2_es',name:'Coro 2',categoryId:'songs',language:'es',pairedLabelId:'chorus2'}];
+test('paired labels appear once with the same number',()=>{assert.deepEqual(Array.from(ctx.hwpLabelMenuNames(labels)),['Chorus 2']);assert.equal(ctx.hwpBilingualLabelName(labels,'Chorus 2'),'Chorus 2 / Coro 2');assert.equal(ctx.hwpSpanishSongLabel('Intro 3'),'Introducción 3');assert.equal(ctx.hwpNumberedSpanishName('Chorus 2','Coro'),'Coro 2')});
+test('selected slide language chooses the correct paired label',()=>{const p={groups:[{id:'g',name:'Verse',labelId:'verse'}]};assert.equal(ctx.hwpSlideLabelForLanguage(labels,p,{id:'1',groupId:'g',hwwLanguage:'es'},'Chorus 2'),'Coro 2');assert.equal(ctx.hwpSlideLabelForLanguage(labels,p,{id:'2',groupId:'g',hwwLanguage:'en'},'Chorus 2'),'Chorus 2');assert.equal(ctx.hwpSlideLabelForLanguage(labels,p,{id:'3',groupId:'g',text:'Santo es el Señor'},'Chorus 2'),'Coro 2')});
