@@ -68,6 +68,22 @@
 .hwp-mixer-channel-toolbar>.hwp-mixer-monitor>label{display:grid;grid-template-rows:auto auto;gap:2px;font-size:10px;line-height:1.15;color:var(--dim);min-width:0}
 .hwp-mixer-channel-toolbar>.hwp-mixer-monitor input[type=range]{width:100%;min-width:0;margin:0;height:12px;accent-color:var(--amber)}
 @media(max-width:800px){.hwp-mixer-channel-toolbar{grid-template-columns:minmax(120px,1fr) 340px;gap:6px}.hwp-mixer-channel-toolbar>.hwp-mixer-monitor{padding:5px 6px;gap:4px 6px}.hwp-mixer-monitor-status{gap:4px}}
+</style><style id="hwp-mixer-gain-faders-v1">
+.hwp-mixer-channel-tools{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:3px;width:100%;min-width:0}
+.hwp-mixer-strip .hwp-mixer-channel-tools .hwp-mixer-btn{padding:4px 0;min-width:0;font-size:10px;box-sizing:border-box}
+.hwp-mixer-dialog.hwp-mixer-gain-dialog{width:min(350px,100%);box-sizing:border-box;gap:10px;padding:14px}
+.hwp-mixer-gain-dialog .hwp-mixer-top{flex-wrap:nowrap}
+.hwp-mixer-gain-dialog .hwp-mixer-top h3{font-size:15px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.hwp-mixer-gain-identity{border-left:4px solid var(--amber);background:var(--bg);border-radius:5px;padding:8px;font-size:12px;font-weight:600;overflow-wrap:anywhere}
+.hwp-mixer-gain-bank{display:flex;align-items:stretch;justify-content:center;gap:12px;min-width:0}
+.hwp-mixer-gain-strip{display:flex;flex-direction:column;align-items:center;gap:5px;flex:0 1 118px;min-width:0;border:1px solid var(--line);border-radius:8px;background:var(--bg);padding:9px 8px}
+.hwp-mixer-gain-strip strong{font-size:12px}
+.hwp-mixer-gain-strip .hwp-mixer-sub{font-size:11px;text-align:center}
+.hwp-mixer-gain-strip .hwp-mixer-value{font-size:14px;min-height:18px}
+.hwp-mixer-gain-track{flex:none;height:clamp(160px,36vh,260px);min-height:160px;max-height:none;box-sizing:border-box;padding:10px 0;gap:16px}
+.hwp-mixer-gain-track .hwp-mixer-scale{width:25px}
+.hwp-mixer-gain-dialog .hwp-mixer-gain-track input.hwp-mixer-fader{width:8px;min-width:8px;min-height:0;height:100%;flex:none;align-self:stretch}
+.hwp-mixer-gain-dialog>p{margin:0;font-size:11px;line-height:1.4}
 </style></head><body><script>try{document.documentElement.dataset.hwpAppearance=localStorage.getItem("hwp-appearance")==="light"?"light":"dark"}catch(e){}</script><div id="root"><div id="hwp-boot-placeholder" style="box-sizing:border-box;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;background:#071d16;color:#f3f8f4;font:600 19px Arial,sans-serif;text-align:center"><img src="./hwp-logo.png" alt="Heaven's Wake Production" style="max-width:210px;max-height:130px;object-fit:contain;margin-bottom:24px"><div>Opening Heaven's Wake Production…</div></div></div><script>
 (function(){
  var startupError="";
@@ -3113,7 +3129,7 @@ function HwpSoundMixer({data,setData,mix,setMix}){
     h('input',{type:'range',className:'hwp-mixer-fader',min:-80,max:10,step:.5,value:level,'aria-label':name+' fader','aria-valuetext':fmt(level),onChange:e=>change(Number(e.target.value)),onDoubleClick:()=>change(0)}),
     h('div',{className:'hwp-mixer-meter',title:'Meter unavailable — mixer disconnected','aria-label':'No live meter signal'})),
     btn(on?'ON':'MUTED',toggle,on?'':'muted',{'aria-label':(on?'Mute ':'Unmute ')+name,'aria-pressed':!on}),
-    master?btn('Mix settings',()=>setEditor({type:'buses'})):btn('Gain / Edit',()=>openChannel(c.id)),
+    master?btn('Mix settings',()=>setEditor({type:'buses'})):h('div',{className:'hwp-mixer-channel-tools'},btn('Gain',()=>setEditor({type:'gain',id:c.id}),'',{'aria-label':'Gain: '+name,title:'Adjust input gain'}),btn('Edit',()=>openChannel(c.id),'',{'aria-label':'Edit: '+name,title:'Edit channel settings'})),
     h('div',{style:{height:4,width:'100%',background:color,borderRadius:3}}));
  };
  const field=(label,control)=>h('label',{},label,control);
@@ -3122,17 +3138,27 @@ function HwpSoundMixer({data,setData,mix,setMix}){
  let title='',body=[];
  if(editor.type==='channel'){
   const c=data.channels[editor.id];title='Channel '+(c.id<32?String(c.id+1).padStart(2,'0'):'ST '+(c.id-31))+' settings';
-  const gain=(label,key,min,max,step)=>field(label+' · '+Number(c[key]).toFixed(1)+' dB',h('input',{type:'range',min,max,step,value:c[key],onChange:e=>updateChannel(c.id,{[key]:Number(e.target.value)})}));
   body=[field('Channel name',h('input',{value:c.name,maxLength:40,onChange:e=>updateChannel(c.id,{name:e.target.value})})),
    field('Category (type a new category to create it)',h('input',{list:'hwp-mixer-categories',value:c.category,onChange:e=>updateChannel(c.id,{category:e.target.value})})),
    h('datalist',{id:'hwp-mixer-categories'},...categories.filter(x=>x!=='All Channels').map(x=>h('option',{key:x,value:x}))),
    h('span',{className:'hwp-mixer-sub'},'120 preset colors'),
    h('div',{className:'hwp-mixer-palette'},...hwpMixerPalette.map(color=>swatch(color,()=>setChannelColor(c.id,color),c.color===color))),
    h('div',{className:'hwp-mixer-row'},h('input',{type:'color',value:c.color,'aria-label':'Custom color',onChange:e=>setChannelColor(c.id,e.target.value)}),h('input',{value:hex,style:{flex:1,minWidth:90},'aria-label':'HEX color',onChange:e=>setHex(e.target.value)}),btn('Apply',()=>{if(/^#[0-9a-f]{6}$/i.test(hex))setChannelColor(c.id,hex)},'',{disabled:!/^#[0-9a-f]{6}$/i.test(hex)}),btn('Save favorite',()=>setData(old=>({...old,favorites:[...new Set([...old.favorites,c.color])]})))),
-   data.favorites.length?h('div',{className:'hwp-mixer-palette'},...data.favorites.map(color=>swatch(color,()=>setChannelColor(c.id,color),c.color===color))):null,
-   c.id<32?gain('A.GAIN (analog input)', 'ag',-6,66,1):h('p',{className:'hwp-mixer-sub'},'Analog gain is only available for supported patched analog inputs.'),
-   gain('D.GAIN (digital input)','dg',-96,24,.5),
-   h('p',{className:'hwp-mixer-sub'},'Demo values only. Input gain is shared across mixes; actual gain range and availability depend on QL1 input patch and firmware.')];
+   data.favorites.length?h('div',{className:'hwp-mixer-palette'},...data.favorites.map(color=>swatch(color,()=>setChannelColor(c.id,color),c.color===color))):null];
+ }else if(editor.type==='gain'){
+  const c=data.channels[editor.id];title='Gain — '+c.name;
+  const gainFader=(label,description,key,min,max,step,ticks)=>{
+   const value=Number(c[key]),display=(value>0?'+':'')+value.toFixed(1)+' dB';
+   const change=v=>updateChannel(c.id,{[key]:Math.max(min,Math.min(max,v))});
+   return h('div',{className:'hwp-mixer-gain-strip',key},
+    h('strong',{},label),h('span',{className:'hwp-mixer-sub'},description),
+    h('output',{className:'hwp-mixer-value','aria-live':'off'},display),
+    h('div',{className:'hwp-mixer-track hwp-mixer-gain-track'},h('div',{className:'hwp-mixer-scale','aria-hidden':true},...ticks.map(v=>h('span',{key:v,style:{top:(max-v)/(max-min)*100+'%'}},v>0?'+'+v:String(v)))),
+     h('input',{type:'range',className:'hwp-mixer-fader',min,max,step,value,'aria-label':description+' gain','aria-valuetext':display,onChange:e=>change(Number(e.target.value)),onDoubleClick:()=>change(0)})));
+  };
+  body=[h('div',{className:'hwp-mixer-gain-identity',style:{borderLeftColor:c.color}},(c.id<32?'CH '+String(c.id+1).padStart(2,'0'):'ST '+String(c.id-31).padStart(2,'0'))+' · '+c.name),
+   h('div',{className:'hwp-mixer-gain-bank'},c.id<32?gainFader('A.GAIN','Analog input','ag',-6,66,1,[66,48,36,24,12,0,-6]):null,gainFader('D.GAIN','Digital input','dg',-96,24,.5,[24,12,0,-24,-48,-72,-96])),
+   h('p',{className:'hwp-mixer-sub'},'Demo only · Input gain is shared across all mixes. Analog gain depends on the console input patch.')];
  }else if(editor.type==='buses'){
   title='Monitor mix configuration';
   body=[h('p',{className:'hwp-mixer-sub'},'Choose which QL1 MIX buses appear as monitor tabs. Rename them to match your actual console routing.'),...data.buses.slice(1).map(b=>h('div',{key:b.id,className:'hwp-mixer-row'},h('input',{type:'checkbox',checked:b.enabled,'aria-label':'Show MIX '+b.id,onChange:e=>{if(!e.target.checked&&mix===b.id)setMix(0);updateBus(b.id,{enabled:e.target.checked})}}),h('span',{className:'hwp-mixer-sub',style:{width:45}},'MIX '+b.id),h('input',{value:b.name,style:{flex:1,minWidth:100},'aria-label':'MIX '+b.id+' name',onChange:e=>updateBus(b.id,{name:e.target.value})}),h('input',{type:'color',value:b.color,'aria-label':'MIX '+b.id+' color',onChange:e=>updateBus(b.id,{color:e.target.value})})))];
@@ -3140,7 +3166,7 @@ function HwpSoundMixer({data,setData,mix,setMix}){
   title='Yamaha QL1 connection';
   body=[h('p',{},'Offline demo — no physical mixer is connected.'),h('p',{},'Live control requires a secure local QL1 bridge on the console network. The bridge must verify input patching, console firmware, monitor bus routing and remote-control commands before accepting writes.'),h('p',{},'Headphone monitoring requires a separate audio feed from a dedicated CUE or monitor output via Dante or an audio interface, streamed to this browser. No audio is currently available.'),h('p',{className:'hwp-mixer-sub'},'This release does not send commands to the console. Demo changes are saved in this browser only.')];
  }
- return h('div',{className:'hwp-mixer-modalback',onClick:e=>{if(e.target===e.currentTarget)setEditor(null)}},h('section',{className:'hwp-mixer-dialog',role:'dialog','aria-modal':true,'aria-label':title},h('div',{className:'hwp-mixer-top'},h('h3',{},title),btn('Close',()=>setEditor(null),'',{'aria-label':'Close mixer settings'})),...body));
+ return h('div',{className:'hwp-mixer-modalback',onClick:e=>{if(e.target===e.currentTarget)setEditor(null)}},h('section',{className:'hwp-mixer-dialog'+(editor.type==='gain'?' hwp-mixer-gain-dialog':''),role:'dialog','aria-modal':true,'aria-label':title},h('div',{className:'hwp-mixer-top'},h('h3',{},title),btn('Close',()=>setEditor(null),'',{'aria-label':'Close mixer settings'})),...body));
  };
  return h('main',{className:'hwp-mixer-workspace',style:{'--hwp-mixer-width':width==='Compact'?'76px':width==='Wide'?'118px':'91px'}},
   h('div',{className:'hwp-mixer-top'},h('div',{},h('h2',{},'Sound Mixer'),h('span',{className:'hwp-mixer-sub'},'Yamaha QL1 · Offline demo')),h('div',{className:'hwp-mixer-row'},btn('Connection',()=>setEditor({type:'connection'})),btn('Monitor setup',()=>setEditor({type:'buses'})),h('select',{className:'hwp-mixer-btn',value:width,'aria-label':'Fader width',onChange:e=>setWidth(e.target.value)},...['Compact','Standard','Wide'].map(v=>h('option',{key:v,value:v},v))))),
@@ -3151,7 +3177,7 @@ function HwpSoundMixer({data,setData,mix,setMix}){
     h('span',{className:'hwp-mixer-monitor-cue',title:cue.length?cue.map(cueLabel).join(', '):'No CUE selected'},cue.length?cue.map(cueLabel).join(', '):'No CUE selected'),
     h('div',{className:'hwp-mixer-monitor-actions'},btn(multiple?'Multi CUE':'Single CUE',()=>{setMultiple(!multiple);if(multiple)setCue(old=>old.slice(-1))},multiple?'active':''),btn('Clear CUE',()=>setCue([]))),
     field('Monitor volume (demo)',h('input',{type:'range',min:0,max:100,value:volume,'aria-label':'Headphone volume (demo)',onChange:e=>setVolume(Number(e.target.value))})))),
-  h('div',{className:'hwp-mixer-console'},h('div',{className:'hwp-mixer-bank',role:'group','aria-label':current.name+' channel faders'},...(channels.length?channels.map(c=>strip(c)):[h('p',{className:'hwp-mixer-sub'},'No channels assigned to this category. Assign channels from All Channels using Gain / Edit.')])),strip(null,true)),
+  h('div',{className:'hwp-mixer-console'},h('div',{className:'hwp-mixer-bank',role:'group','aria-label':current.name+' channel faders'},...(channels.length?channels.map(c=>strip(c)):[h('p',{className:'hwp-mixer-sub'},'No channels assigned to this category. Assign channels from All Channels using Edit.')])),strip(null,true)),
   h('div',{className:'hwp-mixer-sub'},mix===0?'Main faders · demo only':'Sends on faders · '+current.name+' · demo only'),dialog());
 }
 
