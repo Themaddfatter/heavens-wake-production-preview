@@ -285,7 +285,7 @@ test('Visual camera editor supports source resizing, cropping, and independent s
 });
 test('Visual workspace uses shared live composition and independent object inspector',()=>{
  for(const marker of ['hwp-visual-editor-release','function HwpVisualCameraCanvas','function HwpVisualHandles','function HwpVisualLayoutHandles','function HwpVisualInspector','function HwpVisualCustomOverlay','hwp-visual-columns','onLayerChange:patchLayout','+ Text','+ Shape','+ Media'])includes(marker,marker);
- assert.ok(html.includes('M.jsx(HwpFullscreenButton,{}),!livestream&&M.jsx(\x60button\x60,{className:F(\x60iconbtn hwp-template-icon\x60'));
+ assert.ok(html.includes('M.jsx(HwpFullscreenButton,{}),!productionOnly&&M.jsx(\x60button\x60,{className:F(\x60iconbtn hwp-template-icon\x60'));
  assert.ok(html.includes('document.fullscreenElement)await document.exitFullscreen()'));
  assert.ok(html.includes('HwpFullscreenButton,{}),(0,M.jsx)(\x60button\x60,{onClick:()=>x().postMessage'));
 });
@@ -525,4 +525,17 @@ test('Stage uses the same editor chrome and places layout controls in the normal
  assert.ok(!stage.includes('className:`hwp-stage-workspace`'));
  assert.ok(!html.includes('.app[data-mode="edit"]>.hwp-stage-integrated{grid-column:1/-1'));
  assert.ok(html.includes('unified-stage-editor-v4'));
+});
+
+test('HWP header keeps permanent slots across workspace and status changes',()=>{
+ const fixed=css.slice(css.indexOf('/* Stable HWP header slots'));
+ assert.ok(fixed.includes('grid-template-columns:100px 42px 74px 164px'));
+ for(const [selector,col] of [['.brand',1],['[aria-label="Search library"]',2],['.hwp-production-modes',4],['[aria-label="Audience screen"]',8],['[aria-label="Stage screen"]',9],['.hwp-cloud-indicator',10],['.hwp-fullscreen-toggle',11],['.hwp-template-icon',12],['.settings-gear',13]]) {
+  assert.ok(fixed.includes(selector+' {grid-column:'+col),selector);
+ }
+ assert.ok(fixed.includes('grid-column:3;width:74px'));
+ assert.ok(fixed.includes('grid-column:6;position:relative'));
+ assert.ok(fixed.includes('repeat(4,minmax(0,1fr))'));
+ assert.ok(fixed.includes('visibility:hidden;pointer-events:none'));
+ assert.ok(html.includes('hwp-access.css?v=hwp-fixed-header-v1'));
 });
