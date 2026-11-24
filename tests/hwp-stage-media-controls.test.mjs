@@ -288,3 +288,33 @@ test('Visual workspace uses shared live composition and independent object inspe
  assert.ok(html.includes('document.fullscreenElement)await document.exitFullscreen()'));
  assert.ok(html.includes('HwpFullscreenButton,{}),(0,M.jsx)(\x60button\x60,{onClick:()=>x().postMessage'));
 });
+
+test('Presenter layer list is top-first and drag ordering preserves bottom-first rendering',()=>{
+ const start=html.indexOf('function hwpLayerDropOrder('),end=html.indexOf('function HwpPresenterLayers(',start);
+ const order=new Function(html.slice(start,end)+';return hwpLayerDropOrder')();
+ const objects=[{id:'back'},{id:'middle'},{id:'front'}];
+ assert.equal(order(objects,'back','front',false).join(','),'middle,front,back');
+ assert.equal(order(objects,'front','back',true).join(','),'front,back,middle');
+ assert.equal(order(objects,'middle','middle',false).join(','),'back,middle,front');
+ assert.equal(order(objects,'front','background',true).join(','),'back,middle,front');
+ assert.equal(objects.map(o=>o.id).join(','),'back,middle,front');
+ for(const marker of ['HwpPresenterLayers','application/x-hwp-layer','hwp-layer-background','hwp-layer-drop-before',"label:'Delete'","label:'Duplicate'","label:'Rename'"])includes(marker,marker);
+});
+test('Quick Edit updates only selected text content and preserves layout, other objects and existing text styles',()=>{
+ const start=html.indexOf('function hwpQuickTextPatch('),end=html.indexOf('function HwpQuickCanvasText(',start);
+ const {hwpQuickTextPatch,hwpQuickApplySlideText}=new Function(html.slice(start,end)+';return {hwpQuickTextPatch,hwpQuickApplySlideText}')();
+ const slide={id:'slide',background:{type:'color',color:'#000000'},objects:[{id:'lyrics',kind:'text',text:'one two',x:24,width:200,textStyle:{fontSize:50},runs:[{text:'one ',bold:true},{text:'two',italic:true}]},{id:'shape',kind:'rect'},{id:'copy',kind:'text',binding:'copyright',text:'Copyright'}]};
+ const original=JSON.stringify(slide),edited=hwpQuickApplySlideText(slide,[{id:'lyrics',text:'one three'},{id:'shape',text:'ignored'},{id:'copy',text:'New copyright'}]);
+ assert.equal(edited.objects[0].text,'one three');
+ assert.equal(edited.objects[0].runs[0].bold,true);
+ assert.equal(edited.objects[0].runs.map(r=>r.text).join(''),'one three');
+ assert.equal(edited.objects[0].x,24);
+ assert.equal(edited.objects[0].textStyle,slide.objects[0].textStyle);
+ assert.equal(edited.objects[1],slide.objects[1]);
+ assert.equal(edited.objects[2].hwpTextOverride,true);
+ assert.equal(edited.background,slide.background);
+ assert.equal(JSON.stringify(slide),original);
+ assert.equal(hwpQuickTextPatch(slide.objects[0],'one two'),null);
+ assert.equal(hwpQuickApplySlideText(slide,[]),slide);
+ for(const marker of ['hwp-presenter-text-release','HwpQuickSlideEdit',"label:'Quick Edit'","type:'hwp-quick-slide-text'","t.presentationId);",'Text content','Font & style','Alignment & spacing','Text effects'])includes(marker,marker);
+});
