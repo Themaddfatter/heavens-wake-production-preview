@@ -200,6 +200,35 @@
 .hwp-fader-bank-page.compact>.hwp-mc-channel{width:100%;min-width:0;padding:5px 2px;gap:5px}
 .hwp-fader-bank-page.compact>.hint{grid-column:1/-1}
 .hwp-fader-bank-page[inert]{pointer-events:none}
+</style>
+<style id="hwp-hardware-fader-surface-v1">
+/* A molded console cap, recessed mechanical slot and printed scale. The
+   visual cap and native range thumb share dimensions and the same dB travel. */
+.hwp-mixer-calibrated{--hwp-fader-cap-height:25px;--hwp-fader-cap-width:32px;gap:4px}
+.hwp-mixer-calibrated .hwp-mixer-calibrated-scale{width:20px;font:600 9px/1 ui-monospace,SFMono-Regular,Consolas,monospace;color:var(--dim);font-variant-numeric:tabular-nums}
+.hwp-mixer-calibrated-slider{width:34px}
+.hwp-mixer-track{gap:4px}
+.hwp-mixer-calibrated-scale .hwp-mixer-travel>span{line-height:10px;letter-spacing:-.03em}
+.hwp-mixer-calibrated-scale .hwp-mixer-travel>span::after{left:calc(100% + 2px);width:4px;border-top:1px solid currentColor;opacity:.75}
+.hwp-mixer-calibrated-scale .hwp-mixer-travel>span.hwp-fader-unity{color:var(--text);font-weight:850}
+.hwp-mixer-calibrated-scale .hwp-mixer-travel>span.hwp-fader-unity::after{width:5px;border-top:2px solid currentColor;opacity:1}
+.hwp-mixer-calibrated-rail{width:10px;border-radius:3px;background:linear-gradient(90deg,#5d6670 0%,#252a30 12%,#080a0d 28%,#030405 62%,#1b2026 83%,#626b74 100%);box-shadow:0 0 0 1px #0006,inset 1px 0 2px #000d,inset -1px 0 1px #ffffff15,0 1px 1px #ffffff35}
+.hwp-mixer-calibrated-rail::after{content:"";position:absolute;inset:2px auto 2px 50%;width:2px;transform:translateX(-50%);background:linear-gradient(90deg,#08090b,#39414a 60%,#14171a);border-radius:1px}
+.hwp-mixer-calibrated-thumb{border:1px solid #51575d;border-radius:3px;background:linear-gradient(180deg,#fafafa 0%,#dce0e2 7%,#aeb5ba 17%,#e6e8e9 29%,#cdd1d3 42%,#b7bec2 48%,#b7bec2 52%,#a0a8ad 64%,#c2c7ca 78%,#8b949a 92%,#555e65 100%);box-shadow:0 1px 0 #ffffff90 inset,0 -2px 0 #3a434b70 inset,1px 0 0 #ffffff55 inset,-1px 0 0 #4b545b66 inset,0 3px 5px #0007,0 1px 1px #000b}
+.hwp-mixer-calibrated-thumb::before{content:"";position:absolute;inset:3px 3px;border-radius:2px;background:linear-gradient(90deg,#ffffff30,transparent 14%,transparent 86%,#00000018);pointer-events:none}
+.hwp-mixer-calibrated-thumb::after{left:1px;right:1px;height:2px;background:#24282c;box-shadow:0 1px 0 #ffffffa0}
+.hwp-mixer-calibrated-slider:active .hwp-mixer-calibrated-thumb{box-shadow:0 1px 0 #ffffff90 inset,0 -2px 0 #3a434b70 inset,0 1px 2px #000a}
+.hwp-mixer-track>.hwp-mixer-meter{width:5px;border-radius:2px;border:1px solid #0005;background:repeating-linear-gradient(to bottom,#222b27 0 4px,#111815 4px 6px);box-shadow:inset 0 1px 3px #0009;opacity:.7;box-sizing:border-box}
+.hwp-mixer-strip,.hwp-mc-channel{background:linear-gradient(180deg,color-mix(in srgb,var(--bg-2) 94%,#ffffff 6%),var(--bg-2) 20%,color-mix(in srgb,var(--bg-2) 96%,#000000 4%));box-shadow:inset 0 1px 0 #ffffff16,inset 0 -1px 0 #00000016}
+.hwp-mixer-strip .hwp-mixer-name,.hwp-mc-channel .hwp-mc-name{box-shadow:inset 0 1px 0 #ffffff35,inset 0 -1px 0 #00000030;border-radius:3px}
+.hwp-mixer-strip .hwp-mixer-btn:not(.hwp-mixer-name),.hwp-mc-channel .hwp-mc-mute,.hwp-mc-channel .hwp-mc-toggle{box-shadow:inset 0 1px 0 #ffffff24,0 1px 2px #0003;border-radius:4px}
+.hwp-mixer-strip .hwp-mixer-btn.cued,.hwp-mixer-strip .hwp-mixer-btn.muted,.hwp-mc-channel .hwp-mc-mute.muted,.hwp-mc-channel .hwp-mc-toggle.active{box-shadow:inset 0 1px 0 #ffffff40,inset 0 -1px 0 #0004,0 1px 3px #0003}
+.hwp-mc-fader-track .hwp-mixer-calibrated{--hwp-fader-cap-width:25px;--hwp-fader-cap-height:22px;gap:3px}
+.hwp-mc-fader-track .hwp-mixer-calibrated-slider{width:27px}
+.hwp-mc-fader-track .hwp-mixer-calibrated .hwp-mixer-calibrated-scale{width:19px;font-size:8px}
+.hwp-mc-fader-track .hwp-mixer-calibrated-rail{width:8px}
+.hwp-mc-fader-track .hwp-mixer-calibrated-thumb{border-radius:3px}
+.hwp-mixer-gain-dialog .hwp-mixer-calibrated{--hwp-fader-cap-width:32px;--hwp-fader-cap-height:25px}
 </style></head><body><script>try{document.documentElement.dataset.hwpAppearance=localStorage.getItem("hwp-appearance")==="light"?"light":"dark"}catch(e){}</script><div id="root"><div id="hwp-boot-placeholder" style="box-sizing:border-box;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;background:#071d16;color:#f3f8f4;font:600 19px Arial,sans-serif;text-align:center"><img src="./hwp-logo.png" alt="Heaven's Wake Production" style="max-width:210px;max-height:130px;object-fit:contain;margin-bottom:24px"><div>Opening Heaven's Wake Production…</div></div></div><script>
 (function(){
  var startupError="";
@@ -3303,7 +3332,7 @@ function hwpMixerCalibratedFader({min,max,step,value,ticks,label,valueText,onCha
  const h=hwpMixerNode,pos=v=>hwpMixerDbPosition(v,min,max)+'%';
  return h('div',{className:'hwp-mixer-calibrated'},
   h('div',{className:'hwp-mixer-scale hwp-mixer-calibrated-scale','aria-hidden':true},
-   h('div',{className:'hwp-mixer-travel'},...ticks.map(v=>h('span',{key:v,style:{top:pos(v)}},formatTick(v))))),
+   h('div',{className:'hwp-mixer-travel'},...ticks.map(v=>h('span',{key:v,className:v===0?'hwp-fader-unity':'',style:{top:pos(v)}},formatTick(v))))),
   h('div',{className:'hwp-mixer-calibrated-slider'},
    h('div',{className:'hwp-mixer-travel','aria-hidden':true},
     h('div',{className:'hwp-mixer-calibrated-rail'}),
