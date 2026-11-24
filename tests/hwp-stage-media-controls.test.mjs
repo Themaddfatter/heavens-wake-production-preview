@@ -449,3 +449,26 @@ test('Template preview is independent of active song, live media and existing pr
  assert.ok(html.includes('case`apply-theme`:{if(e.session.editingTemplateId)return e;'));
  assert.ok(html.includes('standalone-template-preview-v1'));
 });
+
+test('Full stage layout migrates previously hardcoded elements into editable layers without modifying source',()=>{
+ const a=html.indexOf('function hwpStageFullLayout('),b=html.indexOf('function hwpStageEditorSnapshot(',a);
+ const full=new Function(html.slice(a,b)+';return hwpStageFullLayout')();
+ const old={id:'stage',objects:[{id:'cur',kind:'current',x:40,y:80,width:1180,height:664},{id:'clock',kind:'clock',x:1500,y:20,width:380,height:48}]};
+ const migrated=full(old);
+ assert.equal(old.objects.length,2);
+ assert.equal(migrated.objects.filter(o=>o.kind==='clock').length,1);
+ for(const kind of ['current','stageTitle','presentation','clock','operatorNotes','stageMessage'])assert.ok(migrated.objects.some(o=>o.kind===kind),kind);
+ assert.equal(full(migrated),migrated);
+ const removed={...migrated,objects:migrated.objects.filter(o=>o.kind!=='stageMessage')};
+ assert.equal(full(removed).objects.some(o=>o.kind==='stageMessage'),false);
+ const stage=html.slice(html.indexOf('function Fr({snap:'),html.indexOf('function Ir('));
+ assert.ok(stage.includes('hwpStageFullLayout(e.stageLayout)'));
+ assert.ok(stage.includes('editorPreview&&previewMessage'));
+ assert.ok(stage.includes('e.stageMessage?.text'));
+ const editor=html.slice(html.indexOf('function Lr({'),html.indexOf('function Rr('));
+ assert.ok(editor.includes('editorPreview:true,previewMessage'));
+ assert.ok(editor.includes('hwpStageEditorSnapshot(state,selectedSlide)'));
+ assert.ok(html.includes('setStageLayoutEditor(key===`stage`)'));
+ assert.ok(html.includes('selectedSlide:true,onClose:()=>setStageLayoutEditor(false)'));
+ assert.ok(html.includes('!e.stageLayout&&(0,M.jsxs)(`header`'));
+});
