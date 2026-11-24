@@ -497,3 +497,32 @@ test('Stage message accents and companion preview bounds match actual output sta
  assert.ok(html.includes('hwp-live-monitor-box>.scaled-host{position:absolute;inset:0;width:100%;height:100%;aspect-ratio:auto}'));
  assert.ok(html.includes('hwp-template-icon'));
 });
+
+test('Template mode is entered only explicitly and normal editor navigation clears stale template selection',()=>{
+ const start=html.indexOf('case`session`:{const p=t.patch'),end=html.indexOf('case`select-objects`:',start);
+ assert.ok(start>=0&&end>start);
+ const reduce=new Function('e','t','switch(t.type){'+html.slice(start,end)+'default:return e}');
+ const base={doc:{presentations:[{id:'real',slides:[{id:'slide'}]}]},session:{mode:'edit',activePresentationId:'real',selectedSlideIds:['slide'],selectedObjectIds:['template-layer'],editingTemplateId:'scripture',inspectorTab:'text',stageSlideContent:true}};
+ assert.equal(reduce(base,{type:'session',patch:{zoom:0.5}}).session.editingTemplateId,'scripture');
+ const open=reduce(base,{type:'session',patch:{mode:'edit',editingTemplateId:'song',selectedObjectIds:['lyrics']}});
+ assert.equal(open.session.editingTemplateId,'song');
+ assert.equal(open.session.stageSlideContent,false);
+ for(const patch of [{mode:'show'},{mode:'edit'},{activePresentationId:'real'},{selectedSlideIds:['slide']}]) {
+  const next=reduce(base,{type:'session',patch});
+  assert.equal(next.session.editingTemplateId,null);
+  assert.deepEqual(next.session.selectedObjectIds,[]);
+  assert.equal(next.session.stageSlideContent,false);
+ }
+ assert.equal(reduce(base,{type:'select-slides',ids:['slide']}).session.editingTemplateId,null);
+ assert.equal(reduce(base,{type:'select-presentation',id:'real'}).session.editingTemplateId,null);
+ assert.ok(html.includes('!i.editingTemplateId&&hwpTextOutput(e)===`stage`'));
+});
+test('Stage uses the same editor chrome and places layout controls in the normal right inspector',()=>{
+ const start=html.indexOf('function Lr({selectedSlide=true})'),end=html.indexOf('function Rr(',start);
+ const stage=html.slice(start,end);
+ for(const marker of ['className:`film`','className:`film-slides`','className:`editor-main`','className:`editor-tools`','className:`viewport hwp-stage-shared-viewport`','className:`inspector hwp-stage-inspector hwp-stage-shared-inspector`','className:`hwp-stage-panel-controls`','className:`tabs`','className:`inspector-body`','title:`Text box`','title:`Media box`','title:`Shapes`','title:`Duplicate`','title:`Delete`','title:`Bring forward`','title:`Send backward`','Math.round(scale*100)','Preview stage message','Slide content'])assert.ok(stage.includes(marker),marker);
+ assert.ok(!stage.includes('className:`hwp-stage-toolbar`'));
+ assert.ok(!stage.includes('className:`hwp-stage-workspace`'));
+ assert.ok(!html.includes('.app[data-mode="edit"]>.hwp-stage-integrated{grid-column:1/-1'));
+ assert.ok(html.includes('unified-stage-editor-v4'));
+});
