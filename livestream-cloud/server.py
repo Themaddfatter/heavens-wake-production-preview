@@ -18,11 +18,27 @@ def firebase_profile(uid):
     snapshot=firestore.client().collection('users').document(uid).get()
     return snapshot.to_dict() if snapshot.exists else None
 
+async def encoder_progress(socket, process, destination):
+    announced=False
+    while True:
+        line=await process.stdout.readline()
+        if not line: break
+        if not announced and line.startswith(b'out_time_us='):
+            try: sent=int(line.split(b'=',1)[1])>0
+            except ValueError: sent=False
+            if sent:
+                await socket.send(json.dumps({'status':'sending-media','destination':destination}))
+                announced=True
+    code=await process.wait()
+    if code:
+        await socket.send(json.dumps({'status':'encoder-stopped','destination':destination}))
+
 async def handler(socket, verify=firebase_identity, profile=firebase_profile, validator=validate_destination):
     if socket.request.headers.get('Origin')!=ORIGIN:
         await socket.close(1008,'Origin denied');return
     processes=[]
     ingests=[]
+    monitors=[]
     acquired=False
     try:
         message=json.loads(await asyncio.wait_for(socket.recv(),10))
@@ -34,12 +50,13 @@ async def handler(socket, verify=firebase_identity, profile=firebase_profile, va
         if active.locked(): await socket.close(1008,'Another stream is active');return
         await active.acquire()
         acquired=True
-        for target in targets:
+        for index,target in enumerate(targets):
             ingest= PinnedIngest(target)
             ingests.append(ingest)
             output=await ingest.start()
-            p=await asyncio.create_subprocess_exec('ffmpeg','-hide_banner','-loglevel','error','-protocol_whitelist','pipe','-f','matroska','-i','pipe:0','-c:v','libx264','-preset','veryfast','-pix_fmt','yuv420p','-r','30','-g','60','-keyint_min','60','-sc_threshold','0','-b:v','4500k','-maxrate','4500k','-bufsize','9000k','-c:a','aac','-b:a','128k','-ar','44100','-protocol_whitelist','rtmp,tcp',*output,stdin=asyncio.subprocess.PIPE,stdout=asyncio.subprocess.DEVNULL,stderr=asyncio.subprocess.DEVNULL)
+            p=await asyncio.create_subprocess_exec('ffmpeg','-hide_banner','-loglevel','error','-progress','pipe:1','-stats_period','1','-protocol_whitelist','pipe','-f','matroska','-i','pipe:0','-c:v','libx264','-preset','veryfast','-pix_fmt','yuv420p','-r','30','-g','60','-keyint_min','60','-sc_threshold','0','-b:v','4500k','-maxrate','4500k','-bufsize','9000k','-c:a','aac','-b:a','128k','-ar','44100','-protocol_whitelist','rtmp,tcp',*output,stdin=asyncio.subprocess.PIPE,stdout=asyncio.subprocess.PIPE,stderr=asyncio.subprocess.DEVNULL)
             processes.append(p)
+            monitors.append(asyncio.create_task(encoder_progress(socket,p,index)))
         await socket.send(json.dumps({'status':'accepting-media'}))
         async with asyncio.timeout(12*60*60):
             while True:
@@ -61,6 +78,8 @@ async def handler(socket, verify=firebase_identity, profile=firebase_profile, va
             except asyncio.TimeoutError:
                 if p.returncode is None: p.kill()
                 await p.wait()
+        for monitor in monitors: monitor.cancel()
+        await asyncio.gather(*monitors,return_exceptions=True)
         await asyncio.gather(*(ingest.close() for ingest in ingests),return_exceptions=True)
         if acquired: active.release()
 
