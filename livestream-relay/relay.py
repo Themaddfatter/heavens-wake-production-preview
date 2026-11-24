@@ -31,7 +31,9 @@ async def handler(socket):
             process = await asyncio.create_subprocess_exec(
                 'ffmpeg', '-hide_banner', '-loglevel', 'error', '-i', 'pipe:0',
                 '-c:v', 'libx264', '-preset', 'veryfast', '-pix_fmt', 'yuv420p',
-                '-c:a', 'aac', '-f', 'flv', url,
+                '-r', '30', '-g', '60', '-keyint_min', '60', '-sc_threshold', '0',
+                '-b:v', '4500k', '-maxrate', '4500k', '-bufsize', '9000k',
+                '-c:a', 'aac', '-b:a', '128k', '-ar', '44100', '-f', 'flv', url,
                 stdin=asyncio.subprocess.PIPE, stdout=asyncio.subprocess.DEVNULL,
                 stderr=asyncio.subprocess.DEVNULL)
             processes.append(process)
