@@ -151,6 +151,43 @@
 .hwp-mc-bank-nav{display:flex;gap:3px;flex:none}
 .hwp-mc-bank-nav button{width:25px;height:25px;border:1px solid var(--line);background:var(--bg-3,var(--panel-2));color:var(--text);border-radius:4px;font-size:19px;line-height:1;cursor:pointer}
 .hwp-mc-bank-nav button:disabled{opacity:.4;cursor:default}
+</style>
+<style id="hwp-vertical-fader-banks-v1">
+.hwp-fader-page-nav{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:9px;flex:0 0 32px;align-self:stretch}
+.hwp-fader-page-nav .hwp-fader-page-arrow{display:grid;place-items:center;width:30px;height:32px;min-width:0;padding:0;border:1px solid var(--line);border-radius:5px;color:var(--text);background:var(--bg-2);cursor:pointer}
+.hwp-fader-page-nav .hwp-fader-page-arrow:disabled{opacity:.3;cursor:default}
+.hwp-fader-page-count{font-size:10px;color:var(--dim);font-variant-numeric:tabular-nums;white-space:nowrap}
+.hwp-mixer-console{min-width:0;align-items:stretch}
+.hwp-mixer-console>.hwp-mixer-bank{overflow:hidden;min-width:0;flex:1 1 0;padding-bottom:0;touch-action:pan-x}
+.hwp-mixer-console>.hwp-mixer-bank>.hwp-mixer-strip{box-sizing:border-box}
+.hwp-mixer-console>.hwp-mixer-strip.master{box-sizing:border-box;flex:none}
+.hwp-mc-body{padding:8px;gap:8px}
+.hwp-mc-top-actions{display:flex!important;align-items:center;gap:3px!important;flex:none}
+.hwp-mc-toggle{display:grid;place-items:center;min-width:0;width:32px;height:30px;padding:0;flex:none}
+.hwp-mc-toggle.active{background:var(--amber)!important;color:var(--hwp-accent-ink)!important;border-color:var(--amber)!important}
+.hwp-mc-console{position:relative;overflow:hidden;gap:3px;min-width:0;min-height:360px;flex:1 0 360px;max-height:600px}
+.hwp-mc-console>.hwp-fader-page-nav{flex-basis:23px;gap:7px}
+.hwp-fader-page-nav.compact .hwp-fader-page-arrow{width:23px;height:29px}
+.hwp-fader-page-nav.compact .hwp-fader-page-count{font-size:9px}
+.hwp-mc-console>.hwp-mc-list{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:3px;overflow:hidden;min-width:0;padding:0;flex:1 1 0;touch-action:pan-x}
+.hwp-mc-list>.hwp-mc-channel{width:100%;min-width:0;padding:5px 2px;gap:5px}
+.hwp-mc-list>.hint{grid-column:1/-1}
+.hwp-mc-list .hwp-mc-fader-track{min-height:190px;padding:3px 0}
+.hwp-mc-fader-track .hwp-mixer-calibrated{gap:3px;--hwp-fader-cap-width:22px;--hwp-fader-cap-height:28px}
+.hwp-mc-fader-track .hwp-mixer-calibrated .hwp-mixer-calibrated-scale{width:20px;font-size:8px}
+.hwp-mc-fader-track .hwp-mixer-calibrated-slider{width:25px}
+.hwp-mc-popup-shade{position:absolute;inset:0;background:#0002;z-index:3}
+.hwp-mc-console>.hwp-mc-master-bank{position:absolute;z-index:4;inset:0 0 0 auto;width:max(76px,calc((100% - 26px)/3));padding:0;border:0;transform:translateX(102%);visibility:hidden;transition:transform .18s ease,visibility 0s .18s;pointer-events:none;box-shadow:-5px 0 14px #0004}
+.hwp-mc-console>.hwp-mc-master-bank.open{transform:translateX(0);visibility:visible;transition:transform .18s ease;pointer-events:auto}
+.hwp-mc-master-bank>.hwp-mc-channel{width:100%;min-width:0;background:var(--bg-2);padding:7px 3px}
+.hwp-mc-gain-popup{position:absolute;z-index:5;top:0;right:0;bottom:38px;width:min(100%,190px);display:flex;flex-direction:column;gap:6px;box-sizing:border-box;padding:8px;border:1px solid var(--line);border-radius:7px;background:var(--bg-2);box-shadow:0 5px 20px #0006}
+.hwp-mc-gain-head{display:flex;align-items:center;justify-content:space-between;gap:3px;font-size:11px;min-width:0}
+.hwp-mc-gain-head strong{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.hwp-mc-gain-head .iconbtn{width:25px;height:25px;min-width:0;flex:none;padding:0;font-size:18px}
+.hwp-mc-gain-bank{display:flex;justify-content:center;gap:7px;min-height:0;flex:1}
+.hwp-mc-gain-strip{display:flex;flex-direction:column;align-items:center;gap:4px;flex:1;min-width:0;font-size:10px}
+.hwp-mc-gain-strip .hwp-mc-fader-track{flex:1;min-height:100px;padding:4px 0;max-height:none}
+@media(prefers-reduced-motion:reduce){.hwp-mc-console>.hwp-mc-master-bank{transition:none!important}}
 </style></head><body><script>try{document.documentElement.dataset.hwpAppearance=localStorage.getItem("hwp-appearance")==="light"?"light":"dark"}catch(e){}</script><div id="root"><div id="hwp-boot-placeholder" style="box-sizing:border-box;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;background:#071d16;color:#f3f8f4;font:600 19px Arial,sans-serif;text-align:center"><img src="./hwp-logo.png" alt="Heaven's Wake Production" style="max-width:210px;max-height:130px;object-fit:contain;margin-bottom:24px"><div>Opening Heaven's Wake Production…</div></div></div><script>
 (function(){
  var startupError="";
@@ -1975,13 +2012,45 @@ function HwpCompanionSwitch({active,onChange}){
  return M.jsx('div',{className:'hwp-companion-switch',role:'group','aria-label':'Presenter companions',children:modes.map(([mode,title,d])=>M.jsx('button',{type:'button',className:F('iconbtn',active===mode&&'active'),title,'data-tip':title,'aria-label':title,'aria-pressed':active===mode,onClick:()=>onChange(mode),children:M.jsx('svg',{width:22,height:22,viewBox:'0 0 24 24',fill:'none',stroke:'currentColor',strokeWidth:1.7,strokeLinecap:'round',strokeLinejoin:'round','aria-hidden':true,children:M.jsx('path',{d})})},mode))});
 }
 
+function hwpMixerPageSize(available,strip,gap){return Math.max(1,Math.floor((available+gap+.01)/(strip+gap)))}
+function hwpUseFaderPages(total,category,fixed,width){
+ const [capacity,setCapacity]=l.useState(fixed||1),[page,setPage]=l.useState(0),ref=l.useRef(null);
+ const size=fixed||capacity,last=Math.max(0,Math.ceil(total/size)-1),index=Math.min(page,last);
+ l.useEffect(()=>{setPage(0)},[category]);
+ l.useEffect(()=>{setPage(p=>Math.min(p,last))},[last]);
+ l.useLayoutEffect(()=>{
+  const el=ref.current;if(!el||fixed)return;
+  const measure=()=>{const strip=el.querySelector('.hwp-mixer-strip');if(!strip)return;const gap=parseFloat(getComputedStyle(el).columnGap)||0;const w=strip.getBoundingClientRect().width;if(w>0)setCapacity(hwpMixerPageSize(el.clientWidth,w,gap))};
+  measure();const observer=typeof ResizeObserver==='function'?new ResizeObserver(measure):null;observer?.observe(el);window.addEventListener('resize',measure);return()=>{observer?.disconnect();window.removeEventListener('resize',measure)};
+ },[fixed,width,total,category]);
+ const go=dir=>setPage(p=>Math.max(0,Math.min(last,p+dir)));
+ l.useEffect(()=>{
+  const el=ref.current;if(!el)return;let lock=false,timer=0,touch=null;
+  const wheel=e=>{if(e.ctrlKey||Math.abs(e.deltaY)<Math.abs(e.deltaX)||!e.deltaY)return;e.preventDefault();if(!lock){lock=true;go(e.deltaY>0?1:-1)}clearTimeout(timer);timer=setTimeout(()=>{lock=false},180)};
+  const start=e=>{if(e.touches.length!==1||e.target.closest('input,button,select')){touch=null;return}touch={x:e.touches[0].clientX,y:e.touches[0].clientY}};
+  const move=e=>{if(touch&&e.cancelable&&Math.abs(e.touches[0].clientY-touch.y)>12)e.preventDefault()};
+  const end=e=>{if(!touch)return;const t=e.changedTouches[0],dy=t.clientY-touch.y,dx=t.clientX-touch.x;touch=null;if(Math.abs(dy)>30&&Math.abs(dy)>Math.abs(dx))go(dy<0?1:-1)};
+  const cancel=()=>{touch=null};
+  el.addEventListener('wheel',wheel,{passive:false});el.addEventListener('touchstart',start,{passive:true});el.addEventListener('touchmove',move,{passive:false});el.addEventListener('touchend',end);el.addEventListener('touchcancel',cancel);
+  return()=>{clearTimeout(timer);el.removeEventListener('wheel',wheel);el.removeEventListener('touchstart',start);el.removeEventListener('touchmove',move);el.removeEventListener('touchend',end);el.removeEventListener('touchcancel',cancel)};
+ },[last]);
+ return {ref,size,index,last,go,first:index*size,end:Math.min(total,(index+1)*size)};
+}
+function HwpFaderPageNav({pages,compact=false}){
+ const h=hwpMixerNode,button=(dir,title,d)=>h('button',{type:'button',className:'iconbtn hwp-fader-page-arrow',title,'data-tip':title,'aria-label':title,disabled:dir<0?pages.index===0:pages.index===pages.last,onClick:()=>pages.go(dir)},h('svg',{width:17,height:17,viewBox:'0 0 24 24',fill:'none',stroke:'currentColor',strokeWidth:2.2,strokeLinecap:'round',strokeLinejoin:'round','aria-hidden':true},h('path',{d})));
+ return h('nav',{className:'hwp-fader-page-nav'+(compact?' compact':''),'aria-label':'Fader banks'},button(-1,'Previous fader bank','M5 15l7-7 7 7'),h('span',{className:'hwp-fader-page-count','aria-live':'polite'},(pages.index+1)+'/'+(pages.last+1)),button(1,'Next fader bank','M5 9l7 7 7-7'));
+}
 function HwpMixerCompanion({data,setData,mix,setMix,onOpenMixer}){
- const h=hwpMixerNode,[category,setCategory]=l.useState('All Channels'),bankRef=l.useRef(null);
- l.useEffect(()=>{if(bankRef.current)bankRef.current.scrollLeft=0},[category]);
- const scrollBank=dir=>{const el=bankRef.current;if(el)el.scrollBy({left:dir*Math.max(80,el.clientWidth-80),behavior:'smooth'})};
+ const h=hwpMixerNode,[category,setCategory]=l.useState('All Channels'),[masterOpen,setMasterOpen]=l.useState(false),[gainId,setGainId]=l.useState(null);
+ const bodyRef=l.useRef(null);
+ const icon=(title,d,active,click,extra={})=>h('button',{type:'button',className:'iconbtn hwp-mc-toggle'+(active?' active':''),title,'data-tip':title,'aria-label':title,'aria-pressed':active,onClick:click,...extra},h('svg',{width:19,height:19,viewBox:'0 0 24 24',fill:'none',stroke:'currentColor',strokeWidth:1.8,strokeLinecap:'round',strokeLinejoin:'round','aria-hidden':true},h('path',{d})));
+ const gainIcon='M12 3v6m0 6v6M8 9h8v6H8zM5 5v14m14-14v14';
  const buses=data.buses.filter(b=>b.enabled),current=buses.find(b=>b.id===mix)||buses[0]||data.buses[0],busId=current.id;
  const categories=['All Channels',...new Set([...hwpMixerCategories,...data.channels.map(c=>c.category)])];
  const channels=data.channels.filter(c=>category==='All Channels'||c.category===category);
+ const pages=hwpUseFaderPages(channels.length,category,3),gainChannel=gainId===null?null:data.channels.find(c=>c.id===gainId);
+ l.useEffect(()=>{setGainId(null)},[pages.index,category]);
+ l.useEffect(()=>{const dismiss=e=>{if(e.type==='keydown'){if(e.key!=='Escape')return}else if(e.target.closest?.('[data-hwp-mc-popup],[data-hwp-mc-toggle]')&&bodyRef.current?.contains(e.target))return;setMasterOpen(false);setGainId(null)};document.addEventListener('pointerdown',dismiss);document.addEventListener('keydown',dismiss);return()=>{document.removeEventListener('pointerdown',dismiss);document.removeEventListener('keydown',dismiss)}},[]);
  const fmt=n=>n<=-80?'−∞ dB':(n>0?'+':'')+Number(n).toFixed(1)+' dB';
  function change(id,master,key,value){
   setData(old=>master?{...old,buses:old.buses.map(b=>b.id===busId?{...b,[key]:key==='on'?!b.on:value}:b)}:{...old,channels:old.channels.map(c=>c.id!==id?c:key==='level'?{...c,levels:c.levels.map((n,j)=>j===busId?value:n)}:{...c,on:c.on.map((n,j)=>j===busId?!n:n)})});
@@ -1993,13 +2062,23 @@ function HwpMixerCompanion({data,setData,mix,setMix,onOpenMixer}){
    h('span',{className:'hwp-mc-name',title:name,style:{background:color,color:hwpAccentInk(color)}},name),
    h('output',{className:'hwp-mc-db'},fmt(level)),
    h('div',{className:'hwp-mixer-track hwp-mc-fader-track'},hwpMixerCalibratedFader({min:-80,max:10,step:.5,value:level,ticks:[10,0,-10,-20,-40,-60,-80],label:name+' fader',valueText:fmt(level),onChange:v=>change(c?.id,master,'level',v),formatTick:v=>v===-80?'−∞':v>0?'+'+v:String(v)})),
-   h('button',{type:'button',className:'hwp-mc-mute'+(on?'':' muted'),'aria-label':(on?'Mute ':'Unmute ')+name,'aria-pressed':!on,title:(on?'Mute ':'Unmute ')+name,onClick:()=>change(c?.id,master,'on')},on?'ON':'MUTED'));
+   h('button',{type:'button',className:'hwp-mc-mute'+(on?'':' muted'),'aria-label':(on?'Mute ':'Unmute ')+name,'aria-pressed':!on,title:(on?'Mute ':'Unmute ')+name,onClick:()=>change(c?.id,master,'on')},on?'ON':'MUTED'),
+   master?null:icon('Gain: '+name,gainIcon,gainId===c.id,()=>{setMasterOpen(false);setGainId(old=>old===c.id?null:c.id)},{'data-hwp-mc-toggle':true}));
  }
- return h('section',{className:'hwp-mc-body','aria-label':'Sound Mixer Companion'},
-  h('div',{className:'hwp-mc-top'},h('div',{},h('strong',{},'Sound Mixer'),h('span',{className:'hwp-mc-status'},'Yamaha QL1 · Offline demo')),h('button',{type:'button',className:'iconbtn hwp-mc-open',title:'Open full Sound Mixer','aria-label':'Open full Sound Mixer',onClick:onOpenMixer},h('svg',{width:19,height:19,viewBox:'0 0 24 24',fill:'none',stroke:'currentColor',strokeWidth:1.8,strokeLinecap:'round',strokeLinejoin:'round','aria-hidden':true},h('path',{d:'M14 4h6v6m0-6-8 8M10 20H4v-6m0 6 8-8'})))),
+ function gainFader(key,label,min,max,step,ticks){
+  const value=Number(gainChannel[key])||0,display=(value>0?'+':'')+value.toFixed(1)+' dB';
+  return h('div',{className:'hwp-mc-gain-strip',key},h('strong',{},label),h('output',{className:'hwp-mc-db'},display),h('div',{className:'hwp-mixer-track hwp-mc-fader-track'},hwpMixerCalibratedFader({min,max,step,value,ticks,label:gainChannel.name+' '+label,valueText:display,onChange:v=>setData(old=>({...old,channels:old.channels.map(c=>c.id===gainId?{...c,[key]:Math.max(min,Math.min(max,v))}:c)})),formatTick:v=>v>0?'+'+v:String(v)})));
+ }
+ return h('section',{className:'hwp-mc-body',ref:bodyRef,'aria-label':'Sound Mixer Companion'},
+  h('div',{className:'hwp-mc-top'},h('div',{},h('strong',{},'Sound Mixer'),h('span',{className:'hwp-mc-status'},'Yamaha QL1 · Offline demo')),h('div',{className:'hwp-mc-top-actions'},icon('Master fader','M4 4h16v16H4zM12 7v3m0 4v3M9 10h6v4H9z',masterOpen,()=>{setGainId(null);setMasterOpen(v=>!v)},{'data-hwp-mc-toggle':true,'aria-expanded':masterOpen}),h('button',{type:'button',className:'iconbtn hwp-mc-open',title:'Open full Sound Mixer','aria-label':'Open full Sound Mixer',onClick:onOpenMixer},h('svg',{width:19,height:19,viewBox:'0 0 24 24',fill:'none',stroke:'currentColor',strokeWidth:1.8,strokeLinecap:'round',strokeLinejoin:'round','aria-hidden':true},h('path',{d:'M14 4h6v6m0-6-8 8M10 20H4v-6m0 6 8-8'}))))),
   h('div',{className:'hwp-mc-filters'},h('label',{},'Output mix',h('select',{value:busId,'aria-label':'Mixer output',onChange:e=>setMix(Number(e.target.value))},...buses.map(b=>h('option',{key:b.id,value:b.id},b.name)))),h('label',{},'Channels',h('select',{value:category,'aria-label':'Mixer channel category',onChange:e=>setCategory(e.target.value)},...categories.map(v=>h('option',{key:v,value:v},v||'Unassigned'))))),
-  h('div',{className:'hwp-mc-list-heading'},h('strong',{},'Channel faders'),h('span',{},channels.length+' of '+data.channels.length),h('div',{className:'hwp-mc-bank-nav'},h('button',{type:'button',title:'Previous channels','aria-label':'Previous channels',onClick:()=>scrollBank(-1),disabled:!channels.length},'‹'),h('button',{type:'button',title:'Next channels','aria-label':'Next channels',onClick:()=>scrollBank(1),disabled:!channels.length},'›'))),
-  h('div',{className:'hwp-mc-console'},h('div',{className:'hwp-mc-list',ref:bankRef,role:'group','aria-label':current.name+' channel faders'},...(channels.length?channels.map(c=>strip(c)):[h('p',{className:'hint'},'No channels in this category.')])),h('div',{className:'hwp-mc-master-bank'},strip(null,true))));
+  h('div',{className:'hwp-mc-list-heading'},h('strong',{},'Channel faders'),h('span',{},channels.length?(pages.first+1)+'–'+pages.end+' of '+channels.length:'0 channels')),
+  h('div',{className:'hwp-mc-console'},
+   h(HwpFaderPageNav,{pages,compact:true}),
+   h('div',{className:'hwp-mc-list',ref:pages.ref,role:'group','aria-label':current.name+' channel faders'},...(channels.length?channels.slice(pages.first,pages.end).map(c=>strip(c)):[h('p',{className:'hint'},'No channels in this category.')])),
+   masterOpen?h('div',{className:'hwp-mc-popup-shade','aria-hidden':true,onPointerDown:e=>{e.stopPropagation();setMasterOpen(false)}}):null,
+   h('div',{className:'hwp-mc-master-bank'+(masterOpen?' open':''),'aria-hidden':!masterOpen,'data-hwp-mc-popup':true},strip(null,true)),
+   gainChannel?h('div',{className:'hwp-mc-gain-popup',role:'dialog','aria-label':'Gain: '+gainChannel.name,'data-hwp-mc-popup':true},h('div',{className:'hwp-mc-gain-head'},h('strong',{},'Gain · '+gainChannel.name),h('button',{type:'button',className:'iconbtn',title:'Close gain','aria-label':'Close gain',onClick:()=>setGainId(null)},'×')),h('div',{className:'hwp-mc-gain-bank'},gainChannel.id<32?gainFader('ag','A.GAIN',-6,66,1,[66,48,36,24,12,0,-6]):null,gainFader('dg','D.GAIN',-96,24,.5,[24,12,0,-24,-48,-72,-96]))):null));
 }
 
 function hwpVisualFrame(v){
@@ -3211,6 +3290,7 @@ function hwpMixerCalibratedFader({min,max,step,value,ticks,label,valueText,onCha
 function HwpSoundMixer({data,setData,mix,setMix}){
  const h=hwpMixerNode, [category,setCategory]=l.useState('All Channels'),[editor,setEditor]=l.useState(null),[cue,setCue]=l.useState([]),[multiple,setMultiple]=l.useState(false),[volume,setVolume]=l.useState(50),[width,setWidth]=l.useState('Standard'),[hex,setHex]=l.useState('');
  const current=data.buses[mix],categories=['All Channels',...new Set([...hwpMixerCategories,...data.channels.map(c=>c.category)])],channels=data.channels.filter(c=>category==='All Channels'||c.category===category);
+ const pages=hwpUseFaderPages(channels.length,category,null,width);
  l.useEffect(()=>{if(!categories.includes(category))setCategory('All Channels')},[category,data.channels]);
  l.useEffect(()=>{const key=e=>{if(e.key==='Escape')setEditor(null)};window.addEventListener('keydown',key);return()=>window.removeEventListener('keydown',key)},[]);
  const updateChannel=(id,patch)=>setData(old=>({...old,channels:old.channels.map(c=>c.id===id?{...c,...(typeof patch==='function'?patch(c):patch)}:c)}));
@@ -3283,7 +3363,7 @@ function HwpSoundMixer({data,setData,mix,setMix}){
     h('span',{className:'hwp-mixer-monitor-cue',title:cue.length?cue.map(cueLabel).join(', '):'No CUE selected'},cue.length?cue.map(cueLabel).join(', '):'No CUE selected'),
     h('div',{className:'hwp-mixer-monitor-actions'},btn(multiple?'Multi CUE':'Single CUE',()=>{setMultiple(!multiple);if(multiple)setCue(old=>old.slice(-1))},multiple?'active':''),btn('Clear CUE',()=>setCue([]))),
     field('Monitor volume (demo)',h('input',{type:'range',min:0,max:100,value:volume,'aria-label':'Headphone volume (demo)',onChange:e=>setVolume(Number(e.target.value))})))),
-  h('div',{className:'hwp-mixer-console'},h('div',{className:'hwp-mixer-bank',role:'group','aria-label':current.name+' channel faders'},...(channels.length?channels.map(c=>strip(c)):[h('p',{className:'hwp-mixer-sub'},'No channels assigned to this category. Assign channels from All Channels using Edit.')])),strip(null,true)),
+  h('div',{className:'hwp-mixer-console'},h(HwpFaderPageNav,{pages}),h('div',{className:'hwp-mixer-bank',ref:pages.ref,role:'group','aria-label':current.name+' channel faders'},...(channels.length?channels.slice(pages.first,pages.end).map(c=>strip(c)):[h('p',{className:'hwp-mixer-sub'},'No channels assigned to this category. Assign channels from All Channels using Edit.')])),strip(null,true)),
   h('div',{className:'hwp-mixer-sub'},mix===0?'Main faders · demo only':'Sends on faders · '+current.name+' · demo only'),dialog());
 }
 
