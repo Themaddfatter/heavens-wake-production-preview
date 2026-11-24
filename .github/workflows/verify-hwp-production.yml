@@ -11,6 +11,7 @@ on:
       - hwp-logo.png
       - hwp-bibles/**
       - sync-staging/**
+      - song-creator/**
       - tests/**
       - .github/workflows/verify-hwp-production.yml
   workflow_dispatch:
@@ -133,4 +134,18 @@ jobs:
             if [ "$attempt" -lt 25 ]; then sleep 12; fi
           done
           echo "::error::HWP custom domain is missing the current service medley and Bible release."
+          exit 1
+
+      - name: Verify native song creator theme is deployed
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -Fq 'background:var(--bg-3);color:var(--text)' song-creator/editor.css
+          grep -Fq ':root[data-hwp-appearance="light"] .hwp-song-dialog{background:#fff;color:var(--text)' song-creator/editor.css
+          for attempt in $(seq 1 25); do
+            if curl -fsSL --max-time 20 "https://production.sioncdo.com/?song_theme=$GITHUB_SHA" -o "$RUNNER_TEMP/hwp-song-theme-home.html" && grep -Fq 'song-creator/editor.css?v=theme-v2' "$RUNNER_TEMP/hwp-song-theme-home.html" && curl -fsSL --max-time 20 "https://production.sioncdo.com/song-creator/editor.css?v=theme-v2&sha=$GITHUB_SHA" -o "$RUNNER_TEMP/hwp-song-theme.css" && cmp -s song-creator/editor.css "$RUNNER_TEMP/hwp-song-theme.css"; then
+              echo "Verified deployed song creator theme stylesheet"; exit 0
+            fi
+            sleep 8
+          done
           exit 1
