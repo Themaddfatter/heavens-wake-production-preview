@@ -290,8 +290,8 @@ test("Presenter Sound Mixer companion shares selected mix, channel levels, maste
  const find=label=>flat(view).find(n=>n.props?.["aria-label"]===label);
  assert.ok(find("Vocal fader"));assert.ok(find("Input 2 fader"));assert.equal(find("Input 3 fader"),undefined);
  assert.equal(find("Open full Sound Mixer"),undefined);
- const bankPositions=()=>flat(view,true).filter(n=>n.props?.["data-bank-index"]!==undefined).map(n=>[n.props["data-bank-index"],n.props.style.transform,n.props.inert]);
- assert.deepEqual(bankPositions(),[[0,"translateY(0%)",false],[1,"translateY(100%)",true]]);
+ const bankPositions=()=>flat(view,true).filter(n=>n.props?.["data-bank-index"]!==undefined).map(n=>[n.props["data-bank-index"],n.props.inert]);
+ assert.deepEqual(bankPositions(),[[0,false],[1,true]]);
  find("Vocal fader").props.onChange({target:{value:"-5.5"}});
  find("Mute Vocal").props.onClick();
  find("Master fader").props.onClick();view=render();
@@ -306,10 +306,10 @@ test("Presenter Sound Mixer companion shares selected mix, channel levels, maste
  const navView=scope.HwpFaderPageNav(nav.props);
  flat(navView).find(n=>n.props?.["aria-label"]==="Next fader bank").props.onClick();view=render();
  assert.equal(find("Vocal fader"),undefined);assert.ok(find("Input 3 fader"));
- assert.deepEqual(bankPositions(),[[0,"translateY(-100%)",true],[1,"translateY(0%)",false]]);
+ assert.deepEqual(bankPositions(),[[0,true],[1,false]]);
  const nav2=flat(view).find(n=>n.tag===scope.HwpFaderPageNav);
  flat(scope.HwpFaderPageNav(nav2.props)).find(n=>n.props?.["aria-label"]==="Previous fader bank").props.onClick();view=render();
- assert.deepEqual(bankPositions(),[[0,"translateY(0%)",false],[1,"translateY(100%)",true]]);
+ assert.deepEqual(bankPositions(),[[0,false],[1,true]]);
  find("Mixer output").props.onChange({target:{value:"0"}});
  assert.equal(data.channels[0].levels[0],-80);
  assert.equal(data.channels[0].levels[1],-5.5);
@@ -327,6 +327,12 @@ test("Presenter Sound Mixer companion shares selected mix, channel levels, maste
  assert.ok(!html.includes("className:`service-num`,children:`BG`"));
  assert.ok(html.includes("width:calc(100% + 24px)"));
  assert.ok(html.includes("hwpUseFaderPages(channels.length,category,null,width)"));
- assert.ok(html.includes("transition:transform 320ms cubic-bezier"));
+ assert.ok(html.includes("scroll-snap-type:y mandatory"));
+ assert.ok(html.includes("scroll-snap-stop:normal"));
+ assert.ok(html.includes("touch-action:pan-y"));
+ assert.ok(html.includes("el.scrollTop=drag.top-dy"));
+ assert.equal(scope.hwpMixerNearestPage(0,300,4),0);
+ assert.equal(scope.hwpMixerNearestPage(780,300,4),3);
+ assert.equal(scope.hwpMixerNearestPage(3000,300,4),4);
  assert.ok(html.includes("hwpFaderBank(pages,channels,strip,current.name+' channel faders',false"));
 });
