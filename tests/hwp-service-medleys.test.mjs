@@ -268,3 +268,5 @@ test("medley glow has persisted appearance setting and applies to both views",()
  assert.ok(css.includes("border:4px solid var(--hwp-medley-glow,#29ff70)"));
  assert.ok(css.includes(".all-service-presentation.service-medley-child > h3.all-pres-bar{margin-left:0!important;width:100%!important"));
 });
+
+test("normal reorder before or after a medley never joins it",()=>{let p=fixture();const a=get("song-a",p),b=get("song-b",p),c=get("song-c",p);p=ctx.hwpServiceCreateMedley(p,b.id,a.id,presentations);p=ctx.hwpServiceMove(p,c.id,a.id,true);assert.equal(get("song-c",p).medleyParentId,null);assert.deepEqual(Array.from(p.items.filter(x=>x.presentationId?.startsWith("song-")),x=>x.presentationId),["song-a","song-b","song-c"]);p=ctx.hwpServiceMove(p,c.id,b.id,false);assert.deepEqual(Array.from(p.items.filter(x=>x.presentationId?.startsWith("song-")),x=>x.presentationId),["song-c","song-a","song-b"]);assert.equal(get("song-c",p).medleyParentId,null);assert.ok(html.includes("hwp-medley-join-target"));assert.ok(!html.includes("},t.id),medleyDrop(item)]"));});

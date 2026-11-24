@@ -193,3 +193,9 @@ Requests below are **not** asserted to be broken in the latest release; compare 
 ## 2026-11-23 — Medley alignment, detachment gesture and customizable glow
 - Center Service presentations shows all medley song banners/slides aligned; the left service pane retains its member hierarchy. Pull any medley song left and release in the service pane to unlink it while retaining the presentation and its service header; root detachment promotes the next song. Option/Alt + Left also unlinks. Distinguish intentional left movement from vertical reorder, show a release indicator, and use the existing undoable reducer.
 - Appearance > Medley glow color persists in the shared workspace and changes the perimeter/glow in both views; default bright green remains. No other feature changes.
+
+## 2026-11-23 — Explicit medley joins, presentation notes, dissolve and HWW reconnect
+- Ordinary drag/drop reorders independent songs before/after any whole medley; only the separate right-edge Join medley drop target or explicit context command creates membership. The previous between-row join target is removed.
+- Presentation notes and expanded toggle are shared presentation fields (not per-account or per-service state), saved through the normal cloud workspace. Note editor remains expanded until toggled off. Library preview slide right-click Edit slide opens the selected presentation in Edit mode without taking it live.
+- Audience visual layers use the global dissolve timing for logo, welcome, slides, background, media, props, messages, including transitions to/from empty. Removed logo cut override and fixed fade-in from empty.
+- HWP reports HWW receiver status, reconnects on auth/focus/network and accepts song-only commands for the selected published schedule even while editing, preserving editor selection. Optional Firestore command signal listener with callable polling fallback; backend/rules require deployment.

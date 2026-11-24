@@ -68,11 +68,13 @@ jobs:
               && grep -Fq 'function hwpMediaFolderEdit' "$RUNNER_TEMP/hwp-home.html" \
               && grep -Fq 'function hwpLibraryFolderEdit' "$RUNNER_TEMP/hwp-home.html" \
               && grep -Fq 'function hwpLoadBibleFile' "$RUNNER_TEMP/hwp-home.html" \
-              && grep -Fq 'hwp-medley-glow-drag-v1' "$RUNNER_TEMP/hwp-home.html" \
+              && grep -Fq 'hwp-service-notes-worship-v2' "$RUNNER_TEMP/hwp-home.html" \
               && grep -Fq 'function HwpWorshipControlAgent' "$RUNNER_TEMP/hwp-home.html" \
               && grep -Fq 'worshipControlAck' "$RUNNER_TEMP/hwp-home.html" \
               && grep -Fq 'function hwpUnmergeServiceScriptures' "$RUNNER_TEMP/hwp-home.html" \
               && grep -Fq 'function hwpRegisteredLabel' "$RUNNER_TEMP/hwp-home.html" \
+              && grep -Fq 'hwp-presentation-note-toggle' "$RUNNER_TEMP/hwp-home.html" \
+              && grep -Fq 'hwp-medley-join-target' "$RUNNER_TEMP/hwp-access.css" \
               && grep -Fq 'function hwpMedleyDragDetach' "$RUNNER_TEMP/hwp-home.html" \
               && grep -Fq 'Medley glow color' "$RUNNER_TEMP/hwp-home.html" \
               && grep -Fq 'hwp-medley-detach-ready' "$RUNNER_TEMP/hwp-access.css" \
