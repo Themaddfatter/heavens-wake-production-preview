@@ -274,31 +274,51 @@ test("normal reorder before or after a medley never joins it",()=>{let p=fixture
 test("moving a child between siblings preserves its medley; standalone moves never join it",()=>{let p=fixture(),a=get("song-a",p),b=get("song-b",p),c=get("song-c",p);p=ctx.hwpServiceCreateMedley(p,b.id,a.id,presentations);p=ctx.hwpServiceCreateMedley(p,c.id,a.id,presentations);p=ctx.hwpServiceMove(p,c.id,b.id,false);assert.deepEqual(Array.from(p.items.filter(x=>x.presentationId?.startsWith("song-")),x=>x.presentationId),["song-a","song-c","song-b"]);assert.equal(get("song-c",p).medleyParentId,a.id);p=ctx.hwpServiceRemoveFromMedley(p,c.id);assert.equal(get("song-c",p).medleyParentId,null);});
 
 
-test("Presenter Sound Mixer companion shares the selected mix and channel state",()=>{
+test("Presenter Sound Mixer companion shares selected mix, channel levels, master and gain",()=>{
  const start=html.indexOf("function HwpCompanionSwitch("),end=html.indexOf("function hwpVisualFrame",start);
- assert.ok(start>=0&&end>start);
+ const faderStart=html.indexOf("function hwpMixerDbPosition("),faderEnd=html.indexOf("function HwpSoundMixer(",faderStart);
+ assert.ok(start>=0&&end>start&&faderStart>=0&&faderEnd>faderStart);
  const h=(tag,props,...children)=>({tag,props,children});
- const scope=createContext({M:{jsx:(tag,props)=>({tag,props,children:props.children})},l:{useState:v=>[v,()=>{}]},F:(...args)=>args.filter(Boolean).join(" "),hwpMixerNode:h,hwpMixerCategories:["Unassigned"]});
- runInContext(html.slice(start,end),scope);
- let data={buses:[{id:0,name:"Main",enabled:true,level:-80,on:false,color:"#123456"},{id:1,name:"Mix 01",enabled:true,level:-40,on:true,color:"#123456"}],channels:[{id:0,name:"Vocal",category:"Unassigned",color:"#123456",levels:[-80,-10],on:[false,true]}]},mix=1,opened=false;
- const view=scope.HwpMixerCompanion({data,setData:fn=>{data=fn(data)},mix,setMix:v=>{mix=v},onOpenMixer:()=>{opened=true}});
+ let slots=[],cursor=0;
+ const hooks={useState:v=>{const i=cursor++;if(!(i in slots))slots[i]=v;return [slots[i],x=>{slots[i]=typeof x==="function"?x(slots[i]):x}]},useRef:v=>({current:v}),useEffect:()=>{},useLayoutEffect:()=>{}};
+ const scope=createContext({M:{jsx:(tag,props)=>({tag,props,children:props.children})},l:hooks,F:(...args)=>args.filter(Boolean).join(" "),hwpMixerNode:h,hwpMixerCategories:["Unassigned"],hwpAccentInk:()=>"#fff"});
+ runInContext(html.slice(start,end)+html.slice(faderStart,faderEnd),scope);
+ let data={buses:[{id:0,name:"Main",enabled:true,level:-80,on:false,color:"#123456"},{id:1,name:"Mix 01",enabled:true,level:-40,on:true,color:"#123456"}],channels:Array.from({length:4},(_,id)=>({id,name:id?"Input "+id:"Vocal",category:"Unassigned",color:"#123456",levels:[-80,-10],on:[false,true],ag:0,dg:0}))},mix=1,opened=false;
+ const render=()=>{cursor=0;return scope.HwpMixerCompanion({data,setData:fn=>{data=fn(data)},mix,setMix:v=>{mix=v},onOpenMixer:()=>{opened=true}})};
  function flat(n){return !n||typeof n!=="object"?[]:[n,...(Array.isArray(n.children)?n.children:[n.children]).flatMap(flat)]}
- const nodes=flat(view),find=label=>nodes.find(n=>n.props?.["aria-label"]===label);
+ let view=render();
+ const find=label=>flat(view).find(n=>n.props?.["aria-label"]===label);
+ assert.ok(find("Vocal fader"));assert.ok(find("Input 2 fader"));assert.equal(find("Input 3 fader"),undefined);
  find("Vocal fader").props.onChange({target:{value:"-5.5"}});
- find("Mix 01 Master fader").props.onChange({target:{value:"0"}});
  find("Mute Vocal").props.onClick();
+ find("Master fader").props.onClick();view=render();
+ assert.equal(find("Master fader").props["aria-pressed"],true);
+ find("Mix 01 Master fader").props.onChange({target:{value:"0"}});
+ find("Master fader").props.onClick();view=render();assert.equal(find("Master fader").props["aria-pressed"],false);
+ find("Gain: Vocal").props.onClick();view=render();assert.equal(find("Gain: Vocal").props["aria-pressed"],true);
+ find("Vocal A.GAIN").props.onChange({target:{value:"12"}});
+ find("Vocal D.GAIN").props.onChange({target:{value:"-6"}});
+ find("Close gain").props.onClick();view=render();assert.equal(find("Gain: Vocal").props["aria-pressed"],false);
+ const nav=flat(view).find(n=>n.tag===scope.HwpFaderPageNav);
+ const navView=scope.HwpFaderPageNav(nav.props);
+ flat(navView).find(n=>n.props?.["aria-label"]==="Next fader bank").props.onClick();view=render();
+ assert.equal(find("Vocal fader"),undefined);assert.ok(find("Input 3 fader"));
  find("Mixer output").props.onChange({target:{value:"0"}});
  find("Open full Sound Mixer").props.onClick();
  assert.equal(data.channels[0].levels[0],-80);
  assert.equal(data.channels[0].levels[1],-5.5);
  assert.equal(data.channels[0].on[1],false);
+ assert.equal(data.channels[0].ag,12);assert.equal(data.channels[0].dg,-6);
  assert.equal(data.buses[1].level,0);
  assert.equal(data.buses[0].level,-80);
  assert.equal(mix,0);assert.ok(opened);
+ assert.equal(scope.hwpMixerPageSize(285,91,6),3);
+ assert.equal(scope.hwpMixerPageSize(284,91,6),2);
  const tabs=scope.HwpCompanionSwitch({active:"mixer",onChange:()=>{}}).props.children;
  assert.equal(tabs.length,3);assert.equal(tabs.filter(tab=>tab.props["aria-pressed"]).length,1);
  assert.equal(tabs[2].props["aria-label"],"Sound Mixer Companion");
  assert.ok(html.includes("Ni,{mixerData,setMixerData,mixerMix,setMixerMix}"));
  assert.ok(!html.includes("className:`service-num`,children:`BG`"));
  assert.ok(html.includes("width:calc(100% + 24px)"));
+ assert.ok(html.includes("hwpUseFaderPages(channels.length,category,null,width)"));
 });
