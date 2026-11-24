@@ -821,8 +821,8 @@
  top:50%;
  transform:translateY(-50%);
 }
-.service-list .service-row[draggable]{cursor:grab;min-height:37px;touch-action:pan-y}
-.service-list .service-row[draggable]:active,
+.service-list .service-row[draggable]{cursor:default;min-height:37px;touch-action:pan-y}
+.service-list .service-row[draggable]:active{cursor:default}
 .service-list .service-header[draggable]:active{cursor:grabbing}
 .service-list.hwp-service-dragging .service-row,
 .service-list.hwp-service-dragging .service-header{transition:box-shadow .08s ease}
@@ -1654,3 +1654,6 @@
 .all-pres-bar .hwp-presentation-note-toggle{flex:none;display:grid;place-items:center;margin-left:4px}.hwp-presentation-note-wrap{display:grid;grid-template-rows:0fr;opacity:0;transition:grid-template-rows 180ms ease,opacity 180ms ease;width:100%;min-width:0;box-sizing:border-box}.hwp-presentation-note-wrap.open{grid-template-rows:1fr;opacity:1}.hwp-presentation-note-inner{min-height:0;overflow:hidden;width:100%}.hwp-presentation-note{display:block;width:100%;box-sizing:border-box;margin:0;padding:8px 10px;min-height:42px;max-height:220px;resize:vertical;background:var(--bg-2,#202020);border:1px solid var(--line,#535353);border-radius:0 0 5px 5px;color:var(--text,#eee);font:inherit;font-size:12px;line-height:1.45}.hwp-presentation-note-wrap:not(.open){pointer-events:none}.hwp-presentation-note-wrap.open .hwp-presentation-note{margin-bottom:6px}.hwp-presentation-note:focus{outline:1px solid var(--amber);outline-offset:-1px}.hwp-worship-connection{display:flex;align-items:center;gap:5px;font:600 10px/1.2 system-ui,sans-serif;padding:3px 8px;color:var(--muted,#aaa);min-height:19px}.hwp-worship-connection>span:nth-child(2){flex:1;min-width:0}.hwp-worship-connection .iconbtn{height:19px;width:20px;min-width:20px;padding:0;font-size:14px}.hwp-worship-dot{width:7px;height:7px;border-radius:50%;background:#d39a58;flex:none}.hwp-worship-connection.connected .hwp-worship-dot{background:#35e47c}.hwp-worship-connection.error .hwp-worship-dot{background:#f06565}
 
 .hwp-library-window>.menu{z-index:9999!important}.stage-layout>.logical-stack{position:absolute;inset:0;pointer-events:none;z-index:200}.stage-layout>.logical-stack>.stack-layer{pointer-events:none}.logical-root>.logical-stack{pointer-events:none}
+
+/* Presentation clicks retain a normal arrow; native drag-and-drop remains enabled. */
+.service-list .service-row.service-presentation[draggable],.service-list .service-row.service-presentation[draggable]:active,.service-list .service-row.service-presentation[draggable] .service-copy,.service-list .service-row.service-presentation[draggable] .hwp-service-drag-grip{cursor:default!important}
