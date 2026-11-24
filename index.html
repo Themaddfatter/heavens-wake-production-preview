@@ -2400,15 +2400,15 @@ function hwpSlideHotkeys(state,presentation){
 function HwpTeamMessages(){
  const {state}=N(),service=hwpWorshipReceiverService(state),serviceId=service?.hwpScheduleId||"";
  const [Chat,setChat]=(0,l.useState)(null),[transport,setTransport]=(0,l.useState)(null);
- (0,l.useEffect)(()=>{let alive=true,stop=()=>{};Promise.all([hwpCloudBoot(),import('./sync-staging/heaven-wake-chat-ui.mjs?v=team-chat-v2'),import('https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js'),import('https://www.gstatic.com/firebasejs/10.14.1/firebase-functions.js')]).then(([system,ui,fs,fn])=>{
- if(!alive||!serviceId){if(alive)setTransport(null);return}
+ (0,l.useEffect)(()=>{let alive=true;import('./sync-staging/heaven-wake-chat-ui.mjs?v=team-chat-v3').then(ui=>{if(alive)setChat(()=>ui.createChatControls({jsx:M.jsx,useState:l.useState,useEffect:l.useEffect,useRef:l.useRef}))}).catch(error=>console.warn('AV messaging UI unavailable',error?.message));return()=>{alive=false}},[]);
+ (0,l.useEffect)(()=>{let alive=true,stop=()=>{};setTransport(null);if(!serviceId)return;Promise.all([hwpCloudBoot(),import('https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js'),import('https://www.gstatic.com/firebasejs/10.14.1/firebase-functions.js')]).then(([system,fs,fn])=>{
+ if(!alive)return
  const auth=system.auth.firebaseAuth,app=auth.app,db=fs.getFirestore(app),call=fn.httpsCallable(fn.getFunctions(app,'us-central1'),'heavenWakeMessages');
  const rows=snapshot=>snapshot.docs.map(d=>({id:d.id,...d.data()})).reverse(),docId=channel=>channel+'__'+serviceId,messages=channel=>fs.collection(db,'heavenWakeMessages',docId(channel),'messages');
  const next={serviceId,watchState:(channel,success,error)=>fs.onSnapshot(fs.doc(db,'heavenWakeMessages',docId(channel)),s=>success(s.data()),error),watchRows:(channel,success,error)=>fs.onSnapshot(fs.query(messages(channel),fs.orderBy('sequence','desc'),fs.limit(100)),s=>success(rows(s)),error),history:async(channel,before)=>rows(await fs.getDocs(fs.query(messages(channel),fs.orderBy('sequence','desc'),fs.startAfter(before),fs.limit(100)))),request:async data=>(await call({...data,serviceId})).data};
- const Component=ui.createChatControls({jsx:M.jsx,useState:l.useState,useEffect:l.useEffect,useRef:l.useRef});
- setChat(()=>Component);stop=system.auth.observe(user=>{if(alive)setTransport(user?next:null)});
+ stop=system.auth.observe(user=>{if(alive)setTransport(user?next:null)});
  }).catch(error=>console.warn('AV messaging unavailable',error?.message));return()=>{alive=false;stop()}},[serviceId]);
- return Chat&&transport?.serviceId===serviceId&&serviceId?(0,M.jsx)(Chat,{app:'hwp',transport,key:serviceId}):(0,M.jsx)('span',{style:{display:'inline-block',width:74,flex:'0 0 74px'},'aria-hidden':true});
+ return Chat?(0,M.jsx)(Chat,{app:'hwp',transport:serviceId&&transport?.serviceId===serviceId?transport:null,unavailableReason:serviceId?'connection':'service',key:serviceId||'no-service'}):(0,M.jsx)('span',{style:{display:'inline-block',width:74,flex:'0 0 74px'},'aria-hidden':true});
 }
 
 function HwpNativeSongCreator({onClose,onSaved}){
