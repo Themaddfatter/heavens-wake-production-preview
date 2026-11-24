@@ -203,3 +203,38 @@ test("accent foreground chooses black or white for readable contrast",()=>{
  assert.equal(ink('#e2a04a'),'#000000');
  assert.ok(html.includes('--hwp-accent-ink'));
 });
+
+test('Livestream companion and Cameras share the Program composition',()=>{
+ for(const marker of ['function HwpLiveCompanion','function HwpCompanionSwitch','function HwpCameraEditor','function HwpCameraComposite','function HwpLayoutEditorPreview','hwp-companion-camera-release'])includes(marker,marker);
+ includes("['control','grid','cameras']", 'header camera editor');
+ includes("preview:true",'selected camera composition');
+ includes("liveActive&&(0,M.jsx)",'preserve recording controller across workspace changes');
+});
+test('Camera framing supports independent virtual views and fits',()=>{
+ const start=html.indexOf('function hwpLiveViewStyle('),end=html.indexOf('function hwpLiveLayoutFor(',start);
+ const style=new Function(html.slice(start,end)+';return hwpLiveViewStyle')();
+ assert.equal(style({zoom:2,flipX:true,rotation:90,fit:'contain'}).transform,'rotate(90deg) scale(-2,2)');
+ assert.equal(style({fit:'contain'}).objectFit,'contain');
+ assert.equal(style({cropX:.8,cropW:1}).clipPath,'inset(0% 0% 0% 80%)');
+});
+test('Layout selection prioritizes exact category and camera, then category and global defaults',()=>{
+ const start=html.indexOf('function hwpLiveLayoutFor('),end=html.indexOf('function HwpLiveMonitor(',start);
+ const find=new Function(html.slice(start,end)+';return hwpLiveLayoutFor')();
+ const state={doc:{presentations:[{id:'song-1',category:'song'}],settings:{livestream:{layouts:[{category:'*',viewId:'*',mode:'off'},{category:'song',viewId:'*',mode:'full'},{category:'song',viewId:'close',mode:'text'}]}}},live:{presentationId:'song-1'}};
+ assert.equal(find(state,{id:'close'}).mode,'text');
+ assert.equal(find(state,{id:'wide'}).mode,'full');
+ state.live.presentationId='missing';
+ assert.equal(find(state,{id:'wide'}).mode,'off');
+});
+test('Layout composition respects text-only, full-slide and camera-only settings',()=>{
+ const start=html.indexOf('function hwpLayoutSlide('),end=html.indexOf('function HwpCameraComposite(',start);
+ const {hwpLayoutSlide,hwpLayoutLayer}=new Function(html.slice(start,end)+';return {hwpLayoutSlide,hwpLayoutLayer}')();
+ const slide={background:{type:'color'},objects:[{kind:'rect'},{kind:'text',text:'Song',textStyle:{color:'#000'}}]};
+ assert.equal(hwpLayoutSlide(slide,{mode:'off'}),null);
+ assert.equal(hwpLayoutSlide(slide,{mode:'full'}).objects.length,2);
+ const textSlide=hwpLayoutSlide(slide,{mode:'text',customText:true,textColor:'#fff'});
+ assert.equal(textSlide.objects.length,1);
+ assert.equal(textSlide.objects[0].textStyle.color,'#fff');
+ assert.equal(hwpLayoutLayer({cameraX:0,cameraY:0,cameraW:100,cameraH:100,slideBehind:true},'camera').zIndex,2);
+ assert.equal(slide.objects[1].textStyle.color,'#000');
+});
