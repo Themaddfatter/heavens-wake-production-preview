@@ -216,7 +216,7 @@ test("service theme editor includes template selection, reorder, colors and save
  assert.ok(css.includes('.hwp-service-theme-editor .hwp-theme-header-row'));
 });
 test("expanded right preview removes clear buttons and transport and includes stage messages",()=>{
- const start=html.indexOf("function Ni(){"),end=html.indexOf("function Pi(){",start);
+ const start=html.indexOf("function Ni("),end=html.indexOf("function Pi(){",start);
  assert.ok(start>0&&end>start);
  const preview=html.slice(start,end);
  assert.ok(preview.includes('className:`preview hwp-preview-redesign`'));
@@ -272,3 +272,33 @@ test("medley glow has persisted appearance setting and applies to both views",()
 test("normal reorder before or after a medley never joins it",()=>{let p=fixture();const a=get("song-a",p),b=get("song-b",p),c=get("song-c",p);p=ctx.hwpServiceCreateMedley(p,b.id,a.id,presentations);p=ctx.hwpServiceMove(p,c.id,a.id,true);assert.equal(get("song-c",p).medleyParentId,null);assert.deepEqual(Array.from(p.items.filter(x=>x.presentationId?.startsWith("song-")),x=>x.presentationId),["song-a","song-b","song-c"]);p=ctx.hwpServiceMove(p,c.id,b.id,false);assert.deepEqual(Array.from(p.items.filter(x=>x.presentationId?.startsWith("song-")),x=>x.presentationId),["song-c","song-a","song-b"]);assert.equal(get("song-c",p).medleyParentId,null);assert.ok(html.includes("hwp-medley-join-target"));assert.ok(!html.includes("},t.id),medleyDrop(item)]"));});
 
 test("moving a child between siblings preserves its medley; standalone moves never join it",()=>{let p=fixture(),a=get("song-a",p),b=get("song-b",p),c=get("song-c",p);p=ctx.hwpServiceCreateMedley(p,b.id,a.id,presentations);p=ctx.hwpServiceCreateMedley(p,c.id,a.id,presentations);p=ctx.hwpServiceMove(p,c.id,b.id,false);assert.deepEqual(Array.from(p.items.filter(x=>x.presentationId?.startsWith("song-")),x=>x.presentationId),["song-a","song-c","song-b"]);assert.equal(get("song-c",p).medleyParentId,a.id);p=ctx.hwpServiceRemoveFromMedley(p,c.id);assert.equal(get("song-c",p).medleyParentId,null);});
+
+
+test("Presenter Sound Mixer companion shares the selected mix and channel state",()=>{
+ const start=html.indexOf("function HwpCompanionSwitch("),end=html.indexOf("function hwpVisualFrame",start);
+ assert.ok(start>=0&&end>start);
+ const h=(tag,props,...children)=>({tag,props,children});
+ const scope=createContext({M:{jsx:(tag,props)=>({tag,props,children:props.children})},l:{useState:v=>[v,()=>{}]},F:(...args)=>args.filter(Boolean).join(" "),hwpMixerNode:h,hwpMixerCategories:["Unassigned"]});
+ runInContext(html.slice(start,end),scope);
+ let data={buses:[{id:0,name:"Main",enabled:true,level:-80,on:false,color:"#123456"},{id:1,name:"Mix 01",enabled:true,level:-40,on:true,color:"#123456"}],channels:[{id:0,name:"Vocal",category:"Unassigned",color:"#123456",levels:[-80,-10],on:[false,true]}]},mix=1,opened=false;
+ const view=scope.HwpMixerCompanion({data,setData:fn=>{data=fn(data)},mix,setMix:v=>{mix=v},onOpenMixer:()=>{opened=true}});
+ function flat(n){return !n||typeof n!=="object"?[]:[n,...(Array.isArray(n.children)?n.children:[n.children]).flatMap(flat)]}
+ const nodes=flat(view),find=label=>nodes.find(n=>n.props?.["aria-label"]===label);
+ find("Vocal fader").props.onChange({target:{value:"-5.5"}});
+ find("Mix 01 Master fader").props.onChange({target:{value:"0"}});
+ find("Mute Vocal").props.onClick();
+ find("Mixer output").props.onChange({target:{value:"0"}});
+ find("Open full Sound Mixer").props.onClick();
+ assert.equal(data.channels[0].levels[0],-80);
+ assert.equal(data.channels[0].levels[1],-5.5);
+ assert.equal(data.channels[0].on[1],false);
+ assert.equal(data.buses[1].level,0);
+ assert.equal(data.buses[0].level,-80);
+ assert.equal(mix,0);assert.ok(opened);
+ const tabs=scope.HwpCompanionSwitch({active:"mixer",onChange:()=>{}}).props.children;
+ assert.equal(tabs.length,3);assert.equal(tabs.filter(tab=>tab.props["aria-pressed"]).length,1);
+ assert.equal(tabs[2].props["aria-label"],"Sound Mixer Companion");
+ assert.ok(html.includes("Ni,{mixerData,setMixerData,mixerMix,setMixerMix}"));
+ assert.ok(!html.includes("className:`service-num`,children:`BG`"));
+ assert.ok(html.includes("width:calc(100% + 24px)"));
+});

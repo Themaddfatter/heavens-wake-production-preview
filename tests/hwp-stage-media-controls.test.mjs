@@ -11,7 +11,7 @@ const screenHelpers=html.slice(html.indexOf('const HWP_TEXT_OUTPUTS='),html.inde
 const includes=(part,label)=>assert.ok(html.includes(part),label);
 
 test('Stage messages remain until explicitly removed, with stacked labeled actions',()=>{
- const composer=html.slice(html.indexOf('function HwpStageMessageComposer()'),html.indexOf('function Ni()'));
+ const composer=html.slice(html.indexOf('function HwpStageMessageComposer()'),html.indexOf('function Ni('));
  assert.ok(composer.includes('type:"clear-stage-message"'));
  assert.ok(!composer.includes('expiresAt'));
  assert.ok(composer.includes('title:`SM ON`'));
@@ -142,7 +142,7 @@ test('production dynamically loads versioned media-safety modules',()=>{
   assert.ok(html.includes("import('./sync-staging/"+name+".mjs?v=hwp-media-deletion-safety-v1')"),name);
 });
 
-test("Operator workflow changes are present",()=>{for(const part of ["+ Create Template","Create and edit","hwpPresentationView","Type a message first.","hwpMergeServiceScriptures","hwpNormalizeMediaFolders","Choose existing media","Create a medley with the first selected song"])assert.ok(html.includes(part),part);assert.ok(!html.slice(html.indexOf("function HwpStageMessageComposer()"),html.indexOf("function Ni()")).includes("disabled:"));});
+test("Operator workflow changes are present",()=>{for(const part of ["+ Create Template","Create and edit","hwpPresentationView","Type a message first.","hwpMergeServiceScriptures","hwpNormalizeMediaFolders","Choose existing media","Create a medley with the first selected song"])assert.ok(html.includes(part),part);assert.ok(!html.slice(html.indexOf("function HwpStageMessageComposer()"),html.indexOf("function Ni(")).includes("disabled:"));});
 
 test("Folder helpers preserve media and presentation contents while moving, copying and deleting folders",()=>{
  const start=html.indexOf("function hwpReorderFolderBlock("),end=html.indexOf("function hwpNormalizeMediaFolders(",start),library=html.indexOf("function hwpLibraryFolders(doc)"),libraryEnd=html.indexOf("let hwpLibraryClipboard=",library);
