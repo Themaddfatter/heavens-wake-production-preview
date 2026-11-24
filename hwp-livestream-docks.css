@@ -1,0 +1,42 @@
+/* HWP livestream lower docks; upper camera and monitor layout is unchanged. */
+.app[data-mode=livestream] .hwp-obs-lower{grid-column:1/-1;display:grid;grid-template-columns:minmax(155px,.8fr) minmax(185px,1.05fr) minmax(240px,1.4fr) minmax(175px,.9fr);gap:6px;align-items:stretch;min-width:0}
+.app[data-mode=livestream] .hwp-obs-dock{display:flex;flex-direction:column;min-width:0;min-height:260px;border:1px solid var(--line);border-radius:6px;background:var(--bg-2);overflow:hidden;color:var(--text)}
+.hwp-obs-dock-title{display:flex;align-items:center;min-height:34px;padding:7px 12px;background:var(--bg);border-bottom:1px solid var(--line);font-size:12px;font-weight:750;letter-spacing:.015em}
+.hwp-obs-dock-body{flex:1;min-width:0;max-height:330px;overflow:auto;padding:8px;scrollbar-width:thin;display:flex;flex-direction:column;gap:8px}
+.hwp-obs-dock-footer{padding:7px 8px;border-top:1px solid var(--line)}
+.hwp-obs-dock-footer .btn{width:100%}
+.hwp-obs-list{display:flex;flex-direction:column;gap:2px;min-height:54px}
+.hwp-obs-list-row{width:100%;min-height:34px;display:flex;align-items:center;gap:8px;padding:7px 9px;text-align:left;border:1px solid transparent;border-radius:4px;background:transparent;color:var(--text);cursor:pointer;font:inherit;font-size:12px}
+.hwp-obs-list-row>span:nth-child(2){flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.hwp-obs-list-row small{opacity:.65;font-size:10px}
+.hwp-obs-list-mark{font-size:13px;opacity:.8;min-width:15px;text-align:center}
+.hwp-obs-list-row:hover{background:var(--bg)}
+.hwp-obs-list-row.selected{background:var(--amber);color:var(--hwp-accent-ink);font-weight:650;border-color:var(--amber)}
+.hwp-obs-empty{font-size:12px;opacity:.65;padding:8px;margin:0}
+.hwp-obs-details{border:1px solid var(--line);border-radius:4px;padding:0 7px;font-size:11px;min-width:0}
+.hwp-obs-details summary{cursor:pointer;padding:7px 0;font-weight:600}
+.hwp-obs-details[open]{padding-bottom:8px}
+.hwp-obs-field{display:flex;flex-direction:column;gap:4px;font-size:11px;min-width:0;margin:4px 0}
+.hwp-obs-field input:not([type=range]),.hwp-obs-field select{width:100%;min-width:0;height:30px;border:1px solid var(--line);border-radius:4px;background:var(--bg);color:var(--text);padding:4px 7px;box-sizing:border-box;font:inherit}
+.hwp-obs-field input[type=color]{padding:2px}
+.hwp-obs-field input[type=range],.hwp-obs-inline input[type=range]{width:100%;min-width:0;accent-color:var(--amber);margin:3px 0}
+.hwp-obs-property-grid{display:grid;grid-template-columns:1fr 1fr;gap:4px 8px}
+.hwp-obs-inline{display:flex;align-items:center;gap:7px;min-width:0}
+.hwp-obs-check{display:flex;align-items:center;gap:5px;font-size:11px;min-height:26px}
+.hwp-obs-mic,.hwp-obs-mixer-row{padding:6px 4px 9px;border-bottom:1px solid var(--line);display:flex;flex-direction:column;gap:6px}
+.hwp-obs-mixer-label{justify-content:space-between;font-size:12px;font-weight:650}
+.hwp-obs-mixer-label small{font-variant-numeric:tabular-nums;font-size:11px;opacity:.7}
+.hwp-obs-level{height:12px;border-radius:2px;overflow:hidden;position:relative;background:var(--bg);border:1px solid var(--line)}
+.hwp-obs-level>span{display:block;height:100%;background:linear-gradient(90deg,#269653 0%,#59b84d 65%,#e2b83f 82%,#d44a45 100%);background-size:240px 100%;transition:width 80ms linear}
+.hwp-obs-dock .btn{min-height:31px;font-size:11px;border-radius:4px;padding:6px 9px;white-space:normal}
+.hwp-obs-mute{flex:none;min-width:58px}
+.hwp-obs-mute.muted{border-color:#bd4848;color:#bd4848}
+.hwp-obs-control-stack{display:flex;flex-direction:column;gap:6px}
+.hwp-obs-control-stack>.btn{width:100%}
+.hwp-obs-control-stack>.btn.primary{min-height:35px;font-weight:700}
+.hwp-obs-status{grid-column:1/-1;display:flex;align-items:center;gap:8px;padding:7px 10px;border:1px solid var(--line);border-radius:4px;background:var(--bg-2);font-size:11px;min-width:0}
+.hwp-obs-status-dot{height:8px;width:8px;border-radius:50%;background:#8b9098;flex:none}
+.hwp-obs-status-dot.on{background:#32aa65}
+.hwp-obs-output-format{margin-left:auto;white-space:nowrap;font-variant-numeric:tabular-nums}
+@media(max-width:1100px){.app[data-mode=livestream] .hwp-obs-lower{grid-template-columns:repeat(2,minmax(0,1fr))}.app[data-mode=livestream] .hwp-obs-dock{min-height:210px}}
+@media(max-width:600px){.app[data-mode=livestream] .hwp-obs-lower{grid-template-columns:minmax(0,1fr)}.hwp-obs-status{flex-wrap:wrap}.hwp-obs-output-format{margin-left:0}.app[data-mode=livestream] .hwp-obs-dock{min-height:160px}}
