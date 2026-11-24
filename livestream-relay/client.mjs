@@ -3,9 +3,9 @@ export async function startRelayStream({token,destinations,onStatus=()=>{}}){
  if(!token||!Array.isArray(destinations)||!destinations.length)throw Error('Enter the relay token and at least one destination.');
  if(!navigator.mediaDevices?.getDisplayMedia)throw Error('Screen capture is unavailable in this browser.');
  let capture, socket, recorder, ended=false;
- const stop=()=>{
+ const stop=(reason='stopped')=>{
   if(ended)return;ended=true;
-  const close=()=>{if(socket&&(socket.readyState===WebSocket.OPEN||socket.readyState===WebSocket.CONNECTING))socket.close();capture?.getTracks().forEach(track=>track.stop());onStatus('stopped')};
+  const close=()=>{if(socket&&(socket.readyState===WebSocket.OPEN||socket.readyState===WebSocket.CONNECTING))socket.close();capture?.getTracks().forEach(track=>track.stop());onStatus(reason)};
   if(recorder&&recorder.state!=='inactive'){recorder.onstop=close;recorder.stop()}else close();
  };
  try{
@@ -24,10 +24,10 @@ export async function startRelayStream({token,destinations,onStatus=()=>{}}){
   });
   const type=['video/webm;codecs=vp8,opus','video/webm;codecs=vp9,opus','video/webm'].find(t=>MediaRecorder.isTypeSupported(t));
   recorder=new MediaRecorder(capture,type?{mimeType:type}:undefined);
-  recorder.ondataavailable=event=>{if(event.data.size&&socket.readyState===WebSocket.OPEN){if(socket.bufferedAmount>8*1024*1024){onStatus('connection too slow');stop();return}socket.send(event.data)}};
-  recorder.onerror=()=>{onStatus('recording error');stop()};
-  socket.onclose=()=>{if(!ended){onStatus('relay disconnected');stop()}};
-  capture.getVideoTracks()[0].onended=stop;
+  recorder.ondataavailable=event=>{if(event.data.size&&socket.readyState===WebSocket.OPEN){if(socket.bufferedAmount>8*1024*1024){stop('Connection too slow');return}socket.send(event.data)}};
+  recorder.onerror=()=>{stop('Capture failed')};
+  socket.onclose=event=>{if(!ended)stop(event.reason||'Relay disconnected')};
+  capture.getVideoTracks()[0].onended=()=>stop();
   recorder.start(500);onStatus('Sending to relay');return {stop};
  }catch(error){stop();throw error}
 }

@@ -46,7 +46,7 @@ async def handler(socket):
                     raise RuntimeError('A destination encoder stopped')
                 process.stdin.write(chunk)
             await asyncio.gather(*(process.stdin.drain() for process in processes))
-    except (ValueError, TypeError, json.JSONDecodeError, asyncio.TimeoutError, RuntimeError):
+    except (ValueError, TypeError, json.JSONDecodeError, asyncio.TimeoutError, RuntimeError, BrokenPipeError, ConnectionResetError):
         await socket.close(1008, 'Relay request failed')
     finally:
         for process in processes:
