@@ -7,6 +7,7 @@ const css=readFileSync(new URL('../hwp-access.css',import.meta.url),'utf8');
 const cloud=readFileSync(new URL('../sync-staging/hwp-sync-client.mjs',import.meta.url),'utf8');
 const firebase=readFileSync(new URL('../sync-staging/hwp-auth.mjs',import.meta.url),'utf8');
 const local=readFileSync(new URL('../sync-staging/hwp-local-media-sync.mjs',import.meta.url),'utf8');
+const screenHelpers=html.slice(html.indexOf('const HWP_TEXT_OUTPUTS='),html.indexOf('const hwpSystemFonts='));
 const includes=(part,label)=>assert.ok(html.includes(part),label);
 
 test('Stage messages remain until explicitly removed, with stacked labeled actions',()=>{
@@ -228,7 +229,7 @@ test('Layout selection prioritizes exact category and camera, then category and 
 });
 test('Layout composition respects text-only, full-slide and camera-only settings',()=>{
  const start=html.indexOf('function hwpLayoutSlide('),end=html.indexOf('function HwpCameraComposite(',start);
- const {hwpLayoutSlide,hwpLayoutLayer}=new Function(html.slice(start,end)+';return {hwpLayoutSlide,hwpLayoutLayer}')();
+ const {hwpLayoutSlide,hwpLayoutLayer}=new Function(screenHelpers+html.slice(start,end)+';return {hwpLayoutSlide,hwpLayoutLayer}')();
  const slide={background:{type:'color'},objects:[{kind:'rect'},{kind:'text',text:'Song',textStyle:{color:'#000'}}]};
  assert.equal(hwpLayoutSlide(slide,{mode:'off'}),null);
  assert.equal(hwpLayoutSlide(slide,{mode:'full'}).objects.length,2);
@@ -241,7 +242,7 @@ test('Layout composition respects text-only, full-slide and camera-only settings
 
 test('Independent livestream text boxes preserve original audience and stage slides',()=>{
  const start=html.indexOf('function hwpStreamTextRoles('),end=html.indexOf('function hwpStreamEditorSlide(',start);
- const {hwpStreamTextRoles,hwpStreamTextObjects,hwpStreamBoxBounds}=new Function(html.slice(start,end)+';return {hwpStreamTextRoles,hwpStreamTextObjects,hwpStreamBoxBounds}')();
+ const {hwpStreamTextRoles,hwpStreamTextObjects,hwpStreamBoxBounds}=new Function(screenHelpers+html.slice(start,end)+';return {hwpStreamTextRoles,hwpStreamTextObjects,hwpStreamBoxBounds}')();
  const slide={width:1920,height:1080,objects:[{id:'lyrics-1',kind:'text',binding:'lyrics',name:'Lyrics',text:'First song',x:100,y:100,width:1700,height:700,textStyle:{fontSize:90,color:'#ffffff'},runs:[{text:'First song',fontSize:90}]},{id:'copyright-1',kind:'text',binding:'copyright',text:'Copyright',x:100,y:1000,width:250,height:50,textStyle:{fontSize:18}},{id:'graphic',kind:'rect'}]};
  const original=JSON.stringify(slide),layout={slideX:0,slideY:65,slideW:100,slideH:35,textBoxes:[{key:'lyrics#1',x:5,y:72,w:90,h:23,fontSize:52,color:'#ffff00',autoFit:true},{key:'copyright#1',hidden:true}]};
  assert.equal(hwpStreamTextRoles(slide).length,2);
@@ -316,7 +317,7 @@ test('Quick Edit updates only selected text content and preserves layout, other 
  assert.equal(JSON.stringify(slide),original);
  assert.equal(hwpQuickTextPatch(slide.objects[0],'one two'),null);
  assert.equal(hwpQuickApplySlideText(slide,[]),slide);
- for(const marker of ['hwp-presenter-text-release','HwpQuickSlideEdit',"label:'Quick Edit'","type:'hwp-quick-slide-text'","t.presentationId);",'Text content','Font & style','Text alignment & spacing','Text effects'])includes(marker,marker);
+ for(const marker of ['hwp-presenter-text-release','HwpQuickSlideEdit',"label:'Quick Edit'","type:'hwp-quick-slide-text'","t.presentationId);",'Edit words directly in the text box on the slide.','Font & style','Text alignment & spacing','Text effects'])includes(marker,marker);
 });
 
 test('Presenter selection is automatic and formatting and object arrangement stay in their own inspector sections',()=>{
@@ -336,4 +337,34 @@ test('Presenter selection is automatic and formatting and object arrangement sta
  assert.ok(text.includes('Text alignment & spacing'));
  assert.ok(text.includes('Align text'));
  assert.ok(!text.includes('align-objects'));
+});
+
+test('Text outputs inherit audience until unlinked and preserve independent formatting, position and shared words',()=>{
+ const start=html.indexOf('function fe(e,t){'),end=html.indexOf('function pe(e){',start);
+ const {hwpScreenObject,hwpScreenEditPatch,hwpScreenLinkPatch,hwpScreenSnap}=new Function(screenHelpers+html.slice(start,end)+';return {hwpScreenObject,hwpScreenEditPatch,hwpScreenLinkPatch,hwpScreenSnap}')();
+ const base={id:'lyrics',kind:'text',text:'Shared lyrics',x:80,y:100,width:800,height:300,scaleToFit:true,textStyle:{fontFamily:'Georgia',fontSize:64,color:'#ffffff',shadow:{enabled:true,color:'#000000'},stroke:{enabled:false,width:2}}};
+ let o=hwpScreenEditPatch(base,{textStyle:{fontSize:80}},'audience');
+ assert.equal(hwpScreenObject(o,'stage').textStyle.fontSize,80);
+ o=hwpScreenEditPatch(o,hwpScreenLinkPatch(o,'stage',false),'audience');
+ o=hwpScreenEditPatch(o,{x:400,textStyle:{fontSize:100,colorGradient:{from:'#ffffff',to:'#d7aa50',angle:90}}},'stage');
+ assert.equal(hwpScreenObject(o,'stage').x,400);
+ assert.equal(hwpScreenObject(o,'stage').textStyle.fontSize,100);
+ assert.equal(hwpScreenObject(o,'audience').textStyle.fontSize,80);
+ o=hwpScreenEditPatch(o,{textStyle:{fontSize:72},text:'Changed words'},'audience');
+ assert.equal(hwpScreenObject(o,'stage').text,'Changed words');
+ assert.equal(hwpScreenObject(o,'stage').textStyle.fontSize,100);
+ assert.equal(hwpScreenObject(o,'livestream').textStyle.fontSize,72);
+ o=hwpScreenEditPatch(o,{textStyle:{fontSize:48}},'livestream');
+ assert.equal(hwpScreenObject(o,'livestream').textStyle.fontSize,48);
+ assert.equal(hwpScreenObject(o,'stage').textStyle.fontSize,100);
+ o=hwpScreenEditPatch(o,hwpScreenLinkPatch(o,'stage',true),'audience');
+ assert.equal(hwpScreenObject(o,'stage').textStyle.fontSize,72);
+ assert.equal(hwpScreenObject(o,'livestream').textStyle.fontSize,48);
+ assert.equal(hwpScreenSnap({slide:{objects:[o]}},'livestream').slide.objects[0].textStyle.fontSize,48);
+});
+test('Text inspector uses icon controls and gradients, with words edited directly on canvas',()=>{
+ const text=html.slice(html.indexOf('function Ar({objects:'),html.indexOf('function jr({objects:'));
+ assert.ok(!text.includes('textarea'));
+ for(const marker of ['HwpFontPicker','HwpTextStyleActions','alignJustify','HwpTextColorControl','colorGradient','Shadow color','Outline color'])assert.ok(text.includes(marker),marker);
+ for(const marker of ['api.fontsource.org/v1/fonts','hwpEnsureFont','hwpGradientImage','HwpTextEffectDefs','feMorphology','feGaussianBlur','WebkitBackgroundClip','hwpScreenSnap','editorTextOutput'])includes(marker,marker);
 });
