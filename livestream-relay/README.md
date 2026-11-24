@@ -1,0 +1,5 @@
+# Experimental local streaming relay
+
+This prototype is not a production release. It requires Python 3.10 or newer, FFmpeg on PATH and the Python `websockets` package version 16. Run `python -m pip install websockets==16.0`, then run `python livestream-relay/relay.py` on the computer using HWP. The relay listens only on 127.0.0.1:8765 and prints a new session token each time it starts. Enter the token and one RTMP or RTMPS URL including its stream key per line in HWP. Keep the token and stream keys private. Select the program window or tab when the browser asks for screen sharing, and select audio if desired.
+
+The prototype accepts a browser WebM capture and runs one FFmpeg process per destination. Its connection status confirms only that media is being sent to the local relay; it does not confirm that a platform has accepted or is broadcasting the stream. Local two-destination RTMP testing passed. Real YouTube and Facebook sessions, browser compatibility, recovery, latency, long-running streams, and device packaging remain unverified.
