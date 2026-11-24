@@ -467,7 +467,8 @@ test('Full stage layout migrates previously hardcoded elements into editable lay
  assert.ok(stage.includes('render:model=>render(model.message)'));
  assert.ok(stage.includes('message?.text'));
  assert.ok(html.includes('gridTemplateRows:`minmax(0,1fr)`,padding:0,gap:0'));
- const editor=html.slice(html.indexOf('function Lr({'),html.indexOf('function Rr('));
+ const editorStart=html.indexOf('function Lr({onClose,selectedSlide=false})');
+ const editor=html.slice(editorStart,html.indexOf('function Rr(',editorStart));
  assert.ok(editor.includes('editorPreview:true,previewMessage'));
  assert.ok(editor.includes('hwpStageEditorSnapshot(state,selectedSlide)'));
  assert.ok(html.includes('setStageLayoutEditor(key===`stage`)'));
