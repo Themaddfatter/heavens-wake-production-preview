@@ -4,6 +4,7 @@ from websockets.asyncio.server import serve
 from websockets.exceptions import ConnectionClosed
 from identity import authorize_stream, AccessDenied
 from destinations import validate_destination, InvalidDestination
+from pinned_ingest import PinnedIngest
 
 ORIGIN='https://production.sioncdo.com'
 active=asyncio.Lock()
@@ -21,28 +22,32 @@ async def handler(socket, verify=firebase_identity, profile=firebase_profile, va
     if socket.request.headers.get('Origin')!=ORIGIN:
         await socket.close(1008,'Origin denied');return
     processes=[]
+    ingests=[]
     try:
         message=json.loads(await asyncio.wait_for(socket.recv(),10))
         if not isinstance(message,dict): raise ValueError('Invalid request')
         await asyncio.to_thread(authorize_stream,message.get('token'),verify,profile)
         urls=message.get('destinations')
         if not isinstance(urls,list) or not 1<=len(urls)<=4: raise ValueError('Invalid destinations')
-        # Validation is not sufficient protection against DNS rebinding: do not deploy
-        # until outbound connections are pinned to verified public addresses.
         targets=[await asyncio.to_thread(validator,url) for url in urls]
         if active.locked(): await socket.close(1008,'Another stream is active');return
         async with active:
             for target in targets:
-                p=await asyncio.create_subprocess_exec('ffmpeg','-hide_banner','-loglevel','error','-i','pipe:0','-c:v','libx264','-preset','veryfast','-pix_fmt','yuv420p','-r','30','-g','60','-keyint_min','60','-sc_threshold','0','-b:v','4500k','-maxrate','4500k','-bufsize','9000k','-c:a','aac','-b:a','128k','-ar','44100','-f','flv',target['url'],stdin=asyncio.subprocess.PIPE,stdout=asyncio.subprocess.DEVNULL,stderr=asyncio.subprocess.DEVNULL)
+                ingest= PinnedIngest(target)
+                ingests.append(ingest)
+                output=await ingest.start()
+                p=await asyncio.create_subprocess_exec('ffmpeg','-hide_banner','-loglevel','error','-protocol_whitelist','pipe','-f','matroska','-i','pipe:0','-c:v','libx264','-preset','veryfast','-pix_fmt','yuv420p','-r','30','-g','60','-keyint_min','60','-sc_threshold','0','-b:v','4500k','-maxrate','4500k','-bufsize','9000k','-c:a','aac','-b:a','128k','-ar','44100','-protocol_whitelist','rtmp,tcp',*output,stdin=asyncio.subprocess.PIPE,stdout=asyncio.subprocess.DEVNULL,stderr=asyncio.subprocess.DEVNULL)
                 processes.append(p)
             await socket.send(json.dumps({'status':'accepting-media'}))
-            async for chunk in socket:
-                if not isinstance(chunk,bytes): continue
-                for p in processes:
-                    if p.returncode is not None: raise RuntimeError('Encoder stopped')
-                    p.stdin.write(chunk)
-                await asyncio.gather(*(p.stdin.drain() for p in processes))
-    except (AccessDenied,InvalidDestination,ValueError,TypeError,asyncio.TimeoutError,RuntimeError,BrokenPipeError,ConnectionResetError):
+            async with asyncio.timeout(12*60*60):
+                while True:
+                    chunk=await asyncio.wait_for(socket.recv(),30)
+                    if not isinstance(chunk,bytes): raise ValueError('Expected media data')
+                    for p in processes:
+                        if p.returncode is not None: raise RuntimeError('Encoder stopped')
+                        p.stdin.write(chunk)
+                    await asyncio.wait_for(asyncio.gather(*(p.stdin.drain() for p in processes)),15)
+    except (AccessDenied,InvalidDestination,ValueError,TypeError,asyncio.TimeoutError,RuntimeError,OSError):
         await socket.close(1008,'Stream request failed')
     except ConnectionClosed:
         pass
@@ -51,7 +56,10 @@ async def handler(socket, verify=firebase_identity, profile=firebase_profile, va
             if p.stdin: p.stdin.close()
         for p in processes:
             try: await asyncio.wait_for(p.wait(),5)
-            except asyncio.TimeoutError: p.kill();await p.wait()
+            except asyncio.TimeoutError:
+                if p.returncode is None: p.kill()
+                await p.wait()
+        await asyncio.gather(*(ingest.close() for ingest in ingests),return_exceptions=True)
 
 async def main():
     import firebase_admin
