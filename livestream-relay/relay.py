@@ -5,6 +5,7 @@ from websockets.asyncio.server import serve
 
 ORIGIN = 'https://production.sioncdo.com'
 TOKEN = secrets.token_urlsafe(32)
+ACTIVE = False
 
 def destination(url):
     if not isinstance(url, str) or len(url) > 2048 or any(ord(c) < 32 for c in url):
@@ -15,9 +16,11 @@ def destination(url):
     return url
 
 async def handler(socket):
+    global ACTIVE
     if socket.request.headers.get('Origin') != ORIGIN:
         await socket.close(1008, 'Origin denied'); return
     processes = []
+    acquired = False
     try:
         raw = await asyncio.wait_for(socket.recv(), timeout=10)
         settings = json.loads(raw)
@@ -27,6 +30,10 @@ async def handler(socket):
         if not isinstance(urls, list) or not 1 <= len(urls) <= 4:
             raise ValueError('Select one to four destinations')
         urls = [destination(url) for url in urls]
+        if ACTIVE:
+            await socket.close(1008, 'Relay is already streaming'); return
+        ACTIVE = True
+        acquired = True
         for url in urls:
             process = await asyncio.create_subprocess_exec(
                 'ffmpeg', '-hide_banner', '-loglevel', 'error', '-i', 'pipe:0',
@@ -56,6 +63,8 @@ async def handler(socket):
             try: await asyncio.wait_for(process.wait(), 5)
             except asyncio.TimeoutError:
                 process.kill(); await process.wait()
+        if acquired:
+            ACTIVE = False
 
 async def main():
     if not shutil.which('ffmpeg'):
