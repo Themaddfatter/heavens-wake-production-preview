@@ -316,5 +316,24 @@ test('Quick Edit updates only selected text content and preserves layout, other 
  assert.equal(JSON.stringify(slide),original);
  assert.equal(hwpQuickTextPatch(slide.objects[0],'one two'),null);
  assert.equal(hwpQuickApplySlideText(slide,[]),slide);
- for(const marker of ['hwp-presenter-text-release','HwpQuickSlideEdit',"label:'Quick Edit'","type:'hwp-quick-slide-text'","t.presentationId);",'Text content','Font & style','Alignment & spacing','Text effects'])includes(marker,marker);
+ for(const marker of ['hwp-presenter-text-release','HwpQuickSlideEdit',"label:'Quick Edit'","type:'hwp-quick-slide-text'","t.presentationId);",'Text content','Font & style','Text alignment & spacing','Text effects'])includes(marker,marker);
+});
+
+test('Presenter selection is automatic and formatting and object arrangement stay in their own inspector sections',()=>{
+ const editor=html.slice(html.indexOf('function gr()'),html.indexOf('function Er()'));
+ const toolbar=editor.slice(editor.indexOf('className:`editor-tools`'),editor.indexOf('className:`viewport`'));
+ assert.ok(toolbar.includes('title:`Shapes`'));
+ assert.ok(toolbar.includes('"aria-label":`Shapes`'));
+ assert.ok(!toolbar.includes('children:`Shapes`'));
+ assert.ok(!toolbar.includes('title:`Select`'));
+ assert.ok(!toolbar.includes('align-objects'));
+ assert.ok(!editor.includes('a(e.id)'));
+ assert.ok(editor.includes('onClick:()=>{ve(e.id),v(!1)}'));
+ const shape=html.slice(html.indexOf('function kr({objects:'),html.indexOf('function Ar({objects:'));
+ const text=html.slice(html.indexOf('function Ar({objects:'),html.indexOf('function jr({objects:'));
+ assert.ok(shape.includes('Object alignment'));
+ assert.ok(shape.includes("type:'align-objects'"));
+ assert.ok(text.includes('Text alignment & spacing'));
+ assert.ok(text.includes('Align text'));
+ assert.ok(!text.includes('align-objects'));
 });
