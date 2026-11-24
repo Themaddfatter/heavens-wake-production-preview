@@ -229,6 +229,42 @@
 .hwp-mc-fader-track .hwp-mixer-calibrated-rail{width:8px}
 .hwp-mc-fader-track .hwp-mixer-calibrated-thumb{border-radius:3px}
 .hwp-mixer-gain-dialog .hwp-mixer-calibrated{--hwp-fader-cap-width:32px;--hwp-fader-cap-height:25px}
+</style>
+<style id="hwp-recessed-fader-faceplate-v1">
+/* Hardware faceplate: decorative layers only, preserving the calibrated travel
+   and the native input dimensions in the mixer, companion and gain dialogs. */
+.hwp-mixer-track{
+ --hwp-fader-plate-top:#363d43;--hwp-fader-plate-bottom:#22292f;
+ --hwp-fader-plate-edge:#13191e;--hwp-fader-plate-highlight:#ffffff20;
+ --hwp-fader-plate-grain:#ffffff03;--hwp-fader-scale-ink:#bfc9d0;
+ --hwp-fader-unity-ink:#f4f7f9;--hwp-fader-well:#090d1180;
+ isolation:isolate;border-radius:6px
+}
+html[data-hwp-appearance="light"] .hwp-mixer-track{
+ --hwp-fader-plate-top:#e1e5e8;--hwp-fader-plate-bottom:#bcc4cb;
+ --hwp-fader-plate-edge:#818d97;--hwp-fader-plate-highlight:#ffffffb0;
+ --hwp-fader-plate-grain:#25374707;--hwp-fader-scale-ink:#394752;
+ --hwp-fader-unity-ink:#17232d;--hwp-fader-well:#59677535
+}
+.hwp-mixer-track::before{
+ content:"";position:absolute;z-index:-1;inset:0 1px;border-radius:6px;pointer-events:none;
+ background:repeating-linear-gradient(0deg,var(--hwp-fader-plate-grain) 0 1px,transparent 1px 3px),
+ linear-gradient(90deg,#00000012 0%,transparent 11%,transparent 88%,#00000018 100%),
+ linear-gradient(180deg,var(--hwp-fader-plate-top),var(--hwp-fader-plate-bottom));
+ box-shadow:0 0 0 1px var(--hwp-fader-plate-edge),inset 0 1px 0 var(--hwp-fader-plate-highlight),inset 1px 0 2px #0003,inset 0 -2px 4px #0003,0 1px 0 var(--hwp-fader-plate-highlight)
+}
+.hwp-mixer-track .hwp-mixer-calibrated-slider{isolation:isolate}
+.hwp-mixer-track .hwp-mixer-calibrated-slider::before{
+ content:"";position:absolute;z-index:-1;inset:-2px 3px;border-radius:4px;pointer-events:none;
+ background:linear-gradient(90deg,#00000024,transparent 22%,var(--hwp-fader-well) 50%,transparent 78%,#00000024);
+ box-shadow:inset 1px 0 2px #0003,inset -1px 0 1px var(--hwp-fader-plate-highlight)
+}
+.hwp-mixer-track .hwp-mixer-calibrated-scale{color:var(--hwp-fader-scale-ink);text-shadow:none}
+.hwp-mixer-track .hwp-mixer-calibrated-scale .hwp-mixer-travel>span.hwp-fader-unity{color:var(--hwp-fader-unity-ink)}
+.hwp-mixer-track .hwp-mixer-calibrated-rail{box-shadow:0 0 0 1px #0008,inset 1px 0 2px #000d,inset -1px 0 1px #ffffff18,0 1px 0 var(--hwp-fader-plate-highlight)}
+.hwp-mixer-track>.hwp-mixer-meter{align-self:stretch;box-shadow:0 0 0 1px #0005,inset 0 1px 3px #0009}
+.hwp-mc-fader-track::before{inset:0 1px;border-radius:4px}
+.hwp-mc-fader-track .hwp-mixer-calibrated-slider::before{inset:-1px 2px;border-radius:3px}
 </style></head><body><script>try{document.documentElement.dataset.hwpAppearance=localStorage.getItem("hwp-appearance")==="light"?"light":"dark"}catch(e){}</script><div id="root"><div id="hwp-boot-placeholder" style="box-sizing:border-box;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;background:#071d16;color:#f3f8f4;font:600 19px Arial,sans-serif;text-align:center"><img src="./hwp-logo.png" alt="Heaven's Wake Production" style="max-width:210px;max-height:130px;object-fit:contain;margin-bottom:24px"><div>Opening Heaven's Wake Production…</div></div></div><script>
 (function(){
  var startupError="";
