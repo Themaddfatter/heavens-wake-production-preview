@@ -283,12 +283,15 @@ test("Presenter Sound Mixer companion shares selected mix, channel levels, maste
  const hooks={useState:v=>{const i=cursor++;if(!(i in slots))slots[i]=v;return [slots[i],x=>{slots[i]=typeof x==="function"?x(slots[i]):x}]},useRef:v=>({current:v}),useEffect:()=>{},useLayoutEffect:()=>{}};
  const scope=createContext({M:{jsx:(tag,props)=>({tag,props,children:props.children})},l:hooks,F:(...args)=>args.filter(Boolean).join(" "),hwpMixerNode:h,hwpMixerCategories:["Unassigned"],hwpAccentInk:()=>"#fff"});
  runInContext(html.slice(start,end)+html.slice(faderStart,faderEnd),scope);
- let data={buses:[{id:0,name:"Main",enabled:true,level:-80,on:false,color:"#123456"},{id:1,name:"Mix 01",enabled:true,level:-40,on:true,color:"#123456"}],channels:Array.from({length:4},(_,id)=>({id,name:id?"Input "+id:"Vocal",category:"Unassigned",color:"#123456",levels:[-80,-10],on:[false,true],ag:0,dg:0}))},mix=1,opened=false;
- const render=()=>{cursor=0;return scope.HwpMixerCompanion({data,setData:fn=>{data=fn(data)},mix,setMix:v=>{mix=v},onOpenMixer:()=>{opened=true}})};
- function flat(n){return !n||typeof n!=="object"?[]:[n,...(Array.isArray(n.children)?n.children:[n.children]).flatMap(flat)]}
+ let data={buses:[{id:0,name:"Main",enabled:true,level:-80,on:false,color:"#123456"},{id:1,name:"Mix 01",enabled:true,level:-40,on:true,color:"#123456"}],channels:Array.from({length:4},(_,id)=>({id,name:id?"Input "+id:"Vocal",category:"Unassigned",color:"#123456",levels:[-80,-10],on:[false,true],ag:0,dg:0}))},mix=1;
+ const render=()=>{cursor=0;return scope.HwpMixerCompanion({data,setData:fn=>{data=fn(data)},mix,setMix:v=>{mix=v}})};
+ function flat(n,includeInactive=false){return !n||typeof n!=="object"||(!includeInactive&&n.props?.inert)?[]:[n,...(Array.isArray(n.children)?n.children:[n.children]).flatMap(child=>flat(child,includeInactive))]}
  let view=render();
  const find=label=>flat(view).find(n=>n.props?.["aria-label"]===label);
  assert.ok(find("Vocal fader"));assert.ok(find("Input 2 fader"));assert.equal(find("Input 3 fader"),undefined);
+ assert.equal(find("Open full Sound Mixer"),undefined);
+ const bankPositions=()=>flat(view,true).filter(n=>n.props?.["data-bank-index"]!==undefined).map(n=>[n.props["data-bank-index"],n.props.style.transform,n.props.inert]);
+ assert.deepEqual(bankPositions(),[[0,"translateY(0%)",false],[1,"translateY(100%)",true]]);
  find("Vocal fader").props.onChange({target:{value:"-5.5"}});
  find("Mute Vocal").props.onClick();
  find("Master fader").props.onClick();view=render();
@@ -303,15 +306,18 @@ test("Presenter Sound Mixer companion shares selected mix, channel levels, maste
  const navView=scope.HwpFaderPageNav(nav.props);
  flat(navView).find(n=>n.props?.["aria-label"]==="Next fader bank").props.onClick();view=render();
  assert.equal(find("Vocal fader"),undefined);assert.ok(find("Input 3 fader"));
+ assert.deepEqual(bankPositions(),[[0,"translateY(-100%)",true],[1,"translateY(0%)",false]]);
+ const nav2=flat(view).find(n=>n.tag===scope.HwpFaderPageNav);
+ flat(scope.HwpFaderPageNav(nav2.props)).find(n=>n.props?.["aria-label"]==="Previous fader bank").props.onClick();view=render();
+ assert.deepEqual(bankPositions(),[[0,"translateY(0%)",false],[1,"translateY(100%)",true]]);
  find("Mixer output").props.onChange({target:{value:"0"}});
- find("Open full Sound Mixer").props.onClick();
  assert.equal(data.channels[0].levels[0],-80);
  assert.equal(data.channels[0].levels[1],-5.5);
  assert.equal(data.channels[0].on[1],false);
  assert.equal(data.channels[0].ag,12);assert.equal(data.channels[0].dg,-6);
  assert.equal(data.buses[1].level,0);
  assert.equal(data.buses[0].level,-80);
- assert.equal(mix,0);assert.ok(opened);
+ assert.equal(mix,0);
  assert.equal(scope.hwpMixerPageSize(285,91,6),3);
  assert.equal(scope.hwpMixerPageSize(284,91,6),2);
  const tabs=scope.HwpCompanionSwitch({active:"mixer",onChange:()=>{}}).props.children;
@@ -321,4 +327,6 @@ test("Presenter Sound Mixer companion shares selected mix, channel levels, maste
  assert.ok(!html.includes("className:`service-num`,children:`BG`"));
  assert.ok(html.includes("width:calc(100% + 24px)"));
  assert.ok(html.includes("hwpUseFaderPages(channels.length,category,null,width)"));
+ assert.ok(html.includes("transition:transform 320ms cubic-bezier"));
+ assert.ok(html.includes("hwpFaderBank(pages,channels,strip,current.name+' channel faders',false"));
 });
