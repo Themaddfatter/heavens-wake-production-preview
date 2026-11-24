@@ -368,3 +368,16 @@ test('Text inspector uses icon controls and gradients, with words edited directl
  for(const marker of ['HwpFontPicker','HwpTextStyleActions','alignJustify','HwpTextColorControl','colorGradient','Shadow color','Outline color'])assert.ok(text.includes(marker),marker);
  for(const marker of ['api.fontsource.org/v1/fonts','hwpEnsureFont','hwpGradientImage','HwpTextEffectDefs','feMorphology','feGaussianBlur','WebkitBackgroundClip','hwpScreenSnap','editorTextOutput'])includes(marker,marker);
 });
+test('Bundled font catalog contains over a thousand unique real font families',()=>{const catalog=JSON.parse(readFileSync(new URL('../hwp-font-catalog.json',import.meta.url),'utf8'));assert.ok(catalog.fonts.length>=1000);assert.equal(new Set(catalog.fonts.map(font=>font.family)).size,catalog.fonts.length);assert.ok(catalog.fonts.every(font=>font.id&&font.family&&Array.isArray(font.weights)&&font.weights.length));assert.ok(catalog.fonts.some(font=>font.family==='Montserrat'));assert.ok(catalog.fonts.some(font=>font.family==='Libre Baskerville'));includes('hwp-font-catalog.json','bundled font data');});
+
+test('Independent output variants and rich text survive audience content updates',()=>{
+ const start=html.indexOf('function fe(e,t){'),end=html.indexOf('function pe(e){',start),quickStart=html.indexOf('function hwpQuickTextPatch('),quickEnd=html.indexOf('function hwpQuickApplySlideText(',quickStart);
+ const {hwpScreenObject,hwpScreenEditPatch,hwpScreenLinkPatch}=new Function(screenHelpers+html.slice(start,end)+html.slice(quickStart,quickEnd)+';return {hwpScreenObject,hwpScreenEditPatch,hwpScreenLinkPatch}')();
+ const base={kind:'text',text:'Hello world',runs:[{text:'Hello ',bold:true},{text:'world'}],textStyle:{fontSize:64,shadow:{},stroke:{}}};
+ let o=hwpScreenEditPatch(base,hwpScreenLinkPatch(base,'stage',false),'audience');
+ o=hwpScreenEditPatch(o,{text:'Hello church',runs:[{text:'Hello church',italic:true}]},'audience');
+ const stage=hwpScreenObject(o,'stage');assert.equal(stage.runs.map(r=>r.text).join(''),'Hello church');assert.equal(stage.runs[0].bold,true);assert.equal(stage.runs[0].italic,undefined);
+ o=hwpScreenEditPatch(o,{textStyle:{fontSize:120}},'stage');
+ assert.equal(hwpScreenObject(o,'stage').textStyle.fontSize,120);assert.equal(hwpScreenObject(o,'stage').runs.length,0);assert.equal(o.runs[0].italic,true);
+ for(const marker of ['HwpStageTextSlot','hwpRecordingModel','hwpCanvasGradient','hwpCanvasText','hwp-output-text-styles-v3'])includes(marker,marker);
+});
