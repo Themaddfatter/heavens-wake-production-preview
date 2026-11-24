@@ -165,3 +165,41 @@ test("presentation notes are shared presentation fields and closing preserves th
 test("all audience visual layers use configured dissolve, including logo and media",()=>{const start=html.indexOf("function tr({snap:e"),end=html.indexOf("function nr(",start),source=html.slice(start,end);assert.ok(source.includes("hwp-logo:"));assert.ok(!source.includes("outMs:e.logoOn?0:c"));assert.ok(source.includes("model:e.background,outMs:c,inMs:l"));assert.ok(source.includes("model:e.mediaLayer&&!e.background?"));assert.ok(source.includes("props:"));assert.ok(source.includes("message:"));assert.ok(html.includes("function hwpWorshipReceiverService"));assert.ok(html.includes("watchWorshipSignal"));});
 
 test("stage output is snapshot driven and remote receiver identity survives reload",()=>{const start=html.indexOf("function Hr({snap:e"),end=html.indexOf("function Ur(",start);assert.ok(start>0&&end>start);const stage=html.slice(start,end);assert.ok(!stage.includes("=N()"));assert.ok(stage.includes("e.showClockOnStage!==false"));assert.ok(stage.includes("stage-message:"));assert.ok(html.includes("sessionStorage.getItem(key)"));assert.ok(html.includes("takeover=true;wake(true)"));});
+
+
+test("remote worship slide changes preserve the operator session and use the commanded service",()=>{
+ const start=html.indexOf('case"hwp-worship-trigger":'),end=html.indexOf('case`advance`:',start);
+ assert.ok(start>=0&&end>start);
+ const reducer=new Function('e','t','hwpWorshipReceiverService','hwpWorshipTarget','Wt','switch(t.type){'+html.slice(start,end)+'}');
+ const session={playlistId:'operator-service',activePresentationId:'operator-song',serviceNavId:'operator-row',serviceNavSeq:42,mode:'edit',selectedSlideIds:['editing-slide']};
+ const state={session,live:{audienceOn:true,slideId:'old'}};
+ const target={itemId:'remote-row',presentationId:'remote-song',slideId:'remote-slide',cueIndex:2};
+ const next=reducer(state,{type:'hwp-worship-trigger',serviceId:'remote-service',target},(e,id)=>({hwpScheduleId:id}),(_,p,t)=>p.hwpScheduleId==='remote-service'?t:null,(e,p,c)=>({...e,session:{activePresentationId:p},live:{...e.live,presentationId:p,slideId:target.slideId,cueIndex:c}}));
+ assert.equal(next.session,session);
+ assert.equal(next.live.hwpScheduleId,'remote-service');
+ assert.equal(next.live.slideId,'remote-slide');
+ assert.equal(next.live.hwpServiceItemId,'remote-row');
+ assert.equal(next.live.audienceOn,true);
+ assert.ok(html.includes('hwpWorshipReceiverServices(state).map(service=>M.jsx(HwpWorshipServiceAgent'));
+});
+
+test("single presentation view keeps the entire selected medley and excludes other songs",()=>{
+ const start=html.indexOf('function hwpSingleMedleyRows('),end=html.indexOf('function hwpMedleyEdge(',start);
+ const rows=new Function(html.slice(start,end)+';return hwpSingleMedleyRows;')();
+ const root={id:'root'},child={id:'child',medleyParentId:'root'},child2={id:'child2',medleyParentId:'root'},standalone={id:'standalone'},playlist={items:[root,child,child2,standalone]};
+ assert.deepEqual(rows(playlist,root),[root,child,child2]);
+ assert.deepEqual(rows(playlist,child2),[root,child,child2]);
+ assert.deepEqual(rows(playlist,standalone),[]);
+ assert.ok(html.includes('children:hwpRenderMedleyGroups(!all?singleMedley:'));
+});
+
+test("accent foreground chooses black or white for readable contrast",()=>{
+ const start=html.indexOf('function hwpAccentInk('),end=html.indexOf('function Zi()',start);
+ const ink=new Function(html.slice(start,end)+';return hwpAccentInk;')();
+ assert.equal(ink('#ffffff'),'#000000');
+ assert.equal(ink('#000000'),'#ffffff');
+ assert.equal(ink('#ffff00'),'#000000');
+ assert.equal(ink('#142248'),'#ffffff');
+ assert.equal(ink('#e2a04a'),'#000000');
+ assert.ok(html.includes('--hwp-accent-ink'));
+});
