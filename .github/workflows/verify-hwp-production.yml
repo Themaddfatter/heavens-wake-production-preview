@@ -73,7 +73,7 @@ jobs:
               && grep -Fq 'function hwpMediaFolderEdit' "$RUNNER_TEMP/hwp-home.html" \
               && grep -Fq 'function hwpLibraryFolderEdit' "$RUNNER_TEMP/hwp-home.html" \
               && grep -Fq 'function hwpLoadBibleFile' "$RUNNER_TEMP/hwp-home.html" \
-              && grep -Fq 'hwp-service-notes-worship-v4' "$RUNNER_TEMP/hwp-home.html" \
+              && grep -Fq 'hwp-fixed-header-v1' "$RUNNER_TEMP/hwp-home.html" \
               && grep -Fq 'function HwpWorshipControlAgent' "$RUNNER_TEMP/hwp-home.html" \
               && grep -Fq 'worshipControlAck' "$RUNNER_TEMP/hwp-home.html" \
               && grep -Fq 'function hwpUnmergeServiceScriptures' "$RUNNER_TEMP/hwp-home.html" \
