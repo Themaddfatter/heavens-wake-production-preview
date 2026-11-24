@@ -423,3 +423,29 @@ test('Screen switches display icons and audience match options, not independent 
  assert.ok(html.includes('editorTextOutput:`audience`,selectedObjectIds'));
  assert.ok(html.includes('hasEditor=!!n||template'));
 });
+
+
+test('Template preview is independent of active song, live media and existing presentations',()=>{
+ const start=html.indexOf('function Ht(e,t,n){'),end=html.indexOf('function Ut(',start);
+ const Ht=new Function('ye','_e',html.slice(start,end)+';return Ht')(theme=>({objects:theme.canvasObjects}), (slide,name,id,category)=>({name,id,category,canvasObjects:slide.objects}));
+ const song={id:'hww_removed',hwwLibraryId:'removed',slides:[{id:'real',themeId:'theme',objects:[{text:'Real lyrics'}]}]};
+ const state={doc:{themes:[{id:'theme',name:'Song',category:'song',canvasObjects:[{text:'Example'}]}],presentations:[song]},session:{editingTemplateId:'theme',activePresentationId:song.id},live:{presentationId:song.id,mediaId:'live-media'}};
+ const edited=Ht(state,slide=>({...slide,objects:[{text:'Changed preview'}]}));
+ assert.equal(edited.doc.presentations,state.doc.presentations);
+ assert.equal(edited.doc.presentations[0],song);
+ assert.equal(edited.doc.themes[0].canvasObjects[0].text,'Changed preview');
+ assert.equal(edited.live,state.live);
+ assert.equal(edited.doc.themes[0].hwpStandalonePreview,true);
+ const templateStart=html.indexOf('function hwpTemplatePreviewObjects('),templateEnd=html.indexOf('function ye(',templateStart);
+ const preview=new Function(html.slice(templateStart,templateEnd)+';return hwpTemplatePreviewObjects')([{kind:'text',binding:'lyrics',text:'Real lyrics',textStyle:{fontSize:80},hwpTextLinks:{stage:false},hwpTextScreens:{stage:{text:'Real stage',textStyle:{fontSize:100},contentEdited:true}}}],'song')[0];
+ assert.ok(!preview.text.includes('Real'));
+ assert.equal(preview.hwpTextScreens.stage.text,preview.text);
+ assert.equal(preview.hwpTextScreens.stage.textStyle.fontSize,100);
+ assert.equal(preview.textStyle.fontSize,80);
+ const card=html.slice(html.indexOf('function Ri({title:'),html.indexOf('function HwpPresentationViewToggle'));
+ assert.ok(card.includes('onClick:()=>i(e),children:(0,M.jsx)(Mn'));
+ assert.ok(card.includes('onClick:()=>r(e),children:`Apply`'));
+ assert.ok(html.includes('Se=!T&&e.doc.media.find'));
+ assert.ok(html.includes('case`apply-theme`:{if(e.session.editingTemplateId)return e;'));
+ assert.ok(html.includes('standalone-template-preview-v1'));
+});
