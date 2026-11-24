@@ -1488,7 +1488,7 @@ async function hwpPersistStateAndRevision(fullState,revision){
  const db=await m();await new Promise((resolve,reject)=>{const tx=db.transaction(`kv`,`readwrite`),store=tx.objectStore(`kv`);store.put({version:1,doc:fullState.doc,live:fullState.live,session:fullState.session},`state`);store.put(revision,`hwpCloudRevision`);tx.oncomplete=()=>resolve();tx.onerror=()=>reject(tx.error||Error(`Local save failed`));tx.onabort=()=>reject(tx.error||Error(`Local save cancelled`))});
 }
 
-function hwpWorshipManifest(state,service){const byId=new Map(state.doc.presentations.map(p=>[p.id,p]));return (service?.items||[]).flatMap(item=>{const presentation=byId.get(item.presentationId);if(presentation?.category!=="song")return [];return [{itemId:item.id,presentationId:presentation.id,name:hwpServiceMedleyTitle(item,presentation,service.items),medleyParentId:item.medleyParentId||null,slides:Ce(presentation,{allGroups:true}).map(cue=>({slideId:cue.slide.id,cueIndex:cue.index,label:cue.group.name,color:state.doc.labels.find(label=>String(label.name||'').toLowerCase()===String(cue.group.name||'').toLowerCase())?.color||cue.group.color,text:String(pe(cue.slide)||""),enabled:cue.slide.enabled!==false,language:cue.slide.hwwLanguage||""}))}]})}
+function hwpWorshipManifest(state,service){const byId=new Map(state.doc.presentations.map(p=>[p.id,p]));return (service?.items||[]).flatMap(item=>{const presentation=byId.get(item.presentationId);if(presentation?.category!=="song")return [];return [{itemId:item.id,presentationId:presentation.id,name:hwpServiceMedleyTitle(item,presentation,service.items),medleyParentId:item.medleyParentId||null,slides:Ce(presentation,{allGroups:true}).map(cue=>({slideId:cue.slide.id,cueIndex:cue.index,label:cue.group.name,color:(state.doc.labels||[]).find(label=>String(label.name||'').toLowerCase()===String(cue.group.name||'').toLowerCase())?.color||cue.group.color,text:String(pe(cue.slide)||""),enabled:cue.slide.enabled!==false,language:cue.slide.hwwLanguage||""}))}]})}
 
 // Read-only HWW snapshot of the exact HWP thumbnail render inputs.
 // Sent separately from the command manifest and never changes HWP selection or output.
@@ -1505,7 +1505,7 @@ function hwpWorshipPreviewSnapshot(state,service,songs){
    const usedGroups=(p.groups||[]).map(g=>{groups.add(String(g.name||"").toLowerCase());return {id:g.id,name:g.name,color:g.color}});
    return {id:p.id,category:"song",width:p.width,height:p.height,groups:usedGroups,slides};
   });
-  const snapshot=JSON.stringify({presentations,playlists:[{hwpScheduleId:service.hwpScheduleId,hwpSchedulePublished:true,items:songs.map(s=>({id:s.itemId,presentationId:s.presentationId}))}],labels:state.doc.labels.filter(l=>groups.has(String(l.name||"").toLowerCase())).map(l=>({name:l.name,color:l.color})),media:state.doc.media.filter(m=>mediaIds.has(m.id)).map(m=>({id:m.id,kind:m.kind,src:m.src}))});
+  const snapshot=JSON.stringify({presentations,playlists:[{hwpScheduleId:service.hwpScheduleId,hwpSchedulePublished:true,items:songs.map(s=>({id:s.itemId,presentationId:s.presentationId}))}],labels:(state.doc.labels||[]).filter(l=>groups.has(String(l.name||"").toLowerCase())).map(l=>({name:l.name,color:l.color})),media:state.doc.media.filter(m=>mediaIds.has(m.id)).map(m=>({id:m.id,kind:m.kind,src:m.src}))});
   return new TextEncoder().encode(snapshot).byteLength<=600000?snapshot:"";
  }catch(error){console.warn("HWP worship preview snapshot unavailable",error);return ""}
 }
