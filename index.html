@@ -1488,7 +1488,27 @@ async function hwpPersistStateAndRevision(fullState,revision){
  const db=await m();await new Promise((resolve,reject)=>{const tx=db.transaction(`kv`,`readwrite`),store=tx.objectStore(`kv`);store.put({version:1,doc:fullState.doc,live:fullState.live,session:fullState.session},`state`);store.put(revision,`hwpCloudRevision`);tx.oncomplete=()=>resolve();tx.onerror=()=>reject(tx.error||Error(`Local save failed`));tx.onabort=()=>reject(tx.error||Error(`Local save cancelled`))});
 }
 
-function hwpWorshipManifest(state,service){const byId=new Map(state.doc.presentations.map(p=>[p.id,p]));return (service?.items||[]).flatMap(item=>{const presentation=byId.get(item.presentationId);if(presentation?.category!=="song")return [];return [{itemId:item.id,presentationId:presentation.id,name:hwpServiceMedleyTitle(item,presentation,service.items),medleyParentId:item.medleyParentId||null,slides:Ce(presentation,{allGroups:true}).map(cue=>({slideId:cue.slide.id,cueIndex:cue.index,label:cue.group.name,color:cue.group.color,text:String(pe(cue.slide)||""),enabled:cue.slide.enabled!==false,language:cue.slide.hwwLanguage||""}))}]})}
+function hwpWorshipManifest(state,service){const byId=new Map(state.doc.presentations.map(p=>[p.id,p]));return (service?.items||[]).flatMap(item=>{const presentation=byId.get(item.presentationId);if(presentation?.category!=="song")return [];return [{itemId:item.id,presentationId:presentation.id,name:hwpServiceMedleyTitle(item,presentation,service.items),medleyParentId:item.medleyParentId||null,slides:Ce(presentation,{allGroups:true}).map(cue=>({slideId:cue.slide.id,cueIndex:cue.index,label:cue.group.name,color:state.doc.labels.find(label=>String(label.name||'').toLowerCase()===String(cue.group.name||'').toLowerCase())?.color||cue.group.color,text:String(pe(cue.slide)||""),enabled:cue.slide.enabled!==false,language:cue.slide.hwwLanguage||""}))}]})}
+
+// Read-only HWW snapshot of the exact HWP thumbnail render inputs.
+// Sent separately from the command manifest and never changes HWP selection or output.
+function hwpWorshipPreviewSnapshot(state,service,songs){
+ try{
+  const allowed=new Set(songs.map(s=>s.presentationId)),mediaIds=new Set(),groups=new Set();
+  const addMedia=fill=>{if(fill?.type==="media"&&fill.mediaId)mediaIds.add(fill.mediaId)};
+  const presentations=state.doc.presentations.filter(p=>allowed.has(p.id)).map(p=>{
+   const slides=p.slides.map(s=>{
+    const objects=hwpBibleVisibleObjects(s,state.doc.settings.bible,p.width,p.height);
+    addMedia(s.background);objects.forEach(o=>addMedia(o.fill));
+    return {id:s.id,groupId:s.groupId,background:s.background,objects};
+   });
+   const usedGroups=(p.groups||[]).map(g=>{groups.add(String(g.name||"").toLowerCase());return {id:g.id,name:g.name,color:g.color}});
+   return {id:p.id,category:"song",width:p.width,height:p.height,groups:usedGroups,slides};
+  });
+  const snapshot=JSON.stringify({presentations,playlists:[{hwpScheduleId:service.hwpScheduleId,hwpSchedulePublished:true,items:songs.map(s=>({id:s.itemId,presentationId:s.presentationId}))}],labels:state.doc.labels.filter(l=>groups.has(String(l.name||"").toLowerCase())).map(l=>({name:l.name,color:l.color})),media:state.doc.media.filter(m=>mediaIds.has(m.id)).map(m=>({id:m.id,kind:m.kind,src:m.src}))});
+  return new TextEncoder().encode(snapshot).byteLength<=600000?snapshot:"";
+ }catch(error){console.warn("HWP worship preview snapshot unavailable",error);return ""}
+}
 function hwpWorshipTarget(state,service,target){if(!service?.hwpScheduleId||service.hwpSchedulePublished===false||!target)return null;const row=service.items.find(item=>item.id===target.itemId&&item.presentationId===target.presentationId),presentation=row&&state.doc.presentations.find(p=>p.id===row.presentationId&&p.category==="song");if(!presentation)return null;const cue=Ce(presentation,{allGroups:true}).find(c=>c.index===target.cueIndex&&c.slide.id===target.slideId&&c.slide.enabled!==false);return cue?{itemId:row.id,presentationId:presentation.id,slideId:cue.slide.id,cueIndex:cue.index}:null}
 function hwpWorshipActive(state,service){const live=state.live;if(!live?.presentationId||!live.slideId)return null;if(live.hwpScheduleId&&live.hwpScheduleId!==service?.hwpScheduleId)return null;const candidates=(service?.items||[]).filter(row=>row.presentationId===live.presentationId),row=candidates.find(row=>row.id===live.hwpServiceItemId)||candidates.find(row=>row.id===state.session.serviceNavId)||candidates[0];return row?hwpWorshipTarget(state,service,{itemId:row.id,presentationId:live.presentationId,slideId:live.slideId,cueIndex:live.cueIndex}):null}
 function hwpWorshipReceiverServices(state){return hwpVisibleServices(state.doc.playlists).filter(service=>service.hwpScheduleId&&service.hwpSchedulePublished!==false)}
@@ -1500,7 +1520,7 @@ function HwpWorshipServiceAgent({getLatest,serviceId}){
  const {dispatch}=N(),latest=(0,l.useRef)(getLatest),send=(0,l.useRef)(dispatch);latest.current=getLatest;send.current=dispatch;
  (0,l.useEffect)(()=>{
   if(!serviceId)return;
-  let stopped=false,timer=null,owner=false,manifestKey="",activeKey="",heartbeatAt=0,appliedCommand=null,auth=null,busy=false,queued=false,stopSignal=()=>{},stopAuth=()=>{},realtime=false,takeover=false;const receiverId=hwpWorshipReceiverId(serviceId);
+  let stopped=false,timer=null,owner=false,manifestKey="",previewKey="",activeKey="",heartbeatAt=0,appliedCommand=null,auth=null,busy=false,queued=false,stopSignal=()=>{},stopAuth=()=>{},realtime=false,takeover=false;const receiverId=hwpWorshipReceiverId(serviceId);
   const emit=(state,message="")=>{if(stopped)return;const detail={serviceId,state,message};window.hwpWorshipConnection=detail;window.hwpWorshipConnections={...window.hwpWorshipConnections,[serviceId]:detail};window.dispatchEvent(new CustomEvent("hwp-worship-connection",{detail}))};
   function current(){const state=latest.current();const service=state&&hwpWorshipReceiverService(state,serviceId);return service?.hwpScheduleId===serviceId?{state,service}:null}
   const call=(action,data={})=>auth.workspace({action,serviceId,receiverId,...data});
@@ -1527,13 +1547,14 @@ function HwpWorshipServiceAgent({getLatest,serviceId}){
      });
     }
     if(!auth.firebaseAuth.currentUser){emit("signed-out","Sign in to Heaven’s Wake Production.");delay=4000;return}
-    const {state,service}=current(),songs=hwpWorshipManifest(state,service),manifest=JSON.stringify(songs),active=hwpWorshipActive(state,service),audienceOn=!!state.live.audienceOn&&(state.live.hwpScheduleId||hwpWorshipReceiverService(state)?.hwpScheduleId)===serviceId,activeSignature=JSON.stringify([active,audienceOn]);const now=Date.now();
+    const {state,service}=current(),songs=hwpWorshipManifest(state,service),manifest=JSON.stringify(songs),previewSnapshot=hwpWorshipPreviewSnapshot(state,service,songs),active=hwpWorshipActive(state,service),audienceOn=!!state.live.audienceOn&&(state.live.hwpScheduleId||hwpWorshipReceiverService(state)?.hwpScheduleId)===serviceId,activeSignature=JSON.stringify([active,audienceOn]);const now=Date.now();
     let result;
-    if(!owner||manifest!==manifestKey||activeSignature!==activeKey||now-heartbeatAt>=12000){
+    if(!owner||manifest!==manifestKey||previewSnapshot!==previewKey||activeSignature!==activeKey||now-heartbeatAt>=12000){
      const payload={active,audienceOn,takeover};
      if(!owner||manifest!==manifestKey)payload.songs=songs;
+     if(!owner||previewSnapshot!==previewKey)payload.previewSnapshot=previewSnapshot;
      result=await call("worshipControlHeartbeat",payload);
-     if(result.owner){heartbeatAt=now;manifestKey=manifest;activeKey=activeSignature;takeover=false}
+     if(result.owner){heartbeatAt=now;manifestKey=manifest;previewKey=previewSnapshot;activeKey=activeSignature;takeover=false}
     }else result=await call("worshipControlPoll");
     if(stopped||!current())return;owner=!!result.owner;
     emit(owner?"connected":"busy",owner?"HWW can control songs for this published service.":"Another HWP receiver owns this schedule. Close it or enable this HWP audience output.");
