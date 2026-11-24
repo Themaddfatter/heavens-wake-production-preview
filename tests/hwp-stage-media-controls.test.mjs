@@ -15,7 +15,7 @@ test('Stage messages remain until explicitly removed, with stacked labeled actio
  assert.ok(!composer.includes('expiresAt'));
  assert.ok(composer.includes('title:`SM ON`'));
  assert.ok(composer.includes('title:`SM OFF`'));
- assert.ok(html.includes('e.stageMessage&&(0,M.jsx)(HwpStageFlash'));
+ assert.ok(html.includes('render:model=>(0,M.jsx)(HwpStageFlash,{message:model.message})'));
  assert.ok(css.includes('.hwp-stage-message-actions'));
 });
 
@@ -163,3 +163,5 @@ test("HWW remote control only triggers verified song cues for the current publis
 
 test("presentation notes are shared presentation fields and closing preserves the text",()=>{const start=html.indexOf("function hwpPresentationNotePatch("),end=html.indexOf("function hwpMedleyGlow(",start),patch=new Function(html.slice(start,end)+";return hwpPresentationNotePatch")();let p=patch({id:"song"},{open:true});p=patch(p,{text:"Start quietly"});assert.equal(p.hwpPresentationNoteOpen,true);assert.equal(p.hwpPresentationNote,"Start quietly");assert.equal(patch(p,{open:false}).hwpPresentationNote,"Start quietly");assert.ok(html.includes("hwp-presentation-note-toggle"));assert.ok(css.includes("grid-template-rows 180ms"));assert.ok(html.includes('label:`Edit slide`,onClick:()=>editLibrarySlide'));});
 test("all audience visual layers use configured dissolve, including logo and media",()=>{const start=html.indexOf("function tr({snap:e"),end=html.indexOf("function nr(",start),source=html.slice(start,end);assert.ok(source.includes("hwp-logo:"));assert.ok(!source.includes("outMs:e.logoOn?0:c"));assert.ok(source.includes("model:e.background,outMs:c,inMs:l"));assert.ok(source.includes("model:e.mediaLayer&&!e.background?"));assert.ok(source.includes("props:"));assert.ok(source.includes("message:"));assert.ok(html.includes("function hwpWorshipReceiverService"));assert.ok(html.includes("watchWorshipSignal"));});
+
+test("stage output is snapshot driven and remote receiver identity survives reload",()=>{const start=html.indexOf("function Hr({snap:e"),end=html.indexOf("function Ur(",start);assert.ok(start>0&&end>start);const stage=html.slice(start,end);assert.ok(!stage.includes("=N()"));assert.ok(stage.includes("e.showClockOnStage!==false"));assert.ok(stage.includes("stage-message:"));assert.ok(html.includes("sessionStorage.getItem(key)"));assert.ok(html.includes("takeover=true;wake(true)"));});

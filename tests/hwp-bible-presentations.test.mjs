@@ -209,8 +209,9 @@ test("slide editor media-fit choices reach correctly sized image and video outpu
  assert.ok(html.includes('onChange:e=>patch("fit",e.target.value)'));
  assert.ok(html.includes('onChange:e=>patch({mediaFit:e.target.value})'));
 });
-test("logo output switches immediately with cached media and image/video prewarm",()=>{
- assert.ok(html.includes('outMs:e.logoOn?0:c,inMs:e.logoOn?0:l'));
+test("logo output obeys configured dissolve while retaining cached media and image/video prewarm",()=>{
+ assert.ok(!html.includes('outMs:e.logoOn?0:c,inMs:e.logoOn?0:l'));
+ assert.ok(html.includes('outMs:c,inMs:l,render:n=>n.hwpOverlay'));
  assert.ok(html.includes('const hwpResolvedLocalMedia=new Map()'));
  assert.ok(html.includes('function hwpFastResolve(src)')); assert.ok(html.includes('hwpLocalMediaUrl(src)'));
  assert.ok(html.includes('const hwpFastMediaUrls=new Map()'));
