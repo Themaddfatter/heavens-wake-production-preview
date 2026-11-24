@@ -265,6 +265,40 @@ html[data-hwp-appearance="light"] .hwp-mixer-track{
 .hwp-mixer-track>.hwp-mixer-meter{align-self:stretch;box-shadow:0 0 0 1px #0005,inset 0 1px 3px #0009}
 .hwp-mc-fader-track::before{inset:0 1px;border-radius:4px}
 .hwp-mc-fader-track .hwp-mixer-calibrated-slider::before{inset:-1px 2px;border-radius:3px}
+</style>
+<style id="hwp-channel-strip-eq-v1">
+.hwp-mixer-strip,.hwp-mc-channel{--hwp-strip-face:#303a43;--hwp-strip-base:#182128;--hwp-strip-rim:#111a21;--hwp-strip-shine:#ffffff25;--hwp-strip-ink:#d5dfe7;position:relative;isolation:isolate;background:linear-gradient(90deg,#0003,transparent 10%,transparent 90%,#0004),repeating-linear-gradient(0deg,#ffffff03 0 1px,transparent 1px 3px),linear-gradient(180deg,var(--hwp-strip-face),var(--hwp-strip-base));border:1px solid var(--hwp-strip-rim);box-shadow:inset 0 1px 0 var(--hwp-strip-shine),inset 1px 0 0 #ffffff12,inset -1px 0 0 #0006,0 2px 4px #0003;border-radius:6px;color:var(--hwp-strip-ink)}
+html[data-hwp-appearance="light"] :is(.hwp-mixer-strip,.hwp-mc-channel){--hwp-strip-face:#e6ebee;--hwp-strip-base:#b9c4cd;--hwp-strip-rim:#87959f;--hwp-strip-shine:#ffffffd0;--hwp-strip-ink:#263643}
+.hwp-mixer-strip.master{border-color:var(--amber)}
+.hwp-mc-channel{border-top:3px solid var(--hwp-mc-color)}
+.hwp-mixer-strip .hwp-mixer-sub,.hwp-mc-channel .hwp-mc-number,.hwp-mc-channel .hwp-mc-db{color:var(--hwp-strip-ink)}
+.hwp-mixer-strip>.hwp-mixer-track,.hwp-mc-channel>.hwp-mixer-track{border-radius:5px;background:linear-gradient(90deg,#0002,transparent 12%,transparent 88%,#0002);box-shadow:inset 0 1px 3px #0003,0 1px 0 var(--hwp-strip-shine)}
+.hwp-mixer-strip>.hwp-mixer-track::before,.hwp-mc-channel>.hwp-mixer-track::before{inset:2px 1px;box-shadow:0 0 0 1px var(--hwp-fader-plate-edge),inset 0 2px 4px #0006,inset 0 -1px 0 var(--hwp-fader-plate-highlight)}
+.hwp-mc-master-bank>.hwp-mc-channel{background:linear-gradient(180deg,var(--hwp-strip-face),var(--hwp-strip-base))}
+button.hwp-mc-name{border:1px solid #0002;cursor:pointer;font-family:inherit}
+.hwp-mc-tools{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:2px;width:100%;flex:none}
+.hwp-mc-tools .hwp-mc-toggle{width:100%;min-width:0;height:30px}
+.hwp-mc-detail-popup{position:absolute;inset:0 0 0 0;z-index:6;display:flex;flex-direction:column;gap:8px;overflow:auto;overscroll-behavior:contain;padding:8px;box-sizing:border-box;background:var(--bg-2);color:var(--text);border:1px solid var(--line);border-radius:7px;box-shadow:0 6px 24px #0006}
+.hwp-mc-detail-popup>.hwp-mc-gain-head{flex:none}
+.hwp-mixer-dialog.hwp-mixer-eq-dialog{width:min(660px,calc(100vw - 32px));max-width:none}
+.hwp-eq-panel{display:grid;gap:9px;min-width:0}
+.hwp-eq-actions,.hwp-eq-band-tabs,.hwp-eq-filters,.hwp-eq-band-controls{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.hwp-eq-actions .hwp-mixer-btn,.hwp-eq-band-tabs .hwp-mixer-btn{min-height:30px;padding:4px 8px;font-size:12px}
+.hwp-eq-band-tabs .hwp-mixer-btn{flex:1;border-bottom:3px solid var(--hwp-eq-band-color)}
+.hwp-eq-graph{width:100%;display:block;background:linear-gradient(#1d2933,#121b23);border:1px solid #52616d;border-radius:5px;touch-action:none;box-sizing:border-box}
+.hwp-eq-graph text{font:9px ui-monospace,monospace;fill:#b8c7d2}
+.hwp-eq-graph g[style] text{fill:#182128;font-weight:800;pointer-events:none}
+.hwp-eq-filter{display:flex;align-items:end;gap:5px;flex:1;min-width:110px}
+.hwp-eq-field,.hwp-mc-edit-fields label{display:grid;gap:4px;flex:1;min-width:75px;font-size:11px;color:var(--dim)}
+.hwp-eq-field input,.hwp-eq-field select,.hwp-mc-edit-fields input{width:100%;min-width:0;box-sizing:border-box;background:var(--bg);color:var(--text);border:1px solid var(--line);border-radius:4px;padding:5px;font:inherit;font-size:12px}
+.hwp-eq-panel.compact{gap:6px}
+.hwp-eq-panel.compact .hwp-eq-actions,.hwp-eq-panel.compact .hwp-eq-band-tabs{gap:3px}
+.hwp-eq-panel.compact .hwp-mixer-btn{font-size:10px;padding:3px 5px;min-height:26px}
+.hwp-eq-panel.compact .hwp-eq-band-tabs .hwp-mixer-btn{flex:1 1 40%}
+.hwp-eq-panel.compact .hwp-eq-filters{display:grid;grid-template-columns:1fr}
+.hwp-mc-edit-fields{display:grid;gap:8px}
+.hwp-mc-edit-fields .hwp-mixer-palette{grid-template-columns:repeat(10,minmax(0,1fr));gap:3px}
+.hwp-mc-edit-fields .hwp-mixer-swatch{width:100%;min-width:0;aspect-ratio:1;height:auto}
 </style></head><body><script>try{document.documentElement.dataset.hwpAppearance=localStorage.getItem("hwp-appearance")==="light"?"light":"dark"}catch(e){}</script><div id="root"><div id="hwp-boot-placeholder" style="box-sizing:border-box;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;background:#071d16;color:#f3f8f4;font:600 19px Arial,sans-serif;text-align:center"><img src="./hwp-logo.png" alt="Heaven's Wake Production" style="max-width:210px;max-height:130px;object-fit:contain;margin-bottom:24px"><div>Opening Heaven's Wake Production…</div></div></div><script>
 (function(){
  var startupError="";
@@ -2128,8 +2162,70 @@ function HwpFaderPageNav({pages,compact=false}){
  const h=hwpMixerNode,button=(dir,title,d)=>h('button',{type:'button',className:'iconbtn hwp-fader-page-arrow',title,'data-tip':title,'aria-label':title,disabled:dir<0?pages.index===0:pages.index===pages.last,onClick:()=>pages.go(dir)},h('svg',{width:17,height:17,viewBox:'0 0 24 24',fill:'none',stroke:'currentColor',strokeWidth:2.2,strokeLinecap:'round',strokeLinejoin:'round','aria-hidden':true},h('path',{d})));
  return h('nav',{className:'hwp-fader-page-nav'+(compact?' compact':''),'aria-label':'Fader banks'},button(-1,'Previous fader bank','M5 15l7-7 7 7'),h('span',{className:'hwp-fader-page-count','aria-live':'polite'},(pages.index+1)+'/'+(pages.last+1)),button(1,'Next fader bank','M5 9l7 7 7-7'));
 }
+const hwpMixerEqIcon='M3 18h18M3 6v12m2-3c3 0 3-7 6-7s3 5 6 5c2 0 3-3 4-4';
+const hwpMixerEqBands=['Low','Low Mid','High Mid','High'];
+function hwpMixerEqDefault(){return {enabled:true,hpf:{enabled:false,freq:80},lpf:{enabled:false,freq:16000},bands:[{freq:125,gain:0,q:.7,type:'bell'},{freq:500,gain:0,q:1,type:'bell'},{freq:2000,gain:0,q:1,type:'bell'},{freq:8000,gain:0,q:.7,type:'bell'}]}}
+function hwpMixerEqClamp(v,min,max,fallback){v=Number(v);return Number.isFinite(v)?Math.max(min,Math.min(max,v)):fallback}
+function hwpMixerEqNormalize(raw){
+ const d=hwpMixerEqDefault(),r=raw||{},limit=hwpMixerEqClamp;
+ return {enabled:r.enabled!==false,hpf:{enabled:!!r.hpf?.enabled,freq:limit(r.hpf?.freq,20,2000,80)},lpf:{enabled:!!r.lpf?.enabled,freq:limit(r.lpf?.freq,1000,20000,16000)},bands:d.bands.map((b,i)=>{const x=r.bands?.[i]||{};return {freq:limit(x.freq,20,20000,b.freq),gain:limit(x.gain,-18,18,0),q:limit(x.q,.1,10,b.q),type:i===0&&x.type==='lowShelf'?'lowShelf':i===3&&x.type==='highShelf'?'highShelf':'bell'}})};
+}
+function hwpMixerEqCoefficients(type,freq,gain=0,q=.707){
+ const w=2*Math.PI*freq/48000,co=Math.cos(w),si=Math.sin(w),A=Math.pow(10,gain/40),alpha=si/(2*q),root=2*Math.sqrt(A)*si/Math.SQRT2;
+ if(type==='hpf')return [(1+co)/2,-(1+co),(1+co)/2,1+alpha,-2*co,1-alpha];
+ if(type==='lpf')return [(1-co)/2,1-co,(1-co)/2,1+alpha,-2*co,1-alpha];
+ if(type==='lowShelf')return [A*((A+1)-(A-1)*co+root),2*A*((A-1)-(A+1)*co),A*((A+1)-(A-1)*co-root),(A+1)+(A-1)*co+root,-2*((A-1)+(A+1)*co),(A+1)+(A-1)*co-root];
+ if(type==='highShelf')return [A*((A+1)+(A-1)*co+root),-2*A*((A-1)+(A+1)*co),A*((A+1)+(A-1)*co-root),(A+1)-(A-1)*co+root,2*((A-1)-(A+1)*co),(A+1)-(A-1)*co-root];
+ return [1+alpha*A,-2*co,1-alpha*A,1+alpha/A,-2*co,1-alpha/A];
+}
+function hwpMixerEqResponse(eq,freq){
+ if(!eq.enabled)return 0;
+ const filters=eq.bands.map(b=>hwpMixerEqCoefficients(b.type,b.freq,b.gain,b.q));
+ if(eq.hpf.enabled)filters.push(hwpMixerEqCoefficients('hpf',eq.hpf.freq));
+ if(eq.lpf.enabled)filters.push(hwpMixerEqCoefficients('lpf',eq.lpf.freq));
+ const w=2*Math.PI*freq/48000,c=Math.cos(w),s=Math.sin(w),c2=Math.cos(2*w),s2=Math.sin(2*w);
+ return filters.reduce((sum,[b0,b1,b2,a0,a1,a2])=>sum+10*Math.log10(Math.max(1e-20,((b0+b1*c+b2*c2)**2+(b1*s+b2*s2)**2)/Math.max(1e-20,(a0+a1*c+a2*c2)**2+(a1*s+a2*s2)**2))),0);
+}
+let hwpMixerEqClipboard=null;
+function HwpMixerEqPanel({channel,onChange,compact=false}){
+ const h=hwpMixerNode,eq=hwpMixerEqNormalize(channel.eq),[selected,setSelected]=l.useState(0),[copied,setCopied]=l.useState(0),drag=l.useRef(null);
+ const colors=['#f4c66a','#65d2bb','#78a8ff','#e6a0d4'],x=f=>30+350*Math.log10(f/20)/3,y=g=>12+132*(24-Math.max(-24,Math.min(24,g)))/48;
+ const update=(patch)=>onChange({...eq,...patch}),band=(i,patch)=>update({bands:eq.bands.map((b,j)=>i===j?{...b,...patch}:b)});
+ const button=(label,click,active=false,extra={})=>h('button',{type:'button',className:'hwp-mixer-btn'+(active?' active':''),onClick:click,...extra},label);
+ const field=(label,value,min,max,step,change,disabled=false)=>h('label',{className:'hwp-eq-field'},h('span',{},label),h('input',{type:'number',min,max,step,value,disabled,'aria-label':label,onChange:e=>{if(e.target.value!=='')change(hwpMixerEqClamp(e.target.value,min,max,value))}}));
+ const points=Array.from({length:181},(_,i)=>{const f=20*Math.pow(1000,i/180);return x(f).toFixed(2)+','+y(hwpMixerEqResponse(eq,f)).toFixed(2)}).join(' ');
+ function move(e){if(drag.current===null)return;const rect=e.currentTarget.getBoundingClientRect();if(!rect.width||!rect.height)return;const px=(e.clientX-rect.left)/rect.width*400,py=(e.clientY-rect.top)/rect.height*170;band(drag.current,{freq:Math.round(hwpMixerEqClamp(20*Math.pow(10,(px-30)/350*3),20,20000,1000)),gain:Math.round(hwpMixerEqClamp(24-(py-12)/132*48,-18,18,0)*10)/10})}
+ function stop(e){drag.current=null;if(e.currentTarget.hasPointerCapture?.(e.pointerId))e.currentTarget.releasePointerCapture(e.pointerId)}
+ const filter=(key,label,min,max)=>h('div',{className:'hwp-eq-filter',key},button(label,()=>update({[key]:{...eq[key],enabled:!eq[key].enabled}}),eq[key].enabled,{'aria-pressed':eq[key].enabled,'aria-label':label+' on/off'}),field(label+' frequency (Hz)',eq[key].freq,min,max,1,v=>update({[key]:{...eq[key],freq:v}})));
+ return h('div',{className:'hwp-eq-panel'+(compact?' compact':'')},
+  h('div',{className:'hwp-eq-actions'},button(eq.enabled?'EQ ON':'EQ OFF',()=>update({enabled:!eq.enabled}),eq.enabled,{'aria-label':'EQ on/off','aria-pressed':eq.enabled}),button('Reset',()=>onChange(hwpMixerEqDefault())),button('Copy',()=>{hwpMixerEqClipboard=JSON.parse(JSON.stringify(eq));setCopied(n=>n+1)}),button('Paste',()=>{if(hwpMixerEqClipboard)onChange(hwpMixerEqNormalize(hwpMixerEqClipboard))},false,{disabled:!hwpMixerEqClipboard})),
+  h('svg',{className:'hwp-eq-graph',viewBox:'0 0 400 170',role:'img','aria-label':'Equalizer frequency response; drag colored band points to adjust frequency and gain',onPointerMove:move,onPointerUp:stop,onPointerCancel:stop,onLostPointerCapture:()=>{drag.current=null}},
+   ...[-24,-12,0,12,24].map(g=>h('g',{key:g},h('line',{x1:30,x2:380,y1:y(g),y2:y(g),stroke:g===0?'#9aa8b5':'#46515c',strokeWidth:g===0?1.2:.6}),h('text',{x:26,y:y(g)+3,textAnchor:'end'},g>0?'+'+g:g))),
+   ...[20,50,100,200,500,1000,2000,5000,10000,20000].map(f=>h('g',{key:f},h('line',{x1:x(f),x2:x(f),y1:12,y2:144,stroke:'#46515c',strokeWidth:.6}),h('text',{x:x(f),y:157,textAnchor:'middle'},f>=1000?f/1000+'k':f))),
+   h('polyline',{points,fill:'none',stroke:eq.enabled?'#e1eaf0':'#78848c',strokeWidth:2,strokeLinejoin:'round'}),
+   ...eq.bands.map((b,i)=>h('g',{key:i,style:{cursor:'grab'},onPointerDown:e=>{e.preventDefault();setSelected(i);drag.current=i;const svg=e.currentTarget.ownerSVGElement;svg?.setPointerCapture(e.pointerId)}},h('circle',{cx:x(b.freq),cy:y(b.gain),r:13,fill:'transparent'}),h('circle',{cx:x(b.freq),cy:y(b.gain),r:selected===i?8:6,fill:colors[i],stroke:'#182128',strokeWidth:1.5}),h('text',{x:x(b.freq),y:y(b.gain)+3,textAnchor:'middle',fill:'#17212b',fontWeight:800},i+1)))),
+  h('div',{className:'hwp-eq-filters'},filter('hpf','HPF',20,2000),filter('lpf','LPF',1000,20000)),
+  h('div',{className:'hwp-eq-band-tabs'},...hwpMixerEqBands.map((name,i)=>button(name,()=>setSelected(i),selected===i,{key:i,'aria-pressed':selected===i,style:{'--hwp-eq-band-color':colors[i]}}))),
+  h('div',{className:'hwp-eq-band-controls'},
+   selected===0||selected===3?h('label',{className:'hwp-eq-field'},h('span',{},'Filter type'),h('select',{value:eq.bands[selected].type,'aria-label':'EQ filter type',onChange:e=>band(selected,{type:e.target.value})},h('option',{value:'bell'},'Bell'),h('option',{value:selected===0?'lowShelf':'highShelf'},'Shelf'))):null,
+   field('Frequency (Hz)',eq.bands[selected].freq,20,20000,1,v=>band(selected,{freq:v})),field('Gain (dB)',eq.bands[selected].gain,-18,18,.1,v=>band(selected,{gain:v})),field('Q',eq.bands[selected].q,.1,10,.1,v=>band(selected,{q:v}),eq.bands[selected].type!=='bell')),
+  h('div',{className:'hwp-mixer-sub'},'Input EQ · shared across mixes · offline demo'));
+}
+function HwpMixerCompanionChannelEdit({channel,categories,favorites,onChange,onFavorite}){
+ const h=hwpMixerNode,[hex,setHex]=l.useState(channel.color);
+ const color=v=>{onChange({color:v});setHex(v)};
+ return h('div',{className:'hwp-mc-edit-fields'},
+  h('label',{},'Channel name',h('input',{value:channel.name,maxLength:40,onChange:e=>onChange({name:e.target.value})})),
+  h('label',{},'Category',h('input',{list:'hwp-mc-edit-categories',value:channel.category,onChange:e=>onChange({category:e.target.value})})),
+  h('datalist',{id:'hwp-mc-edit-categories'},...categories.filter(v=>v!=='All Channels').map(v=>h('option',{key:v,value:v}))),
+  h('div',{className:'hwp-mixer-palette'},...hwpMixerPalette.map(v=>h('button',{key:v,type:'button',className:'hwp-mixer-swatch',style:{background:v},title:v,'aria-label':'Choose '+v,'aria-pressed':channel.color===v,onClick:()=>color(v)}))),
+  h('label',{},'Custom color',h('input',{type:'color',value:channel.color,onChange:e=>color(e.target.value)})),
+  h('label',{},'HEX color',h('input',{value:hex,onChange:e=>setHex(e.target.value)})),
+  h('div',{className:'hwp-eq-actions'},h('button',{type:'button',className:'hwp-mixer-btn',disabled:!/^#[0-9a-f]{6}$/i.test(hex),onClick:()=>color(hex)},'Apply'),h('button',{type:'button',className:'hwp-mixer-btn',onClick:()=>onFavorite(channel.color)},'Save favorite')),
+  favorites.length?h('div',{className:'hwp-mixer-palette'},...favorites.map(v=>h('button',{key:v,type:'button',className:'hwp-mixer-swatch',style:{background:v},title:v,'aria-label':'Choose '+v,onClick:()=>color(v)}))):null);
+}
 function HwpMixerCompanion({data,setData,mix,setMix}){
- const h=hwpMixerNode,[category,setCategory]=l.useState('All Channels'),[masterOpen,setMasterOpen]=l.useState(false),[gainId,setGainId]=l.useState(null);
+ const h=hwpMixerNode,[category,setCategory]=l.useState('All Channels'),[masterOpen,setMasterOpen]=l.useState(false),[gainId,setGainId]=l.useState(null),[panel,setPanel]=l.useState(null);
  const bodyRef=l.useRef(null);
  const icon=(title,d,active,click,extra={})=>h('button',{type:'button',className:'iconbtn hwp-mc-toggle'+(active?' active':''),title,'data-tip':title,'aria-label':title,'aria-pressed':active,onClick:click,...extra},h('svg',{width:19,height:19,viewBox:'0 0 24 24',fill:'none',stroke:'currentColor',strokeWidth:1.8,strokeLinecap:'round',strokeLinejoin:'round','aria-hidden':true},h('path',{d})));
  const gainIcon='M12 3v6m0 6v6M8 9h8v6H8zM5 5v14m14-14v14';
@@ -2137,8 +2233,11 @@ function HwpMixerCompanion({data,setData,mix,setMix}){
  const categories=['All Channels',...new Set([...hwpMixerCategories,...data.channels.map(c=>c.category)])];
  const channels=data.channels.filter(c=>category==='All Channels'||c.category===category);
  const pages=hwpUseFaderPages(channels.length,category,3),gainChannel=gainId===null?null:data.channels.find(c=>c.id===gainId);
- l.useEffect(()=>{setGainId(null)},[pages.index,category]);
- l.useEffect(()=>{const dismiss=e=>{if(e.type==='keydown'){if(e.key!=='Escape')return}else if(e.target.closest?.('[data-hwp-mc-popup],[data-hwp-mc-toggle]')&&bodyRef.current?.contains(e.target))return;setMasterOpen(false);setGainId(null)};document.addEventListener('pointerdown',dismiss);document.addEventListener('keydown',dismiss);return()=>{document.removeEventListener('pointerdown',dismiss);document.removeEventListener('keydown',dismiss)}},[]);
+ l.useEffect(()=>{setGainId(null);setPanel(null)},[pages.index,category]);
+ l.useEffect(()=>{const dismiss=e=>{if(e.type==='keydown'){if(e.key!=='Escape')return}else if(e.target.closest?.('[data-hwp-mc-popup],[data-hwp-mc-toggle]')&&bodyRef.current?.contains(e.target))return;setMasterOpen(false);setGainId(null);setPanel(null)};document.addEventListener('pointerdown',dismiss);document.addEventListener('keydown',dismiss);return()=>{document.removeEventListener('pointerdown',dismiss);document.removeEventListener('keydown',dismiss)}},[]);
+ const panelChannel=panel?data.channels.find(c=>c.id===panel.id):null;
+ const updateChannel=(id,patch)=>setData(old=>({...old,channels:old.channels.map(c=>c.id===id?{...c,...patch}:c)}));
+ const openPanel=(type,id)=>{setMasterOpen(false);setGainId(null);setPanel(old=>old?.type===type&&old.id===id?null:{type,id})};
  const fmt=n=>n<=-80?'−∞ dB':(n>0?'+':'')+Number(n).toFixed(1)+' dB';
  function change(id,master,key,value){
   setData(old=>master?{...old,buses:old.buses.map(b=>b.id===busId?{...b,[key]:key==='on'?!b.on:value}:b)}:{...old,channels:old.channels.map(c=>c.id!==id?c:key==='level'?{...c,levels:c.levels.map((n,j)=>j===busId?value:n)}:{...c,on:c.on.map((n,j)=>j===busId?!n:n)})});
@@ -2147,18 +2246,18 @@ function HwpMixerCompanion({data,setData,mix,setMix}){
   const level=master?current.level:c.levels[busId],on=master?current.on:c.on[busId],name=master?current.name+' Master':c.name,id=master?'master':'ch-'+c.id,color=master?current.color:c.color;
   return h('div',{key:id,className:'hwp-mc-channel'+(master?' hwp-mc-master':''),style:{'--hwp-mc-color':color}},
    h('span',{className:'hwp-mc-number'},master?'OUTPUT':c.id<32?'CH '+String(c.id+1).padStart(2,'0'):'ST '+String(c.id-31).padStart(2,'0')),
-   h('span',{className:'hwp-mc-name',title:name,style:{background:color,color:hwpAccentInk(color)}},name),
+   h(master?'span':'button',{className:'hwp-mc-name',title:master?name:'Edit '+name,style:{background:color,color:hwpAccentInk(color)},...(!master?{type:'button','aria-label':'Edit '+name,'data-hwp-mc-toggle':true,onClick:()=>openPanel('edit',c.id)}:{})},name),
    h('output',{className:'hwp-mc-db'},fmt(level)),
    h('div',{className:'hwp-mixer-track hwp-mc-fader-track'},hwpMixerCalibratedFader({min:-80,max:10,step:.5,value:level,ticks:[10,0,-10,-20,-40,-60,-80],label:name+' fader',valueText:fmt(level),onChange:v=>change(c?.id,master,'level',v),formatTick:v=>v===-80?'−∞':v>0?'+'+v:String(v)})),
    h('button',{type:'button',className:'hwp-mc-mute'+(on?'':' muted'),'aria-label':(on?'Mute ':'Unmute ')+name,'aria-pressed':!on,title:(on?'Mute ':'Unmute ')+name,onClick:()=>change(c?.id,master,'on')},on?'ON':'MUTED'),
-   master?null:icon('Gain: '+name,gainIcon,gainId===c.id,()=>{setMasterOpen(false);setGainId(old=>old===c.id?null:c.id)},{'data-hwp-mc-toggle':true}));
+   master?null:h('div',{className:'hwp-mc-tools'},icon('Gain: '+name,gainIcon,gainId===c.id,()=>{setMasterOpen(false);setPanel(null);setGainId(old=>old===c.id?null:c.id)},{'data-hwp-mc-toggle':true}),icon('EQ: '+name,hwpMixerEqIcon,panel?.type==='eq'&&panel.id===c.id,()=>openPanel('eq',c.id),{'data-hwp-mc-toggle':true})));
  }
  function gainFader(key,label,min,max,step,ticks){
   const value=Number(gainChannel[key])||0,display=(value>0?'+':'')+value.toFixed(1)+' dB';
   return h('div',{className:'hwp-mc-gain-strip',key},h('strong',{},label),h('output',{className:'hwp-mc-db'},display),h('div',{className:'hwp-mixer-track hwp-mc-fader-track'},hwpMixerCalibratedFader({min,max,step,value,ticks,label:gainChannel.name+' '+label,valueText:display,onChange:v=>setData(old=>({...old,channels:old.channels.map(c=>c.id===gainId?{...c,[key]:Math.max(min,Math.min(max,v))}:c)})),formatTick:v=>v>0?'+'+v:String(v)})));
  }
  return h('section',{className:'hwp-mc-body',ref:bodyRef,'aria-label':'Sound Mixer Companion'},
-  h('div',{className:'hwp-mc-top'},h('div',{},h('strong',{},'Sound Mixer'),h('span',{className:'hwp-mc-status'},'Yamaha QL1 · Offline demo')),h('div',{className:'hwp-mc-top-actions'},icon('Master fader','M4 4h16v16H4zM12 7v3m0 4v3M9 10h6v4H9z',masterOpen,()=>{setGainId(null);setMasterOpen(v=>!v)},{'data-hwp-mc-toggle':true,'aria-expanded':masterOpen}))),
+  h('div',{className:'hwp-mc-top'},h('div',{},h('strong',{},'Sound Mixer'),h('span',{className:'hwp-mc-status'},'Yamaha QL1 · Offline demo')),h('div',{className:'hwp-mc-top-actions'},icon('Master fader','M4 4h16v16H4zM12 7v3m0 4v3M9 10h6v4H9z',masterOpen,()=>{setGainId(null);setPanel(null);setMasterOpen(v=>!v)},{'data-hwp-mc-toggle':true,'aria-expanded':masterOpen}))),
   h('div',{className:'hwp-mc-filters'},h('label',{},'Output mix',h('select',{value:busId,'aria-label':'Mixer output',onChange:e=>setMix(Number(e.target.value))},...buses.map(b=>h('option',{key:b.id,value:b.id},b.name)))),h('label',{},'Channels',h('select',{value:category,'aria-label':'Mixer channel category',onChange:e=>setCategory(e.target.value)},...categories.map(v=>h('option',{key:v,value:v},v||'Unassigned'))))),
   h('div',{className:'hwp-mc-list-heading'},h('strong',{},'Channel faders'),h('span',{},channels.length?(pages.first+1)+'–'+pages.end+' of '+channels.length:'0 channels')),
   h('div',{className:'hwp-mc-console'},
@@ -2166,7 +2265,8 @@ function HwpMixerCompanion({data,setData,mix,setMix}){
    hwpFaderBank(pages,channels,strip,current.name+' channel faders',true,'No channels in this category.'),
    masterOpen?h('div',{className:'hwp-mc-popup-shade','aria-hidden':true,onPointerDown:e=>{e.stopPropagation();setMasterOpen(false)}}):null,
    h('div',{className:'hwp-mc-master-bank'+(masterOpen?' open':''),'aria-hidden':!masterOpen,'data-hwp-mc-popup':true},strip(null,true)),
-   gainChannel?h('div',{className:'hwp-mc-gain-popup',role:'dialog','aria-label':'Gain: '+gainChannel.name,'data-hwp-mc-popup':true},h('div',{className:'hwp-mc-gain-head'},h('strong',{},'Gain · '+gainChannel.name),h('button',{type:'button',className:'iconbtn',title:'Close gain','aria-label':'Close gain',onClick:()=>setGainId(null)},'×')),h('div',{className:'hwp-mc-gain-bank'},gainChannel.id<32?gainFader('ag','A.GAIN',-6,66,1,[66,48,36,24,12,0,-6]):null,gainFader('dg','D.GAIN',-96,24,.5,[24,12,0,-24,-48,-72,-96]))):null));
+   gainChannel?h('div',{className:'hwp-mc-gain-popup',role:'dialog','aria-label':'Gain: '+gainChannel.name,'data-hwp-mc-popup':true},h('div',{className:'hwp-mc-gain-head'},h('strong',{},'Gain · '+gainChannel.name),h('button',{type:'button',className:'iconbtn',title:'Close gain','aria-label':'Close gain',onClick:()=>setGainId(null)},'×')),h('div',{className:'hwp-mc-gain-bank'},gainChannel.id<32?gainFader('ag','A.GAIN',-6,66,1,[66,48,36,24,12,0,-6]):null,gainFader('dg','D.GAIN',-96,24,.5,[24,12,0,-24,-48,-72,-96]))):null,
+   panelChannel?h('div',{className:'hwp-mc-detail-popup',role:'dialog','aria-label':(panel.type==='eq'?'Equalizer: ':'Edit ')+panelChannel.name,'data-hwp-mc-popup':true},h('div',{className:'hwp-mc-gain-head'},h('strong',{},(panel.type==='eq'?'Equalizer (EQ) · ':'Edit · ')+panelChannel.name),h('button',{type:'button',className:'iconbtn',title:'Close', 'aria-label':'Close channel popup',onClick:()=>setPanel(null)},'×')),panel.type==='eq'?h(HwpMixerEqPanel,{key:panelChannel.id,channel:panelChannel,compact:true,onChange:eq=>updateChannel(panelChannel.id,{eq})}):h(HwpMixerCompanionChannelEdit,{key:panelChannel.id,channel:panelChannel,categories,favorites:data.favorites||[],onChange:patch=>updateChannel(panelChannel.id,patch),onFavorite:color=>setData(old=>({...old,favorites:[...new Set([...(old.favorites||[]),color])]}))})):null));
 }
 
 function hwpVisualFrame(v){
@@ -3359,7 +3459,7 @@ const hwpMixerPalette=[...Array.from({length:7},(_,i)=>Array.from({length:16},(_
 const hwpMixerCategories=['Microphones','Instruments','Devices','Effects','Unassigned'];
 function hwpMixerInitial(){
  const buses=Array.from({length:17},(_,i)=>({id:i,name:i?'Mix '+String(i).padStart(2,'0'):'Main',enabled:i<5,color:i?'#567387':'#b58a38',level:-80,on:false}));
- const channels=Array.from({length:40},(_,i)=>({id:i,name:i<32?'Input '+String(i+1).padStart(2,'0'):'ST IN '+String(i-31).padStart(2,'0'),category:'Unassigned',color:'#576879',ag:0,dg:0,levels:Array(17).fill(-80),on:Array(17).fill(false)}));
+ const channels=Array.from({length:40},(_,i)=>({id:i,name:i<32?'Input '+String(i+1).padStart(2,'0'):'ST IN '+String(i-31).padStart(2,'0'),category:'Unassigned',color:'#576879',ag:0,dg:0,eq:hwpMixerEqDefault(),levels:Array(17).fill(-80),on:Array(17).fill(false)}));
  try{const v=JSON.parse(localStorage.getItem('hwp-mixer-layout-v1')||'null');if(v&&v.channels?.length===40&&v.buses?.length===17)return {...v,favorites:Array.isArray(v.favorites)?v.favorites:[]};}catch{}
  return {channels,buses,favorites:[]};
 }
@@ -3384,7 +3484,7 @@ function HwpSoundMixer({data,setData,mix,setMix}){
  const updateChannel=(id,patch)=>setData(old=>({...old,channels:old.channels.map(c=>c.id===id?{...c,...(typeof patch==='function'?patch(c):patch)}:c)}));
  const updateBus=(id,patch)=>setData(old=>({...old,buses:old.buses.map(b=>b.id===id?{...b,...patch}:b)}));
  const btn=(label,onClick,cls='',props={})=>h('button',{type:'button',className:'hwp-mixer-btn '+cls,onClick,...props},label);
- const channelTool=(kind,name,onClick)=>h('button',{type:'button',className:'hwp-mixer-btn hwp-mixer-tool-icon',onClick,title:kind,'data-tip':kind,'aria-label':kind+': '+name},h('svg',{viewBox:'0 0 24 24',width:19,height:19,fill:'none',stroke:'currentColor',strokeWidth:1.8,strokeLinecap:'round',strokeLinejoin:'round','aria-hidden':true},h('path',{d:kind==='Gain'?'M12 3v6m0 6v6M8 9h8v6H8zM5 5v14m14-14v14':'M12 20h9M16.5 3.5a2.12 2.12 0 0 1 3 3L9 17l-4 1 1-4L16.5 3.5zM14.5 5.5l4 4'})));
+ const channelTool=(kind,name,onClick,active=false)=>h('button',{type:'button',className:'hwp-mixer-btn hwp-mixer-tool-icon'+(active?' active':''),onClick,title:kind,'data-tip':kind,'aria-label':kind+': '+name,'aria-pressed':active},h('svg',{viewBox:'0 0 24 24',width:19,height:19,fill:'none',stroke:'currentColor',strokeWidth:1.8,strokeLinecap:'round',strokeLinejoin:'round','aria-hidden':true},h('path',{d:kind==='Gain'?'M12 3v6m0 6v6M8 9h8v6H8zM5 5v14m14-14v14':hwpMixerEqIcon})));
  const fmt=n=>n<=-80?'−∞ dB':(n>0?'+':'')+Number(n).toFixed(1)+' dB';
  const cueLabel=id=>id.startsWith('bus:')?data.buses[Number(id.slice(4))].name:data.channels[Number(id.slice(3))].name;
  const selectCue=id=>setCue(old=>old.includes(id)?old.filter(x=>x!==id):multiple?[...old,id]:[id]);
@@ -3404,7 +3504,7 @@ function HwpSoundMixer({data,setData,mix,setMix}){
     h('div',{className:'hwp-mixer-track'},hwpMixerCalibratedFader({min:-80,max:10,step:.5,value:level,ticks:[10,0,-10,-20,-40,-60,-80],label:name+' fader',valueText:fmt(level),onChange:change,formatTick:v=>v===-80?'−∞':v>0?'+'+v:String(v)}),
     h('div',{className:'hwp-mixer-meter',title:'Meter unavailable — mixer disconnected','aria-label':'No live meter signal'})),
     btn(on?'ON':'MUTED',toggle,on?'':'muted',{'aria-label':(on?'Mute ':'Unmute ')+name,'aria-pressed':!on}),
-    master?btn('Mix settings',()=>setEditor({type:'buses'})):h('div',{className:'hwp-mixer-channel-tools'},channelTool('Gain',name,()=>setEditor({type:'gain',id:c.id})),channelTool('Edit',name,()=>openChannel(c.id))),
+    master?btn('Mix settings',()=>setEditor({type:'buses'})):h('div',{className:'hwp-mixer-channel-tools'},channelTool('Gain',name,()=>setEditor({type:'gain',id:c.id}),editor?.type==='gain'&&editor.id===c.id),channelTool('EQ',name,()=>setEditor({type:'eq',id:c.id}),editor?.type==='eq'&&editor.id===c.id)),
     h('div',{style:{height:4,width:'100%',background:color,borderRadius:3}}));
  };
  const field=(label,control)=>h('label',{},label,control);
@@ -3420,6 +3520,9 @@ function HwpSoundMixer({data,setData,mix,setMix}){
    h('div',{className:'hwp-mixer-palette'},...hwpMixerPalette.map(color=>swatch(color,()=>setChannelColor(c.id,color),c.color===color))),
    h('div',{className:'hwp-mixer-row'},h('input',{type:'color',value:c.color,'aria-label':'Custom color',onChange:e=>setChannelColor(c.id,e.target.value)}),h('input',{value:hex,style:{flex:1,minWidth:90},'aria-label':'HEX color',onChange:e=>setHex(e.target.value)}),btn('Apply',()=>{if(/^#[0-9a-f]{6}$/i.test(hex))setChannelColor(c.id,hex)},'',{disabled:!/^#[0-9a-f]{6}$/i.test(hex)}),btn('Save favorite',()=>setData(old=>({...old,favorites:[...new Set([...old.favorites,c.color])]})))),
    data.favorites.length?h('div',{className:'hwp-mixer-palette'},...data.favorites.map(color=>swatch(color,()=>setChannelColor(c.id,color),c.color===color))):null];
+ }else if(editor.type==='eq'){
+  const c=data.channels[editor.id];title='Equalizer (EQ) — '+c.name;
+  body=[h(HwpMixerEqPanel,{key:c.id,channel:c,onChange:eq=>updateChannel(c.id,{eq})})];
  }else if(editor.type==='gain'){
   const c=data.channels[editor.id];title='Gain — '+c.name;
   const gainFader=(label,description,key,min,max,step,ticks)=>{
@@ -3440,7 +3543,7 @@ function HwpSoundMixer({data,setData,mix,setMix}){
   title='Yamaha QL1 connection';
   body=[h('p',{},'Offline demo — no physical mixer is connected.'),h('p',{},'Live control requires a secure local QL1 bridge on the console network. The bridge must verify input patching, console firmware, monitor bus routing and remote-control commands before accepting writes.'),h('p',{},'Headphone monitoring requires a separate audio feed from a dedicated CUE or monitor output via Dante or an audio interface, streamed to this browser. No audio is currently available.'),h('p',{className:'hwp-mixer-sub'},'This release does not send commands to the console. Demo changes are saved in this browser only.')];
  }
- return h('div',{className:'hwp-mixer-modalback',onClick:e=>{if(e.target===e.currentTarget)setEditor(null)}},h('section',{className:'hwp-mixer-dialog'+(editor.type==='gain'?' hwp-mixer-gain-dialog':''),role:'dialog','aria-modal':true,'aria-label':title},h('div',{className:'hwp-mixer-top'},h('h3',{},title),btn('Close',()=>setEditor(null),'',{'aria-label':'Close mixer settings'})),...body));
+ return h('div',{className:'hwp-mixer-modalback',onClick:e=>{if(e.target===e.currentTarget)setEditor(null)}},h('section',{className:'hwp-mixer-dialog'+(editor.type==='gain'?' hwp-mixer-gain-dialog':editor.type==='eq'?' hwp-mixer-eq-dialog':''),role:'dialog','aria-modal':true,'aria-label':title},h('div',{className:'hwp-mixer-top'},h('h3',{},title),btn('Close',()=>setEditor(null),'',{'aria-label':'Close mixer settings'})),...body));
  };
  return h('main',{className:'hwp-mixer-workspace',style:{'--hwp-mixer-width':width==='Compact'?'76px':width==='Wide'?'118px':'91px'}},
   h('div',{className:'hwp-mixer-top'},h('div',{},h('h2',{},'Sound Mixer'),h('span',{className:'hwp-mixer-sub'},'Yamaha QL1 · Offline demo')),h('div',{className:'hwp-mixer-row'},btn('Connection',()=>setEditor({type:'connection'})),btn('Monitor setup',()=>setEditor({type:'buses'})),h('select',{className:'hwp-mixer-btn',value:width,'aria-label':'Fader width',onChange:e=>setWidth(e.target.value)},...['Compact','Standard','Wide'].map(v=>h('option',{key:v,value:v},v))))),
@@ -3451,7 +3554,7 @@ function HwpSoundMixer({data,setData,mix,setMix}){
     h('span',{className:'hwp-mixer-monitor-cue',title:cue.length?cue.map(cueLabel).join(', '):'No CUE selected'},cue.length?cue.map(cueLabel).join(', '):'No CUE selected'),
     h('div',{className:'hwp-mixer-monitor-actions'},btn(multiple?'Multi CUE':'Single CUE',()=>{setMultiple(!multiple);if(multiple)setCue(old=>old.slice(-1))},multiple?'active':''),btn('Clear CUE',()=>setCue([]))),
     field('Monitor volume (demo)',h('input',{type:'range',min:0,max:100,value:volume,'aria-label':'Headphone volume (demo)',onChange:e=>setVolume(Number(e.target.value))})))),
-  h('div',{className:'hwp-mixer-console'},h(HwpFaderPageNav,{pages}),hwpFaderBank(pages,channels,strip,current.name+' channel faders',false,'No channels assigned to this category. Assign channels from All Channels using Edit.'),strip(null,true)),
+  h('div',{className:'hwp-mixer-console'},h(HwpFaderPageNav,{pages}),hwpFaderBank(pages,channels,strip,current.name+' channel faders',false,'No channels assigned to this category. Assign channels from All Channels by clicking a channel name.'),strip(null,true)),
   h('div',{className:'hwp-mixer-sub'},mix===0?'Main faders · demo only':'Sends on faders · '+current.name+' · demo only'),dialog());
 }
 

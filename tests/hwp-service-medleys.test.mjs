@@ -302,6 +302,25 @@ test("Presenter Sound Mixer companion shares selected mix, channel levels, maste
  find("Vocal A.GAIN").props.onChange({target:{value:"12"}});
  find("Vocal D.GAIN").props.onChange({target:{value:"-6"}});
  find("Close gain").props.onClick();view=render();assert.equal(find("Gain: Vocal").props["aria-pressed"],false);
+ find("EQ: Vocal").props.onClick();view=render();
+ assert.equal(find("EQ: Vocal").props["aria-pressed"],true);
+ const eqPanel=flat(view).find(n=>n.tag===scope.HwpMixerEqPanel);
+ assert.ok(eqPanel);
+ const eq=scope.hwpMixerEqDefault();eq.bands[2].gain=6;
+ eqPanel.props.onChange(eq);
+ assert.equal(data.channels[0].eq.bands[2].gain,6);
+ assert.ok(Math.abs(scope.hwpMixerEqResponse(eq,2000)-6)<.00001);
+ eq.enabled=false;assert.equal(scope.hwpMixerEqResponse(eq,2000),0);
+ find("Close channel popup").props.onClick();view=render();
+ find("Edit Vocal").props.onClick();view=render();
+ const editPanel=flat(view).find(n=>n.tag===scope.HwpMixerCompanionChannelEdit);
+ assert.ok(editPanel);editPanel.props.onChange({name:"Lead Vocal"});
+ assert.equal(data.channels[0].name,"Lead Vocal");
+ editPanel.props.onChange({name:"Vocal"});
+ find("Close channel popup").props.onClick();view=render();
+ assert.ok(html.includes("channelTool('EQ',name"));
+ assert.ok(!html.includes("channelTool('Edit',name"));
+
  const nav=flat(view).find(n=>n.tag===scope.HwpFaderPageNav);
  const navView=scope.HwpFaderPageNav(nav.props);
  flat(navView).find(n=>n.props?.["aria-label"]==="Next fader bank").props.onClick();view=render();
