@@ -101,7 +101,7 @@ test("unlink a medley member without deleting or renaming its song",()=>{
  assert.equal(ctx.hwpServiceZone(get("song-b",p)),"inside");
  assert.equal(get("song-b",p).groupHeaderId,byKey(p,"praise-songs").id);
 });
-test("center shows all service zones in order and only medleys are indented",()=>{
+test("center shows all service zones in order without medley indentation",()=>{
  assert.ok(html.includes("hwpServiceMedleyTitle(item,presentation,pl?.items)"));
  assert.ok(html.includes("item.medleyParentId&&" + String.fromCharCode(96) + "service-medley-child" + String.fromCharCode(96)));
  assert.ok(html.includes('filter(item=>hwpServiceZone(item)===' + String.fromCharCode(96) + 'after' + String.fromCharCode(96) + ')'));
@@ -231,4 +231,40 @@ test("expanded right preview removes clear buttons and transport and includes st
  assert.ok(css.includes('.stage-layout .hwp-stage-flash'));
  const audience=html.slice(html.indexOf('function tr({snap:e'),html.indexOf('function nr(',html.indexOf('function tr({snap:e')));
  assert.ok(!audience.includes('HwpStageFlash'),"audience must not show stage-only flashes");
+});
+
+
+test("left drag detaches only after intentional horizontal movement, not normal vertical reorder",()=>{
+ const gesture={member:true,x:90,y:100};
+ assert.equal(ctx.hwpMedleyDragDetach(gesture,65,104),true);
+ assert.equal(ctx.hwpMedleyDragDetach(gesture,80,100),false);
+ assert.equal(ctx.hwpMedleyDragDetach(gesture,65,155),false);
+ assert.equal(ctx.hwpMedleyDragDetach(gesture,120,100),false);
+ assert.equal(ctx.hwpMedleyDragDetach({...gesture,member:false},30,100),false);
+ assert.equal(ctx.hwpMedleyDragDetach({member:true,x:15,y:100},3,100),true);
+ assert.ok(html.includes("onDropCapture:event=>medleyDragCapture(event,true)"));
+ assert.ok(html.includes('event.key==="ArrowLeft"'));
+});
+test("detaching root promotes next medley song without removing presentations",()=>{
+ let p=fixture(),a=get("song-a",p),b=get("song-b",p),c=get("song-c",p);
+ p=ctx.hwpServiceCreateMedley(p,b.id,a.id,presentations);
+ p=ctx.hwpServiceCreateMedley(p,c.id,a.id,presentations);
+ p=ctx.hwpServiceRemoveFromMedley(p,a.id);
+ assert.equal(get("song-a",p).medleyParentId,null);
+ assert.equal(get("song-b",p).medleyParentId,null);
+ assert.equal(get("song-c",p).medleyParentId,b.id);
+ assert.equal(get("song-a",p).groupHeaderId,byKey(p,"praise-songs").id);
+ assert.equal(ctx.hwpServiceMedleyTitle(get("song-b",p),presentations[1],p.items),"How Great Medley");
+ assert.equal(p.items.filter(row=>row.presentationId).length,5);
+});
+test("medley glow has persisted appearance setting and applies to both views",()=>{
+ assert.equal(ctx.hwpMedleyGlow(undefined),"#29ff70");
+ assert.equal(ctx.hwpMedleyGlow("invalid"),"#29ff70");
+ assert.equal(ctx.hwpMedleyGlowStyle("#b624ff")["--hwp-medley-glow"],"#b624ff");
+ assert.equal(ctx.hwpMedleyGlowStyle("#b624ff")["--hwp-medley-glow-soft"],"#b624ff99");
+ assert.equal(html.split("style:hwpMedleyGlowStyle(e.doc.settings.appearance.medleyGlow)").length-1,2);
+ assert.ok(html.includes("Medley glow color"));
+ assert.ok(html.includes("medleyGlow:e.target.value"));
+ assert.ok(css.includes("border:4px solid var(--hwp-medley-glow,#29ff70)"));
+ assert.ok(css.includes(".all-service-presentation.service-medley-child > h3.all-pres-bar{margin-left:0!important;width:100%!important"));
 });
