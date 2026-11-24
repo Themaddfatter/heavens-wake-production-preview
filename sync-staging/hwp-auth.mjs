@@ -20,6 +20,7 @@ export async function createHwpAuth({loadConfig,loadSdk}) {
   async resetPassword(email){return sdk.sendPasswordResetEmail(auth,String(email||'').trim())},
   async workspace(data){return (await workspace(data)).data},
   async media(data){return (await media(data)).data},
+  async songLibrary(data){return (await songLibrary(data)).data},
   async syncWorshipLibrary(){return (await songLibrary({action:'syncHwpLibrary'})).data}
  };
 }
