@@ -303,7 +303,7 @@ test('Presenter layer list is top-first and drag ordering preserves bottom-first
 });
 test('Quick Edit updates only selected text content and preserves layout, other objects and existing text styles',()=>{
  const start=html.indexOf('function hwpQuickTextPatch('),end=html.indexOf('function HwpQuickCanvasText(',start);
- const {hwpQuickTextPatch,hwpQuickApplySlideText}=new Function(html.slice(start,end)+';return {hwpQuickTextPatch,hwpQuickApplySlideText}')();
+ const {hwpQuickTextPatch,hwpQuickApplySlideText}=new Function(screenHelpers+html.slice(html.indexOf('function fe(e,t){'),html.indexOf('function pe(e){',html.indexOf('function fe(e,t){')))+html.slice(start,end)+';return {hwpQuickTextPatch,hwpQuickApplySlideText}')();
  const slide={id:'slide',background:{type:'color',color:'#000000'},objects:[{id:'lyrics',kind:'text',text:'one two',x:24,width:200,textStyle:{fontSize:50},runs:[{text:'one ',bold:true},{text:'two',italic:true}]},{id:'shape',kind:'rect'},{id:'copy',kind:'text',binding:'copyright',text:'Copyright'}]};
  const original=JSON.stringify(slide),edited=hwpQuickApplySlideText(slide,[{id:'lyrics',text:'one three'},{id:'shape',text:'ignored'},{id:'copy',text:'New copyright'}]);
  assert.equal(edited.objects[0].text,'one three');
@@ -317,7 +317,7 @@ test('Quick Edit updates only selected text content and preserves layout, other 
  assert.equal(JSON.stringify(slide),original);
  assert.equal(hwpQuickTextPatch(slide.objects[0],'one two'),null);
  assert.equal(hwpQuickApplySlideText(slide,[]),slide);
- for(const marker of ['hwp-presenter-text-release','HwpQuickSlideEdit',"label:'Quick Edit'","type:'hwp-quick-slide-text'","t.presentationId);",'Edit words directly in the text box on the slide.','Font & style','Text alignment & spacing','Text effects'])includes(marker,marker);
+ for(const marker of ['hwp-presenter-text-release','HwpQuickSlideEdit',"label:'Quick Edit'","type:'hwp-quick-slide-text'","t.presentationId);",'Font & style','Text alignment & spacing','Text effects'])includes(marker,marker);
 });
 
 test('Presenter selection is automatic and formatting and object arrangement stay in their own inspector sections',()=>{
@@ -339,7 +339,7 @@ test('Presenter selection is automatic and formatting and object arrangement sta
  assert.ok(!text.includes('align-objects'));
 });
 
-test('Text outputs inherit audience until unlinked and preserve independent formatting, position and shared words',()=>{
+test('Text outputs inherit audience until unlinked and preserve independent formatting, position and words',()=>{
  const start=html.indexOf('function fe(e,t){'),end=html.indexOf('function pe(e){',start);
  const {hwpScreenObject,hwpScreenEditPatch,hwpScreenLinkPatch,hwpScreenSnap}=new Function(screenHelpers+html.slice(start,end)+';return {hwpScreenObject,hwpScreenEditPatch,hwpScreenLinkPatch,hwpScreenSnap}')();
  const base={id:'lyrics',kind:'text',text:'Shared lyrics',x:80,y:100,width:800,height:300,scaleToFit:true,textStyle:{fontFamily:'Georgia',fontSize:64,color:'#ffffff',shadow:{enabled:true,color:'#000000'},stroke:{enabled:false,width:2}}};
@@ -351,14 +351,20 @@ test('Text outputs inherit audience until unlinked and preserve independent form
  assert.equal(hwpScreenObject(o,'stage').textStyle.fontSize,100);
  assert.equal(hwpScreenObject(o,'audience').textStyle.fontSize,80);
  o=hwpScreenEditPatch(o,{textStyle:{fontSize:72},text:'Changed words'},'audience');
- assert.equal(hwpScreenObject(o,'stage').text,'Changed words');
+ assert.equal(hwpScreenObject(o,'stage').text,'Shared lyrics');
+ assert.equal(hwpScreenObject(o,'livestream').text,'Changed words');
  assert.equal(hwpScreenObject(o,'stage').textStyle.fontSize,100);
  assert.equal(hwpScreenObject(o,'livestream').textStyle.fontSize,72);
- o=hwpScreenEditPatch(o,{textStyle:{fontSize:48}},'livestream');
+ o=hwpScreenEditPatch(o,{textStyle:{fontSize:48},text:'Stream words',runs:[{text:'Stream words',italic:true}]},'livestream');
+ assert.equal(o.text,'Changed words');
+ assert.equal(hwpScreenObject(o,'stage').text,'Shared lyrics');
+ assert.equal(hwpScreenObject(o,'livestream').text,'Stream words');
  assert.equal(hwpScreenObject(o,'livestream').textStyle.fontSize,48);
  assert.equal(hwpScreenObject(o,'stage').textStyle.fontSize,100);
  o=hwpScreenEditPatch(o,hwpScreenLinkPatch(o,'stage',true),'audience');
  assert.equal(hwpScreenObject(o,'stage').textStyle.fontSize,72);
+ assert.equal(hwpScreenObject(o,'stage').text,'Changed words');
+ assert.equal(hwpScreenObject(o,'livestream').text,'Stream words');
  assert.equal(hwpScreenObject(o,'livestream').textStyle.fontSize,48);
  assert.equal(hwpScreenSnap({slide:{objects:[o]}},'livestream').slide.objects[0].textStyle.fontSize,48);
 });
@@ -376,8 +382,44 @@ test('Independent output variants and rich text survive audience content updates
  const base={kind:'text',text:'Hello world',runs:[{text:'Hello ',bold:true},{text:'world'}],textStyle:{fontSize:64,shadow:{},stroke:{}}};
  let o=hwpScreenEditPatch(base,hwpScreenLinkPatch(base,'stage',false),'audience');
  o=hwpScreenEditPatch(o,{text:'Hello church',runs:[{text:'Hello church',italic:true}]},'audience');
- const stage=hwpScreenObject(o,'stage');assert.equal(stage.runs.map(r=>r.text).join(''),'Hello church');assert.equal(stage.runs[0].bold,true);assert.equal(stage.runs[0].italic,undefined);
+ const stage=hwpScreenObject(o,'stage');assert.equal(stage.runs.map(r=>r.text).join(''),'Hello world');assert.equal(stage.runs[0].bold,true);assert.equal(stage.runs[0].italic,undefined);
  o=hwpScreenEditPatch(o,{textStyle:{fontSize:120}},'stage');
- assert.equal(hwpScreenObject(o,'stage').textStyle.fontSize,120);assert.equal(hwpScreenObject(o,'stage').runs.length,0);assert.equal(o.runs[0].italic,true);
- for(const marker of ['HwpStageTextSlot','hwpRecordingModel','hwpCanvasGradient','hwpCanvasText','hwp-output-text-styles-v3'])includes(marker,marker);
+ assert.equal(hwpScreenObject(o,'stage').textStyle.fontSize,120);assert.equal(hwpScreenObject(o,'stage').runs[0].bold,true);assert.equal(o.runs[0].italic,true);
+ o=hwpScreenEditPatch(o,{text:'Stage only',runs:[{text:'Stage only',underline:true}]},'stage');
+ assert.equal(o.text,'Hello church');assert.equal(hwpScreenObject(o,'livestream').text,'Hello church');assert.equal(hwpScreenObject(o,'stage').text,'Stage only');
+ for(const marker of ['HwpStageTextSlot','hwpRecordingModel','hwpCanvasGradient','hwpCanvasText','hwp-output-text-styles-v5'])includes(marker,marker);
+});
+
+test('Template defaults apply separate screen formatting without copying template sample lyrics or overwriting edited slide words',()=>{
+ const start=html.indexOf('function fe(e,t){'),end=html.indexOf('function pe(e){',start),quickStart=html.indexOf('function hwpQuickTextPatch('),quickEnd=html.indexOf('function HwpQuickCanvasText(',quickStart);
+ const {hwpScreenObject,hwpScreenEditPatch,hwpScreenLinkPatch,hwpTemplateScreenDefaults,hwpQuickApplySlideText}=new Function(screenHelpers+html.slice(start,end)+html.slice(quickStart,quickEnd)+';return {hwpScreenObject,hwpScreenEditPatch,hwpScreenLinkPatch,hwpTemplateScreenDefaults,hwpQuickApplySlideText}')();
+ const base={id:'lyrics',kind:'text',binding:'lyrics',text:'Real song',x:30,textStyle:{fontSize:64,shadow:{},stroke:{}}};
+ let template={...base,text:'Template example'};
+ template=hwpScreenEditPatch(template,{text:'Stage example',textStyle:{fontSize:100},x:42},'stage');
+ template=hwpScreenEditPatch(template,{text:'Stream example',textStyle:{fontSize:32}},'livestream');
+ let slide=hwpTemplateScreenDefaults(base,template,null);
+ assert.equal(hwpScreenObject(slide,'stage').text,'Real song');
+ assert.equal(hwpScreenObject(slide,'stage').textStyle.fontSize,100);
+ assert.equal(hwpScreenObject(slide,'livestream').textStyle.fontSize,32);
+ slide=hwpScreenEditPatch(slide,{text:'Audience update'},'audience');
+ assert.equal(hwpScreenObject(slide,'stage').text,'Real song');
+ slide=hwpScreenEditPatch(slide,{text:'Stage edit',runs:[{text:'Stage edit',italic:true}]},'stage');
+ const updated=hwpTemplateScreenDefaults({...base,text:'Audience update'},template,slide);
+ assert.equal(hwpScreenObject(updated,'stage').text,'Stage edit');
+ assert.equal(hwpScreenObject(updated,'livestream').text,'Real song');
+ const quick=hwpQuickApplySlideText({objects:[updated]},[{id:'lyrics',text:'Quick audience'}]).objects[0];
+ assert.equal(quick.text,'Quick audience');
+ assert.equal(hwpScreenObject(quick,'stage').text,'Stage edit');
+ assert.equal(hwpScreenObject(quick,'livestream').text,'Real song');
+ const legacy={...base,hwpTextLinks:{stage:false},hwpTextScreens:{stage:{savedText:'Old',savedRuns:[],textStyle:base.textStyle}}};
+ const frozen=hwpQuickApplySlideText({objects:[legacy]},[{id:'lyrics',text:'Quick change'}]).objects[0];
+ assert.equal(hwpScreenObject(frozen,'stage').text,'Real song');
+ assert.equal(frozen.text,'Quick change');
+});
+test('Screen switches display icons and audience match options, not independent status copy',()=>{
+ const controls=html.slice(html.indexOf('function HwpEditorOutputControls('),html.indexOf('function fe(e,t){'));
+ for(const marker of ['Audience screen','Stage screen','Livestream','Match ','checkbox'])assert.ok(controls.includes(marker),marker);
+ for(const marker of ['Linked to Audience','Independent ','style makes this screen independent'])assert.ok(!controls.includes(marker),marker);
+ assert.ok(html.includes('editorTextOutput:`audience`,selectedObjectIds'));
+ assert.ok(html.includes('hasEditor=!!n||template'));
 });
