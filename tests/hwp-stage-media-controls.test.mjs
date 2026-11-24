@@ -238,3 +238,31 @@ test('Layout composition respects text-only, full-slide and camera-only settings
  assert.equal(hwpLayoutLayer({cameraX:0,cameraY:0,cameraW:100,cameraH:100,slideBehind:true},'camera').zIndex,2);
  assert.equal(slide.objects[1].textStyle.color,'#000');
 });
+
+test('Independent livestream text boxes preserve original audience and stage slides',()=>{
+ const start=html.indexOf('function hwpStreamTextRoles('),end=html.indexOf('function hwpStreamEditorSlide(',start);
+ const {hwpStreamTextRoles,hwpStreamTextObjects,hwpStreamBoxBounds}=new Function(html.slice(start,end)+';return {hwpStreamTextRoles,hwpStreamTextObjects,hwpStreamBoxBounds}')();
+ const slide={width:1920,height:1080,objects:[{id:'lyrics-1',kind:'text',binding:'lyrics',name:'Lyrics',text:'First song',x:100,y:100,width:1700,height:700,textStyle:{fontSize:90,color:'#ffffff'},runs:[{text:'First song',fontSize:90}]},{id:'copyright-1',kind:'text',binding:'copyright',text:'Copyright',x:100,y:1000,width:250,height:50,textStyle:{fontSize:18}},{id:'graphic',kind:'rect'}]};
+ const original=JSON.stringify(slide),layout={slideX:0,slideY:65,slideW:100,slideH:35,textBoxes:[{key:'lyrics#1',x:5,y:72,w:90,h:23,fontSize:52,color:'#ffff00',autoFit:true},{key:'copyright#1',hidden:true}]};
+ assert.equal(hwpStreamTextRoles(slide).length,2);
+ const output=hwpStreamTextObjects(slide,layout);
+ assert.equal(output.length,1);
+ assert.equal(output[0].x,96);
+ assert.equal(output[0].width,1728);
+ assert.equal(output[0].textStyle.fontSize,52);
+ assert.equal(output[0].textStyle.color,'#ffff00');
+ assert.equal(output[0].runs[0].fontSize,undefined);
+ assert.equal(JSON.stringify(slide),original);
+ const nextSlide={...slide,objects:[{...slide.objects[0],id:'lyrics-2',text:'Next song',runs:[]}]};
+ assert.equal(hwpStreamTextObjects(nextSlide,layout)[0].text,'Next song');
+ assert.equal(hwpStreamTextObjects(nextSlide,layout)[0].x,96);
+ assert.equal(hwpStreamBoxBounds({x:90,y:95,w:50,h:20}).x,50);
+ assert.equal(hwpStreamBoxBounds({x:90,y:95,w:50,h:20}).y,80);
+});
+test('Text box controls are wired to the livestream camera preview only',()=>{
+ for(const marker of ['hwp-stream-text-box-release','function HwpStreamTextHandles','function HwpStreamTextProperties','Edit independent livestream text boxes','onPointerDown:ev=>start(ev,role,true)','textBoxes:[...(old.textBoxes||[])','resolved.independentTextBoxes&&resolved.mode===','exampleSlide=l.useMemo'])includes(marker,marker);
+ const output=html.slice(html.indexOf('function HwpCameraComposite('),html.indexOf('function HwpLayoutEditorPreview('));
+ assert.ok(output.includes('HwpStreamTextOverlay'));
+ const audience=html.slice(html.indexOf('function tr({snap:e'),html.indexOf('function nr(',html.indexOf('function tr({snap:e')));
+ assert.ok(!audience.includes('HwpStreamTextOverlay'));
+});
