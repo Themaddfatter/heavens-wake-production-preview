@@ -29,16 +29,16 @@ export async function startHostedStream({getToken, destinations, muted=false, au
   try {
     // Start screen selection directly from the operator's click, before awaiting auth.
     onStatus('Select HWP Program output');
-    display=await navigator.mediaDevices.getDisplayMedia({video:{frameRate:{ideal:30,max:30},width:{max:1920},height:{max:1080}},audio:!muted});
+    display=await navigator.mediaDevices.getDisplayMedia({video:{frameRate:{ideal:30,max:30},width:{max:1920},height:{max:1080}},audio:true});
     capture=new MediaStream(display.getVideoTracks());
-    if (!muted) {
+    {
       mic=await navigator.mediaDevices.getUserMedia({video:false,audio:audioDeviceId?{deviceId:{exact:audioDeviceId}}:true});
       audioContext=new AudioContext();
       const mixer=audioContext.createMediaStreamDestination();
       for (const source of [display,mic]) if (source.getAudioTracks().length)
         audioContext.createMediaStreamSource(source).connect(mixer);
       await audioContext.resume();
-      mixer.stream.getAudioTracks().forEach(track=>capture.addTrack(track));
+      mixer.stream.getAudioTracks().forEach(track=>{track.enabled=!muted;capture.addTrack(track)});
     }
     const token=await getToken();
     if (!token) throw new Error('Sign in to start a stream.');
@@ -75,7 +75,7 @@ export async function startHostedStream({getToken, destinations, muted=false, au
     display.getVideoTracks()[0].onended=()=>release('Program capture ended');
     recorder.start(500);
     onStatus('Sending program to relay');
-    return {stop:()=>release('Stopped')};
+    return {stop:()=>release('Stopped'),setMuted:value=>capture.getAudioTracks().forEach(track=>track.enabled=!value)};
   } catch (error) {
     release('Stopped');
     throw error;
