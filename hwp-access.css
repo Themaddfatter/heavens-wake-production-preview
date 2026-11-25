@@ -1781,3 +1781,6 @@ html.hwp-ios-standalone:has(.hwp-access-shell) #hwp-native-top{background:#fff!i
 .film-slides .film-slide.hwp-film-drop-before::before,.film-slides .film-slide.hwp-film-drop-after::after{content:"";position:absolute;left:0;right:0;height:3px;border-radius:2px;background:var(--accent,#9a70f4);z-index:5;pointer-events:none}
 .film-slides .film-slide.hwp-film-drop-before::before{top:0}
 .film-slides .film-slide.hwp-film-drop-after::after{bottom:0}
+
+/* Retained text selection stays visible when the inspector takes focus. */
+::highlight(hwp-editor-selection){background-color:#477ce8aa;color:#fff}

@@ -606,3 +606,23 @@ test('Editor drag-drop updates durable presentation order without changing label
  assert.equal((html.match(/\.\.\.hwpEditorFilmDrag\(n,i,t\)/g)||[]).length,2);
  assert.ok(css.includes('.film-slide.hwp-film-drop-before'));
 });
+
+test('Text inspector formats a selected range without modifying the rest of the box',()=>{
+ const start=html.indexOf('const HWP_RUN_STYLE_KEYS='),end=html.indexOf('function hwpScopedRuns(',start);
+ const {rangePatch,wholePatch,style}=new Function(html.slice(start,end)+';return {rangePatch:hwpTextRangePatch,wholePatch:hwpWholeTextPatch,style:hwpSelectionStyle};')();
+ const object={text:'one two three',textStyle:{fontWeight:400,fontSize:30,color:'#fff',shadow:{enabled:true,blur:5},stroke:{enabled:false}},runs:[{text:'one two ',bold:true},{text:'three',italic:true}]};
+ const range={start:4,end:7};
+ const first={...object,...rangePatch(object,range,{fontSize:52,fontWeight:400,color:'#f00',shadow:{blur:12}})};
+ assert.deepEqual(first.runs.map(r=>r.text),['one ','two',' ','three']);
+ assert.equal(first.runs[0].hwpStyle,undefined);assert.equal(first.runs[3].italic,true);
+ assert.equal(style(first,range).fontSize,52);assert.equal(style(first,range).fontWeight,400);assert.equal(style(first,range).shadow.blur,12);
+ const second={...first,...rangePatch(first,range,{shadow:{enabled:false},stroke:{enabled:true,width:3}})};
+ assert.equal(style(second,range).shadow.blur,12);assert.equal(style(second,range).shadow.enabled,false);
+ assert.equal(second.runs[0].bold,true);assert.equal(second.text,object.text);
+ const all=wholePatch(second,{textStyle:{fontSize:80,fontWeight:700}});
+ assert.equal(all.runs[1].hwpStyle.fontSize,undefined);assert.equal(all.runs[1].bold,undefined);assert.equal(all.runs[1].hwpStyle.color,'#f00');
+ assert.equal(rangePatch(object,{start:4,end:4},{color:'#000'}),null);
+ assert.ok(html.includes('hwpSelectionForObject(object)'));assert.ok(html.includes('hwpTextDomRange(el,hwpSavedTextSelection)'));
+ assert.ok(html.includes('hwpClearTextSelection()},onInput:'));assert.ok(html.includes('hwpRunEffects(e,effectId)'));
+ assert.ok(css.includes('::highlight(hwp-editor-selection)'));
+});
