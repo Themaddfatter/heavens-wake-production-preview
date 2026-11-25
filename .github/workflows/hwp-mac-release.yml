@@ -45,6 +45,10 @@ jobs:
           done
           npm run dist:mac
       - name: Verify Apple signature, notarization, and update artifacts
+        env:
+          APPLE_ID: ${{ secrets.HWP_MAC_APPLE_ID }}
+          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.HWP_MAC_APPLE_APP_SPECIFIC_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.HWP_MAC_APPLE_TEAM_ID }}
         run: |
           set -euo pipefail
           app_path="$(find dist -maxdepth 2 -name '*.app' -type d -print -quit)"
@@ -52,6 +56,12 @@ jobs:
           codesign --verify --deep --strict --verbose=2 "$app_path"
           xcrun stapler validate "$app_path"
           spctl --assess --type execute --verbose=2 "$app_path"
+          dmg_path="$(find dist -maxdepth 1 -name '*.dmg' -type f -print -quit)"
+          [[ -n "$dmg_path" ]]
+          codesign --verify --verbose=2 "$dmg_path"
+          xcrun notarytool submit "$dmg_path" --apple-id "$APPLE_ID" --password "$APPLE_APP_SPECIFIC_PASSWORD" --team-id "$APPLE_TEAM_ID" --wait
+          xcrun stapler staple "$dmg_path"
+          xcrun stapler validate "$dmg_path"
           test -s dist/latest-mac.yml
           find dist -maxdepth 1 -name '*.dmg' -print -quit | grep -q .
           find dist -maxdepth 1 -name '*.zip' -print -quit | grep -q .
@@ -63,4 +73,5 @@ jobs:
           version="$(node -p "require('./package.json').version")"
           artifacts=()
           while IFS= read -r -d '' file; do artifacts+=("$file"); done < <(find dist -maxdepth 1 -type f \( -name '*.dmg' -o -name '*.zip' -o -name '*.blockmap' -o -name 'latest-mac.yml*' \) -print0)
-          gh release create "v$version" "${artifacts[@]}" --target "$GITHUB_SHA" --title "HWP for macOS $version" --notes "Signed universal HWP desktop release. Web features use the current production.sioncdo.com deployment." --latest
+          gh release create "v$version" "${artifacts[@]}" --target "$GITHUB_SHA" --title "HWP for macOS $version" --notes "Signed universal HWP desktop release. Web features use the current production.sioncdo.com deployment." --draft
+          gh release edit "v$version" --draft=false --latest
