@@ -42,6 +42,18 @@ jobs:
           python -m pip install --quiet Pillow
           python scripts/hwp-branding.py
 
+      - name: Verify public Ministry Connect configuration and CORS
+        shell: bash
+        run: |
+          set -euo pipefail
+          origin="https://production.sioncdo.com"
+          endpoint="https://us-central1-sion-schedule-next.cloudfunctions.net"
+          curl -fsS --max-time 25 -H "Origin: $origin" -D "$RUNNER_TEMP/hwp-config-headers" "$endpoint/hwpFirebaseConfig" -o "$RUNNER_TEMP/hwp-config.json"
+          grep -iF "access-control-allow-origin: $origin" "$RUNNER_TEMP/hwp-config-headers"
+          node -e 'const c=JSON.parse(require("node:fs").readFileSync(process.argv[1]));if(c.projectId!=="sion-schedule-next"||!c.apiKey||!c.appId||!c.authDomain)process.exit(1);console.log("Verified public HWP Firebase config and origin")' "$RUNNER_TEMP/hwp-config.json"
+          curl -fsS --max-time 20 -X OPTIONS -H "Origin: $origin" -H "Access-Control-Request-Method: POST" -H "Access-Control-Request-Headers: authorization,content-type" -D "$RUNNER_TEMP/hwp-workspace-headers" "$endpoint/hwpWorkspace" -o /dev/null
+          grep -iF "access-control-allow-origin: $origin" "$RUNNER_TEMP/hwp-workspace-headers"
+
       - name: Verify all inline application JavaScript parses
         shell: bash
         run: |
@@ -145,6 +157,22 @@ jobs:
               && cmp -s sync-staging/hwp-mobile-companion.mjs "$RUNNER_TEMP/hwp-mobile-companion.mjs" \
               && curl -fsSL --max-time 20 -H "Cache-Control: no-cache" "$domain/hwp-mobile-companion.css?hwp_release=$GITHUB_SHA" -o "$RUNNER_TEMP/hwp-mobile-companion.css" \
               && cmp -s hwp-mobile-companion.css "$RUNNER_TEMP/hwp-mobile-companion.css" \
+              && curl -fsSL --max-time 20 -H "Cache-Control: no-cache" "$domain/hwp-update-notice.js?hwp_release=$GITHUB_SHA" -o "$RUNNER_TEMP/hwp-update-notice.js" \
+              && cmp -s hwp-update-notice.js "$RUNNER_TEMP/hwp-update-notice.js" \
+              && curl -fsSL --max-time 20 -H "Cache-Control: no-cache" "$domain/hwp-update-notice.css?hwp_release=$GITHUB_SHA" -o "$RUNNER_TEMP/hwp-update-notice.css" \
+              && cmp -s hwp-update-notice.css "$RUNNER_TEMP/hwp-update-notice.css" \
+              && curl -fsSL --max-time 20 -H "Cache-Control: no-cache" "$domain/hwp.webmanifest?hwp_release=$GITHUB_SHA" -o "$RUNNER_TEMP/hwp.webmanifest" \
+              && cmp -s hwp.webmanifest "$RUNNER_TEMP/hwp.webmanifest" \
+              && curl -fsSL --max-time 20 -H "Cache-Control: no-cache" "$domain/hwp-favicon-48-white.png?hwp_release=$GITHUB_SHA" -o "$RUNNER_TEMP/hwp-favicon-48-white.png" \
+              && cmp -s hwp-favicon-48-white.png "$RUNNER_TEMP/hwp-favicon-48-white.png" \
+              && curl -fsSL --max-time 20 -H "Cache-Control: no-cache" "$domain/hwp-touch-180-white.png?hwp_release=$GITHUB_SHA" -o "$RUNNER_TEMP/hwp-touch-180-white.png" \
+              && cmp -s hwp-touch-180-white.png "$RUNNER_TEMP/hwp-touch-180-white.png" \
+              && curl -fsSL --max-time 20 -H "Cache-Control: no-cache" "$domain/hwp-icon-192-white.png?hwp_release=$GITHUB_SHA" -o "$RUNNER_TEMP/hwp-icon-192-white.png" \
+              && cmp -s hwp-icon-192-white.png "$RUNNER_TEMP/hwp-icon-192-white.png" \
+              && curl -fsSL --max-time 20 -H "Cache-Control: no-cache" "$domain/hwp-icon-512-white.png?hwp_release=$GITHUB_SHA" -o "$RUNNER_TEMP/hwp-icon-512-white.png" \
+              && cmp -s hwp-icon-512-white.png "$RUNNER_TEMP/hwp-icon-512-white.png" \
+              && curl -fsSL --max-time 20 -H "Cache-Control: no-cache" "$domain/hwp-maskable-512-white.png?hwp_release=$GITHUB_SHA" -o "$RUNNER_TEMP/hwp-maskable-512-white.png" \
+              && cmp -s hwp-maskable-512-white.png "$RUNNER_TEMP/hwp-maskable-512-white.png" \
               && cmp -s index.html "$RUNNER_TEMP/hwp-home.html" \
               && cmp -s hwp-access.css "$RUNNER_TEMP/hwp-access.css" \
               && test -s "$RUNNER_TEMP/hwp-logo.png"; then
