@@ -6,7 +6,9 @@ export async function createHwpAuth({loadConfig,loadSdk}) {
  const app=existing||sdk.initializeApp(config,'hwp-shared');
  const auth=sdk.getAuth(app),functions=sdk.getFunctions(app,'us-central1');
  const storage=sdk.getStorage(app,'gs://sion-schedule-next.firebasestorage.app');
- await sdk.setPersistence(auth,sdk.browserLocalPersistence);
+ // Safari/private browsing may reject persistent storage. Retain authenticated
+ // session checks even when browser-local persistence is unavailable.
+ await configureHwpPersistence(auth,sdk);
  if(typeof auth.authStateReady==='function')await auth.authStateReady();
  const workspace=sdk.httpsCallable(functions,'hwpWorkspace');
  const media=sdk.httpsCallable(functions,'hwpMedia');
@@ -24,13 +26,23 @@ export async function createHwpAuth({loadConfig,loadSdk}) {
   async syncWorshipLibrary(){return (await songLibrary({action:'syncHwpLibrary'})).data}
  };
 }
+export async function configureHwpPersistence(auth,sdk){
+ const choices=[sdk.browserLocalPersistence,sdk.browserSessionPersistence,sdk.inMemoryPersistence].filter(Boolean);
+ let failure;
+ for(const choice of choices){
+  try{await sdk.setPersistence(auth,choice);return}
+  catch(error){failure=error;if(!['auth/web-storage-unsupported','auth/operation-not-supported-in-this-environment','auth/internal-error','auth/quota-exceeded'].includes(error?.code)&&!['SecurityError','QuotaExceededError','InvalidStateError','NotSupportedError'].includes(error?.name))throw error}
+ }
+ throw failure||new Error('No supported sign-in storage is available.');
+}
 export async function loadHwpFirebaseSdk(){
  const base='https://www.gstatic.com/firebasejs/10.14.1/';
  const [app,auth,functions,storage]=await Promise.all([import(base+'firebase-app.js'),import(base+'firebase-auth.js'),import(base+'firebase-functions.js'),import(base+'firebase-storage.js')]);
  return {...app,...auth,...functions,...storage};
 }
 export async function loadHwpConfig(){
- const response=await fetch('https://us-central1-sion-schedule-next.cloudfunctions.net/hwpFirebaseConfig',{method:'GET'});
- if(!response.ok)throw new Error('HWP sign-in is temporarily unavailable.');
+ const endpoint='https://us-central1-sion-schedule-next.cloudfunctions.net/hwpFirebaseConfig';
+ const response=await fetch(endpoint,{method:'GET',cache:'no-store'});
+ if(!response.ok){const error=new Error('Ministry Connect configuration request failed (HTTP '+response.status+').');error.code='hwp/config-http-'+response.status;throw error}
  return response.json();
 }
