@@ -3090,6 +3090,11 @@ function hwpMergeScheduleWorkspace(base,local,remote){
  }
  return result;
 }
+// Service song order and medley membership need immediate cloud publication.
+function hwpServiceSongSyncKey(doc){
+ const songs=new Set((doc?.presentations||[]).filter(p=>p.category==="song").map(p=>p.id));
+ return JSON.stringify((doc?.playlists||[]).filter(p=>p.hwpScheduleId&&p.hwpSchedulePublished!==false).map(p=>[p.hwpScheduleId,(p.items||[]).filter(row=>songs.has(row.presentationId)).map(row=>[row.id,row.presentationId,row.medleyParentId||null,row.hwwSongLink||""])]));
+}
 function HwpCloudAgent({getLatest}){
  const {state,dispatch}=N(),
   latest=(0,l.useRef)(state.doc),
@@ -3359,7 +3364,9 @@ function HwpCloudAgent({getLatest}){
     hwpSharedPrefs(getLatest().session)
    ])!==signature.current){
     window.clearTimeout(timer.current);
-    timer.current=window.setTimeout(()=>run.current(),1500);
+    const before=signature.current?JSON.parse(signature.current)[0]:null;
+     const urgent=before&&hwpServiceSongSyncKey(before)!==hwpServiceSongSyncKey(latest.current);
+     timer.current=window.setTimeout(()=>run.current(),urgent?0:1500);
    }
   }
  };
@@ -3369,7 +3376,9 @@ function HwpCloudAgent({getLatest}){
   }
   if(!ready.current)return;
   window.clearTimeout(timer.current);
-  timer.current=window.setTimeout(()=>run.current(),1200);
+  const before=signature.current?JSON.parse(signature.current)[0]:null;
+   const urgent=before&&hwpServiceSongSyncKey(before)!==hwpServiceSongSyncKey(state.doc);
+   timer.current=window.setTimeout(()=>run.current(),urgent?0:1200);
   return()=>window.clearTimeout(timer.current);
  },[state.doc,JSON.stringify(hwpSharedPrefs(state.session))]);
  (0,l.useEffect)(()=>{
