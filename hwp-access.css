@@ -1727,3 +1727,31 @@
 .hwp-mixer-calibrated-input:active{cursor:grabbing!important}
 .hwp-mixer-fader:active::-webkit-slider-thumb{cursor:grabbing!important}
 .hwp-mixer-fader:active::-moz-range-thumb{cursor:grabbing!important}
+
+/* Personal presentation selection: visual emphasis only, no geometry changes.
+   Keep medley borders, drag targets, and shared presentation colors intact. */
+.app .service-list .service-row.service-presentation.hwp-presentation-selected,
+.app .service-list .service-row.service-presentation.hwp-presentation-selected:hover,
+.app .all-service-scroll .all-service-presentation.hwp-presentation-selected > .all-pres-bar {
+  background:color-mix(in srgb,var(--amber) 18%,var(--bg-2))!important;
+  box-shadow:inset 0 0 0 2px var(--amber),inset 5px 0 0 var(--amber),0 0 7px color-mix(in srgb,var(--amber) 38%,transparent)!important;
+}
+.app .service-list .service-row.service-presentation.hwp-presentation-selected .service-copy strong,
+.app .all-service-scroll .all-service-presentation.hwp-presentation-selected > .all-pres-bar > .hwp-selection-title {
+  color:color-mix(in srgb,var(--amber) 60%,var(--text))!important;
+}
+.app .all-service-scroll .all-service-presentation.hwp-presentation-selected {
+  outline:2px solid var(--amber)!important;
+  outline-offset:-2px;
+}
+.app .hwp-presentation-live-slot {
+  display:inline-flex;align-items:center;justify-content:center;
+  box-sizing:border-box;flex:0 0 36px;width:36px;min-width:36px;
+  height:16px;line-height:14px;font-size:9px;font-weight:800;
+  letter-spacing:.35px;border-radius:4px;border:1px solid transparent;
+  visibility:hidden;pointer-events:none;white-space:nowrap;
+}
+.app .hwp-presentation-live-slot.on-output {
+  visibility:visible;color:#fff!important;background:#b51d31!important;border-color:#d43b4d;
+}
+.app .all-pres-bar > .hwp-selection-title {min-width:0;flex:1;overflow-wrap:anywhere}

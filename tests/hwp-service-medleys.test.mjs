@@ -403,3 +403,20 @@ test("Volume faders reserve thirty percent of travel above unity and keep gain l
  input.props.onKeyDown({key:"End",preventDefault:()=>{}});assert.equal(level,10);
  input.props.onDoubleClick();assert.equal(level,0);
 });
+
+test('presentation selection and on-output status are distinct and stable for repeated items',()=>{
+ const source=fs.readFileSync(new URL('../index.html',import.meta.url),'utf8');
+ const start=source.indexOf('function hwpPresentationRowId('),end=source.indexOf('function HwpPresentationLiveBadge(',start);
+ const select=Function(source.slice(start,end)+';return hwpServiceSelection')();
+ const playlist={hwpScheduleId:'service-a',items:[{id:'one',presentationId:'song'},{id:'two',presentationId:'song'},{id:'three',presentationId:'other'}]};
+ const state={session:{activePresentationId:'song',serviceNavId:'two'},live:{slideId:'s',presentationId:'song',hwpScheduleId:'service-a',hwpServiceItemId:'one'}};
+ assert.deepEqual(select(state,playlist),{selected:'two',onOutput:'one'});
+ assert.deepEqual(select({...state,live:{...state.live,slideId:null}},playlist),{selected:'two',onOutput:null});
+ assert.deepEqual(select({...state,live:{...state.live,hwpScheduleId:'service-b'}},playlist),{selected:'two',onOutput:null});
+ assert.deepEqual(select({...state,session:{...state.session,serviceHeader:'header'}},playlist),{selected:null,onOutput:'one'});
+ assert.match(source,/HwpPresentationLiveBadge,\{live:hwpIsLive\}/);
+ assert.match(source,/selection\.selected===item\.id&&`hwp-presentation-selected`/);
+ const css=fs.readFileSync(new URL('../hwp-access.css',import.meta.url),'utf8');
+ assert.match(css,/\.hwp-presentation-live-slot\s*\{[\s\S]*?flex:0 0 36px/);
+ assert.match(css,/\.hwp-presentation-selected[\s\S]*?inset 0 0 0 2px var\(--amber\)/);
+});
