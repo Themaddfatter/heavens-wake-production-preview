@@ -55,3 +55,14 @@ test('screen command acknowledgement requires the requested actual output state'
  assert.equal(commandFeedback({...status,stageOn:false},command,50),null);
  assert.equal(commandFeedback({...status,serviceId:'other'},command,50),null);
 });
+
+test('lookup acknowledgement requires the exact live song or scripture',()=>{
+ const targets=[{kind:'song',presentationId:'p',slideId:'s',cueIndex:1},{kind:'scripture',id:'verse-1',book:'John',chapter:3,verse:16,translation:'KJV',text:'Example verse'}];
+ for(const target of targets){
+  const command={id:'lookup',serviceId:'a',expiresAt:100,scope:'lookup',target};
+  const status={serviceId:'a',command:{id:'lookup',status:'applied'},lookupActive:target};
+  assert.equal(commandFeedback(status,command,50),'applied');
+  assert.equal(commandFeedback({...status,lookupActive:null},command,50),null);
+  assert.equal(commandFeedback({...status,lookupActive:{...target,kind:'other'}},command,50),null);
+ }
+});
