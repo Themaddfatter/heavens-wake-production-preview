@@ -99,3 +99,11 @@
 .hwp-mobile-tap-flash{position:absolute;inset:0;z-index:4;pointer-events:none;border:3px solid var(--amber);border-radius:5px;animation:hwp-mobile-touch .42s ease-out both}
 @keyframes hwp-mobile-touch{0%{opacity:1;box-shadow:inset 0 0 0 12px color-mix(in srgb,var(--amber) 36%,transparent)}100%{opacity:0;box-shadow:inset 0 0 0 0 transparent}}
 @media(prefers-reduced-motion:reduce){.hwp-mobile-companion .hwp-mobile-slide:active{transform:none}.hwp-mobile-tap-flash{animation:none}}
+
+/* Keep iOS keyboard focus at the original viewport scale and highlight the local selection. */
+.hwp-mobile-companion input:not([type=range]),.hwp-mobile-companion select,.hwp-mobile-companion textarea{font-size:16px!important}
+.hwp-mobile-companion{touch-action:manipulation;-webkit-text-size-adjust:100%;text-size-adjust:100%}
+.hwp-mobile-companion .hwp-mobile-slide.selected,.hwp-mobile-companion .hwp-mobile-slide.live{border-color:var(--amber);box-shadow:inset 0 0 0 2px var(--amber),0 0 0 2px var(--amber);outline:1px solid var(--amber);outline-offset:1px}
+.hwp-mobile-companion .hwp-mobile-slide-grid{gap:13px;padding:4px}
+.hwp-mobile-companion .hwp-mobile-slide:active,.hwp-mobile-companion .hwp-mobile-slide:not(:disabled):active{transform:none}
+.hwp-mobile-companion .hwp-mobile-slide.selected .hwp-mobile-artboard{outline:2px solid var(--amber);outline-offset:-2px}
