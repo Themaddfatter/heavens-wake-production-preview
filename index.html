@@ -433,7 +433,7 @@ html[data-hwp-appearance="light"] .hwp-mixer-strip.master{border-color:var(--amb
 .hwp-mixer-gain-dialog .hwp-mixer-gain-track .hwp-mixer-calibrated-slider input.hwp-mixer-calibrated-input:active{cursor:grabbing!important}
 .hwp-mixer-calibrated-slider input.hwp-mixer-calibrated-input:active::-webkit-slider-thumb{cursor:grabbing!important}
 .hwp-mixer-calibrated-slider input.hwp-mixer-calibrated-input:active::-moz-range-thumb{cursor:grabbing!important}
-</style><link rel="stylesheet" href="./hwp-mobile-companion.css?v=1"/></head><body><script>try{document.documentElement.dataset.hwpAppearance="dark"}catch(e){}</script><div id="root"><div id="hwp-boot-placeholder" style="box-sizing:border-box;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;background:#071d16;color:#f3f8f4;font:600 19px Arial,sans-serif;text-align:center"><img src="./hwp-logo.png" alt="Heaven's Wake Production" style="max-width:210px;max-height:130px;object-fit:contain;margin-bottom:24px"><div>Opening Heaven's Wake Production…</div></div></div><script>
+</style><link rel="stylesheet" href="./hwp-mobile-companion.css?v=2"/></head><body><script>try{document.documentElement.dataset.hwpAppearance="dark"}catch(e){}</script><div id="root"><div id="hwp-boot-placeholder" style="box-sizing:border-box;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;background:#071d16;color:#f3f8f4;font:600 19px Arial,sans-serif;text-align:center"><img src="./hwp-logo.png" alt="Heaven's Wake Production" style="max-width:210px;max-height:130px;object-fit:contain;margin-bottom:24px"><div>Opening Heaven's Wake Production…</div></div></div><script>
 (function(){
  var startupError="";
  function record(event){
@@ -3774,7 +3774,7 @@ function hwpIsCompanionDevice(){
 }
 function HwpMobileCompanionGate({signOut}){
  const [Component,setComponent]=l.useState(null),[failure,setFailure]=l.useState('');
- l.useEffect(()=>{let alive=true;import('./sync-staging/hwp-mobile-companion.mjs?v=1').then(({createMobileCompanion})=>{
+ l.useEffect(()=>{let alive=true;import('./sync-staging/hwp-mobile-companion.mjs?v=2').then(({createMobileCompanion})=>{
   if(!alive)return;
   const companion=createMobileCompanion({
    h:hwpMixerNode,React:l,boot:hwpCloudBoot,visibleServices:hwpVisibleServices,cues:p=>Ce(p,{allGroups:true}),
@@ -3789,7 +3789,7 @@ function HwpMobileCompanionGate({signOut}){
    Chat:HwpTeamMessages,Icon:({name,size})=>{
     const paths={audience:'M3 4h18v12H3z M8 21h8 M12 16v5',video:'M3 6h13v12H3z M16 10l5-3v10l-5-3',audio:'M5 3v7 M5 14v7 M12 3v12 M12 19v2 M19 3v3 M19 10v11 M2 10h6v4H2z M9 15h6v4H9z M16 6h6v4h-6z'};
     return paths[name]?M.jsx('svg',{viewBox:'0 0 24 24',width:size,height:size,fill:'none',stroke:'currentColor',strokeWidth:1.7,strokeLinecap:'round',strokeLinejoin:'round','aria-hidden':true,children:M.jsx('path',{d:paths[name]})}):M.jsx(pr,{name,size});
-   },accentInk:hwpAccentInk,translations:bt.map(t=>t.id).filter(id=>['KJV','NKJV','NLT','NIV','ESV','RVR1960','RVR1909'].includes(id)),signOut
+   },cachePreferences:prefs=>{window.hwpAccountPreferences=prefs;hwpWriteAccountCache('hwp-account-prefs',prefs)},accentInk:hwpAccentInk,translations:bt.map(t=>t.id).filter(id=>['KJV','NKJV','NLT','NIV','ESV','RVR1960','RVR1909'].includes(id)),signOut
   });
   setComponent(()=>companion);
  }).catch(error=>{if(alive)setFailure(error?.message||String(error))});return()=>{alive=false}},[signOut]);
