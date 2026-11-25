@@ -2,8 +2,8 @@
 (() => {
  const output=new URLSearchParams(location.search).get('display');
  if(output==='audience'||output==='stage')return;
- const selector='meta[name][content],link[rel="stylesheet"],link[rel="manifest"],script,style';
- const signature=doc=>Array.from(doc.querySelectorAll(selector),node=>[node.tagName,node.getAttribute('name')||'',node.getAttribute('content')||'',node.getAttribute('src')||'',node.getAttribute('href')||'',node.tagName==='SCRIPT'||node.tagName==='STYLE'?node.textContent:''].join('\u0000')).join('\u0001');
+ const selector='head>meta[name^="hwp-"][content],head>link[rel="stylesheet"],head>link[rel="manifest"],head>script,body>script,head>style[id^="hwp-"]';
+ const signature=doc=>Array.from(doc.querySelectorAll(selector)).filter(node=>node.tagName!=='LINK'||(node.getAttribute('href')||'').startsWith('./')).map(node=>[node.tagName,node.getAttribute('name')||'',node.getAttribute('content')||'',node.getAttribute('src')||'',node.getAttribute('href')||'',node.tagName==='SCRIPT'||node.tagName==='STYLE'?node.textContent:''].join('\u0000')).join('\u0001');
  // Capture the actual document the user opened before React modifies the DOM.
  const running=signature(document), baseline=new Map();
  let checking=false,pending=false,notice=null;
