@@ -1760,3 +1760,17 @@ html body .hwp-access-shell{background:#fff!important;color:#183150}
 .hwp-access-shell .hwp-access-card{background:linear-gradient(135deg,#fff 0%,#f8f7f4 25%,#fff 47%,#eceff2 73%,#fdfcf9 100%)!important;color:#183150;box-shadow:0 12px 32px rgba(31,38,47,.12),inset 0 1px 0 #fff,inset 0 0 18px rgba(255,255,255,.75)}
 .hwp-access-shell .hwp-access-field,.hwp-access-shell .hwp-access-message,.hwp-access-shell .hwp-access-message h2,.hwp-access-shell .hwp-access-note{color:#183150}
 html.hwp-ios-standalone:has(.hwp-access-shell) #hwp-native-top{background:#fff!important}
+
+/* HWW login logo geometry: identical width, origin and responsive breakpoints. */
+.hwp-access-shell .hwp-access-header{height:auto;min-height:0;padding:10px 48px 0 44px;align-items:flex-start;justify-content:space-between;gap:24px}
+.hwp-access-shell .hwp-access-header img{width:310px;max-width:32vw;height:auto;max-height:none;aspect-ratio:320/184;object-fit:contain;object-position:center;flex:none;margin:0}
+@media(max-width:899px){.hwp-access-shell .hwp-access-header{padding:18px 25px 0;gap:16px}.hwp-access-shell .hwp-access-header img{width:245px;max-width:38vw}.hwp-access-shell .hwp-access-connect{margin-top:7px}}
+@media(max-height:640px) and (min-width:621px){.hwp-access-shell .hwp-access-header{padding-top:3px}.hwp-access-shell .hwp-access-header img{width:195px}}
+@media(max-width:760px),(pointer:coarse) and (max-width:1366px){
+ .hwp-access-shell .hwp-access-header{flex-direction:column;align-items:center;justify-content:center;padding:clamp(12px,3vh,28px) 16px 0;gap:8px}
+ .hwp-access-shell .hwp-access-header img{width:clamp(160px,48vw,260px);max-width:100%;max-height:155px;margin:0 auto}
+ .hwp-access-shell .hwp-access-connect{width:100%;min-width:0;margin:0;justify-content:center;flex-wrap:wrap;gap:8px}
+ .hwp-access-shell .hwp-access-main{min-height:0;overflow:auto}
+ .hwp-access-shell .hwp-access-card{max-height:none}
+}
+@media(max-height:500px) and (orientation:landscape) and (pointer:coarse){.hwp-access-shell .hwp-access-header{padding-top:8px;flex-direction:row;flex-wrap:wrap;gap:8px}.hwp-access-shell .hwp-access-header img{width:140px;max-height:80px}.hwp-access-shell .hwp-access-connect{width:auto}}
