@@ -132,7 +132,9 @@ test('deleted media stays deleted and stale backups cannot auto-resurrect images
  assert.ok(!agent.includes('previousLocalBackup?.doc'));
  assert.ok(agent.includes('localRevision!==remote.revision'));
  assert.ok(html.includes('deletedMediaIds:[...new Set([...(e.doc.deletedMediaIds||[]),t.id])].slice(-5000)'));
- assert.ok(agent.includes('if(currentKey!==signature.current)'));
+ assert.ok(agent.includes('if(previous&&JSON.stringify(current.doc)!==JSON.stringify(previous))'));
+ assert.ok(agent.includes('hwpMergeScheduleWorkspace(previous,current.doc,remoteDoc)'));
+ assert.ok(agent.includes('if(!merged)'));
  assert.ok(agent.includes('else emit("syncing");'));
  assert.ok(html.includes('name="hwp-release" content="hwp-media-deletion-safety-v1"'));
 });
