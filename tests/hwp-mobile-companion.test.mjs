@@ -47,3 +47,11 @@ test('mobile appearance uses valid account colors and desktop defaults',()=>{
  assert.deepEqual(normalizeAppearance({appearance:'invalid',accent:'red'}),{appearance:'dark',accent:'#e2a04a'});
  assert.deepEqual(normalizeAppearance(null),{appearance:'dark',accent:'#e2a04a'});
 });
+
+test('screen command acknowledgement requires the requested actual output state',()=>{
+ const command={id:'screen',serviceId:'a',expiresAt:100,scope:'screen',target:{role:'stage',on:true}};
+ const status={serviceId:'a',command:{id:'screen',status:'applied'},stageOn:true,audienceOn:false};
+ assert.equal(commandFeedback(status,command,50),'applied');
+ assert.equal(commandFeedback({...status,stageOn:false},command,50),null);
+ assert.equal(commandFeedback({...status,serviceId:'other'},command,50),null);
+});
