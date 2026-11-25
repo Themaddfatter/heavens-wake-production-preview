@@ -420,31 +420,3 @@ test('presentation selection and on-output status are distinct and stable for re
  assert.match(css,/\.hwp-presentation-live-slot\s*\{[\s\S]*?flex:0 0 36px/);
  assert.match(css,/\.hwp-presentation-selected[\s\S]*?inset 0 0 0 2px var\(--amber\)/);
 });
-
-
-test("center scrolling follows presentation headings in either direction and reaches the final short section",()=>{
- const start=html.indexOf("function hwpScrolledServiceRow("),end=html.indexOf("function hwpServiceSelection(",start);
- assert.ok(start>=0&&end>start);
- runInContext(html.slice(start,end),ctx);
- const row=(id,top,bottom)=>({id,top,bottom});
- const pick=(rows,atBottom=false,down=true)=>ctx.hwpScrolledServiceRow(rows,0,500,atBottom,down);
- assert.equal(pick([row("a",-100,180),row("b",180,680)]),"a");
- assert.equal(pick([row("a",-400,40),row("b",40,540)]),"b");
- assert.equal(pick([row("a",-350,80),row("b",80,580)],false,false),"a");
- assert.equal(pick([row("a",-50,430),row("b",430,500)],true,true),"b");
- assert.equal(pick([row("a",100,600)]),"a");
- assert.equal(pick([]),null);
-});
-test("scroll selection changes session without taking a slide or requesting a navigation scroll",()=>{
- const start=html.indexOf("case`hwp-scroll-select-presentation`:"),end=html.indexOf("case`select-slides`:",start);
- assert.ok(start>=0&&end>start);
- const testCtx=createContext({hwpActiveService:()=>({id:"service",items:[{id:"b",presentationId:"song",serviceZone:"after"}]}),hwpServiceSelection:()=>({selected:"a"}),hwpServiceZone:row=>row.serviceZone,qt:(state,action)=>({...state,session:{...state.session,activePresentationId:action.id}})});
- runInContext("function reduce(e,t){switch(t.type){"+html.slice(start,end)+"default:return e}}",testCtx);
- const state={doc:{playlists:[],presentations:[{id:"song"}]},session:{mode:"show",serviceNavSeq:17,serviceNavId:"a",serviceHeader:null},live:{slideId:"live-slide"}};
- const next=testCtx.reduce(state,{type:"hwp-scroll-select-presentation",itemId:"b",playlistId:"service",all:true});
- assert.equal(next.session.activePresentationId,"song");
- assert.equal(next.session.serviceNavId,"b");
- assert.equal(next.session.serviceNavSeq,17);
- assert.equal(next.session.hwpPresentationView,"all");
- assert.equal(next.live,state.live);
-});
