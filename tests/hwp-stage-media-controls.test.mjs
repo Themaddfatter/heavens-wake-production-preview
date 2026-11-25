@@ -564,7 +564,7 @@ test('Editor deletion selects the next visible slide, then the previous one, wit
 test('Changing a filmstrip label preserves slide order even when labels repeat',()=>{
  const start=html.indexOf('function hwpEditorOrderedSlides('),end=html.indexOf('function HwpEditorSlideContextMenu(',start);
  const {order,runs,select}=new Function(html.slice(start,end)+';return {order:hwpEditorOrderedSlides,runs:hwpEditorSlideRuns,select:hwpEditorDeleteSelection};')();
- const p={groups:[{id:'verse',name:'Verse'},{id:'chorus',name:'Chorus'}],slides:[{id:'1',groupId:'verse'},{id:'2',groupId:'verse'},{id:'3',groupId:'verse'},{id:'4',groupId:'chorus'}]};
+ const p={arrangements:[{id:'master',order:['verse','chorus']}],groups:[{id:'verse',name:'Verse'},{id:'chorus',name:'Chorus'}],slides:[{id:'1',groupId:'verse'},{id:'2',groupId:'verse'},{id:'3',groupId:'verse'},{id:'4',groupId:'chorus'}]};
  const from=html.indexOf('case`set-slide-label`:'),to=html.indexOf('case`set-slide-tags`:',from);
  const change=new Function('e','t','j','hwpRegisteredLabel','hwpLabelFields','w','Ce','hwpEditorOrderedSlides','switch(t.type){'+html.slice(from,to)+'default:return e}');
  const state={doc:{},session:{mode:'edit'}};
