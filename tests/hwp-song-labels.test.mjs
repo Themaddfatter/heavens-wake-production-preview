@@ -51,7 +51,7 @@ test('HWP Song labels save through the same atomic Firebase catalog as HWW',()=>
  assert.match(editor,/spanishColor:draft\.spanishColor/);
  assert.match(editor,/nameEs:es/);
  assert.match(editor,/hwpSongLabelGroups\(songs\)/);
- assert.match(html,/pollId=window\.setInterval\(\(\)=>\{if\(!document\.hidden\)void load\(\)\},15000\)/);
+ assert.match(html,/pollId=window\.setInterval\(\(\)=>\{pollTicks\+\+;if\(authenticated&&!document\.hidden&&\(!signalAvailable\|\|pollTicks%3===0\)\)void load\(\)\},5000\)/);
  assert.match(html,/cat\.id==="standard"\|\|cat\.id==="songs"/);
 });
 

@@ -107,7 +107,8 @@ test('installed iOS uses final HWW opaque native chrome and fixed guard',async()
 });
 
 
-test('published song-list revision signals refresh both desktop and mobile without replacing the active selection',()=>{
+test('published song-list revision signals refresh both desktop and mobile without replacing the active selection',async()=>{
+ const {readFileSync}=await import('node:fs');
  const html=readFileSync(new URL('../index.html',import.meta.url),'utf8');
  const mobile=readFileSync(new URL('../sync-staging/hwp-mobile-companion.mjs',import.meta.url),'utf8');
  const auth=readFileSync(new URL('../sync-staging/hwp-auth.mjs',import.meta.url),'utf8');
