@@ -1715,3 +1715,15 @@
 @media(max-width:940px) {
   .app > .toolbar {overflow-x:auto;overflow-y:hidden;scrollbar-width:thin}
 }
+
+/* Mixer faders: hand cursor over the draggable cap, closed hand while dragging.
+   Scope this to mixer sliders so presentation resize cursors stay unchanged. */
+.hwp-mixer-fader,
+.hwp-mixer-calibrated-input,
+.hwp-mixer-calibrated-thumb{cursor:grab!important}
+.hwp-mixer-fader::-webkit-slider-thumb{cursor:grab!important}
+.hwp-mixer-fader::-moz-range-thumb{cursor:grab!important}
+.hwp-mixer-fader:active,
+.hwp-mixer-calibrated-input:active{cursor:grabbing!important}
+.hwp-mixer-fader:active::-webkit-slider-thumb{cursor:grabbing!important}
+.hwp-mixer-fader:active::-moz-range-thumb{cursor:grabbing!important}
