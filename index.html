@@ -336,6 +336,32 @@ html[data-hwp-appearance="light"] .hwp-mixer-strip.master{border-color:var(--amb
 .hwp-eq-actions .hwp-mixer-btn.hwp-eq-confirmed{background:var(--amber);border-color:var(--amber);color:var(--hwp-accent-ink);box-shadow:0 0 0 2px color-mix(in srgb,var(--amber) 30%,transparent)}
 .hwp-eq-action-feedback{height:15px;line-height:15px;font-size:11px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:-4px}
 .hwp-eq-panel.compact .hwp-eq-action-feedback{font-size:10px}
+</style>
+<style id="hwp-raised-metal-fader-v1">
+/* Reserve a dedicated scale gutter. Keep the knob center and all marks on the
+   same calibrated vertical travel; depth is entirely visual, not a transform
+   that would shift the indicator or change the native range hit target. */
+.hwp-mixer-track .hwp-mixer-calibrated{gap:9px}
+.hwp-mixer-track .hwp-mixer-calibrated .hwp-mixer-calibrated-scale{width:21px;text-align:right}
+.hwp-mixer-track .hwp-mixer-calibrated-scale .hwp-mixer-travel>span::after{left:calc(100% + 3px);width:4px}
+.hwp-mixer-track .hwp-mixer-calibrated-scale .hwp-mixer-travel>span.hwp-fader-unity::after{width:5px}
+.hwp-mixer-track .hwp-mixer-calibrated-thumb{
+ border:1px solid #777d81;border-radius:3px;
+ background:repeating-linear-gradient(0deg,#ffffff07 0 1px,transparent 1px 3px),linear-gradient(180deg,#c9cdcf 0%,#bec2c4 14%,#b5b9bc 70%,#a1a6a9 84%,#72787c 85%,#858a8e 100%);
+ box-shadow:inset 0 1px 0 #e8eaeb,inset 1px 0 0 #d3d6d8,inset -1px 0 0 #8e9498,inset 0 -3px 0 #656b70,0 2px 0 #363a3d,0 4px 0 #0e1012,1px 6px 6px #000b,0 2px 9px #0007
+}
+.hwp-mixer-track .hwp-mixer-calibrated-thumb::before{display:block;content:"";position:absolute;inset:2px 2px 5px;border-radius:1px;pointer-events:none;background:linear-gradient(90deg,#ffffff13,transparent 20%,transparent 80%,#0000000d)}
+.hwp-mixer-track .hwp-mixer-calibrated-thumb::after{left:2px;right:2px;height:2px;background:#242729;box-shadow:0 1px 0 #ffffff35}
+.hwp-mixer-track .hwp-mixer-calibrated-slider:active .hwp-mixer-calibrated-thumb{box-shadow:inset 0 1px 0 #e0e3e4,inset 0 -3px 0 #656b70,0 2px 0 #363a3d,0 3px 0 #0e1012,1px 4px 5px #000b}
+.hwp-mixer-track .hwp-mixer-calibrated-slider{z-index:1}
+.hwp-mixer-track .hwp-mixer-calibrated-input{z-index:2}
+.hwp-mixer-track.hwp-mc-fader-track .hwp-mixer-calibrated{gap:8px;--hwp-fader-cap-width:23px}
+.hwp-mixer-track.hwp-mc-fader-track .hwp-mixer-calibrated .hwp-mixer-calibrated-scale{width:18px}
+.hwp-mixer-track.hwp-mc-fader-track .hwp-mixer-calibrated-slider{width:25px}
+.hwp-mixer-track.hwp-mc-fader-track .hwp-mixer-calibrated-scale .hwp-mixer-travel>span::after{left:calc(100% + 2px);width:3px}
+.hwp-mixer-track.hwp-mc-fader-track .hwp-mixer-calibrated-scale .hwp-mixer-travel>span.hwp-fader-unity::after{width:4px}
+.hwp-mixer-strip .hwp-mixer-track{gap:2px}
+.hwp-mixer-strip .hwp-mixer-track>.hwp-mixer-meter{flex:0 0 5px}
 </style></head><body><script>try{document.documentElement.dataset.hwpAppearance=localStorage.getItem("hwp-appearance")==="light"?"light":"dark"}catch(e){}</script><div id="root"><div id="hwp-boot-placeholder" style="box-sizing:border-box;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;background:#071d16;color:#f3f8f4;font:600 19px Arial,sans-serif;text-align:center"><img src="./hwp-logo.png" alt="Heaven's Wake Production" style="max-width:210px;max-height:130px;object-fit:contain;margin-bottom:24px"><div>Opening Heaven's Wake Production…</div></div></div><script>
 (function(){
  var startupError="";
