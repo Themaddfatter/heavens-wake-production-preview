@@ -27,7 +27,7 @@ function protect(contents) {
   });
 }
 function createWindow() {
-  mainWindow = new BrowserWindow({width:1440,height:900,minWidth:850,minHeight:560,title:"Heaven's Wake Production",show:false,webPreferences:securePrefs});
+  mainWindow = new BrowserWindow({width:1440,height:900,minWidth:850,minHeight:560,title:"HWP",show:false,webPreferences:securePrefs});
   mainWindow.once('ready-to-show', () => mainWindow?.show());
   mainWindow.on('closed', () => { mainWindow = null; });
   mainWindow.loadURL(HOME).catch(error => { console.error(error); mainWindow?.show(); });
@@ -73,7 +73,7 @@ function configureUpdater() {
 }
 function createMenu() {
   const menu = Menu.buildFromTemplate([
-    {label:"Heaven's Wake Production",submenu:[{role:'about'},{id:'update',label:'Check for Updates…',click:()=>void checkUpdates(true)},{type:'separator'},{role:'hide'},{role:'hideOthers'},{role:'unhide'},{type:'separator'},{role:'quit'}]},
+    {label:"HWP",submenu:[{role:'about'},{id:'update',label:'Check for Updates…',click:()=>void checkUpdates(true)},{type:'separator'},{role:'hide'},{role:'hideOthers'},{role:'unhide'},{type:'separator'},{role:'quit'}]},
     {role:'editMenu'},
     {label:'View',submenu:[{label:'Reload HWP…',accelerator:'CmdOrCtrl+R',click:confirmReload},{role:'resetZoom'},{role:'zoomIn'},{role:'zoomOut'},{role:'togglefullscreen'}]},
     {role:'windowMenu'}
