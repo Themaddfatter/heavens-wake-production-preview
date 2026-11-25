@@ -7,9 +7,10 @@
   "main": "main.cjs",
   "scripts": {
     "start": "electron .",
-    "check": "node --check main.cjs && node --check build-preview.cjs",
-    "dist:mac": "electron-builder --mac --universal --publish never",
-    "dist:preview": "node build-preview.cjs"
+    "check": "node --check main.cjs && node --check build-preview.cjs && node --check prepare-icon.cjs",
+    "dist:mac": "npm run prepare:icon && electron-builder --mac --universal --publish never",
+    "dist:preview": "npm run prepare:icon && node build-preview.cjs",
+    "prepare:icon": "node prepare-icon.cjs"
   },
   "dependencies": {
     "electron-updater": "6.8.11"
@@ -20,7 +21,7 @@
   },
   "build": {
     "appId": "com.sioncdo.hwp",
-    "productName": "Heaven's Wake Production",
+    "productName": "HWP",
     "asar": true,
     "files": [
       "main.cjs",
@@ -52,7 +53,9 @@
         "NSCameraUsageDescription": "HWP uses cameras for production and livestreaming.",
         "NSMicrophoneUsageDescription": "HWP uses microphones and audio inputs for production and livestreaming.",
         "NSLocalNetworkUsageDescription": "HWP connects to production equipment on your local network."
-      }
+      },
+      "icon": "build/icon.icns",
+      "artifactName": "HWP-${version}-${arch}.${ext}"
     },
     "dmg": {
       "sign": true
