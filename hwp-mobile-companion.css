@@ -95,7 +95,7 @@
 .hwp-mobile-screen-row>.hwp-mobile-theme-options{flex:0 1 190px}
 .hwp-mobile-companion .hwp-mobile-slide[aria-disabled=true]{opacity:1;filter:none;cursor:pointer}
 .hwp-mobile-companion .hwp-mobile-slide:active{transform:scale(.975)}
-.hwp-mobile-companion .hwp-mobile-slide .hwp-mobile-live-tag{position:absolute;right:5px;top:5px;z-index:3;pointer-events:none;background:#e03131;color:#fff;font-size:10px;font-weight:800;line-height:1.2;padding:3px 5px;border-radius:3px}
+.hwp-mobile-companion .hwp-mobile-slide .hwp-mobile-live-tag{position:absolute;right:5px;bottom:5px;top:auto;z-index:3;pointer-events:none;background:#e03131;color:#fff;font-size:10px;font-weight:800;line-height:1.2;padding:3px 5px;border-radius:3px}
 .hwp-mobile-tap-flash{position:absolute;inset:0;z-index:4;pointer-events:none;border:3px solid var(--amber);border-radius:5px;animation:hwp-mobile-touch .42s ease-out both}
 @keyframes hwp-mobile-touch{0%{opacity:1;box-shadow:inset 0 0 0 12px color-mix(in srgb,var(--amber) 36%,transparent)}100%{opacity:0;box-shadow:inset 0 0 0 0 transparent}}
 @media(prefers-reduced-motion:reduce){.hwp-mobile-companion .hwp-mobile-slide:active{transform:none}.hwp-mobile-tap-flash{animation:none}}
@@ -107,3 +107,9 @@
 .hwp-mobile-companion .hwp-mobile-slide-grid{gap:13px;padding:4px}
 .hwp-mobile-companion .hwp-mobile-slide:active,.hwp-mobile-companion .hwp-mobile-slide:not(:disabled):active{transform:none}
 .hwp-mobile-companion .hwp-mobile-slide.selected .hwp-mobile-artboard{outline:2px solid var(--amber);outline-offset:-2px}
+
+/* Opaque top bar: no glass, translucency or blur over the mobile workspace. */
+.hwp-mobile-companion .hwp-mobile-header{background:var(--bg-2);opacity:1;filter:none!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;isolation:isolate;z-index:5}
+.hwp-mobile-companion .hwp-mobile-header::before,.hwp-mobile-companion .hwp-mobile-header::after{backdrop-filter:none!important;-webkit-backdrop-filter:none!important;filter:none!important}
+.hwp-mobile-lookup-result-body{display:grid;gap:8px;margin-top:8px}
+.hwp-mobile-companion .hwp-mobile-add-lookup{width:100%;margin-block:7px;background:var(--amber);color:var(--hwp-accent-ink);border-color:var(--amber);font-weight:700;text-align:center}
