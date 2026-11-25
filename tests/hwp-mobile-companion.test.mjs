@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {isCompanionDevice,visibleSchedules,sameCue,remoteCue,selectAvailable,cameraRoster,commandFeedback} from '../sync-staging/hwp-mobile-companion.mjs';
+import {isCompanionDevice,visibleSchedules,sameCue,remoteCue,selectAvailable,cameraRoster,commandFeedback,normalizeAppearance} from '../sync-staging/hwp-mobile-companion.mjs';
 const cue={itemId:'row',presentationId:'p',slideId:'s',cueIndex:1};
 test('mobile detection preserves desktop by default and supports explicit QA override',()=>{
  assert.equal(isCompanionDevice('',()=>({matches:false})),false);
@@ -40,4 +40,10 @@ test('remote acknowledgement requires the exact service, command, and live cue',
  assert.equal(commandFeedback({...applied,active:{...cue,cueIndex:99}},command,50),null);
  assert.equal(commandFeedback({serviceId:'a',command:{id:'cmd',status:'rejected'}},command,50),'rejected');
  assert.equal(commandFeedback({serviceId:'a'},command,101),'rejected');
+});
+
+test('mobile appearance uses valid account colors and desktop defaults',()=>{
+ assert.deepEqual(normalizeAppearance({appearance:'light',accent:'#ABCDEF'}),{appearance:'light',accent:'#abcdef'});
+ assert.deepEqual(normalizeAppearance({appearance:'invalid',accent:'red'}),{appearance:'dark',accent:'#e2a04a'});
+ assert.deepEqual(normalizeAppearance(null),{appearance:'dark',accent:'#e2a04a'});
 });
