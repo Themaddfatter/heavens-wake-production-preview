@@ -15,6 +15,15 @@ export function visibleSchedules(doc, visibleServices) {
 export function sameCue(a,b) {
   return !!a && !!b && ['itemId','presentationId','slideId','cueIndex'].every(k => a[k] === b[k]);
 }
+export function searchSongs(presentations,query){
+ const q=String(query||'').trim().toLocaleLowerCase();if(!q)return [];
+ const titles=[],lyrics=[];
+ for(const p of presentations||[]){if(p.category!=='song')continue;
+  if(String(p.name||'').toLocaleLowerCase().includes(q))titles.push(p);
+  else if(p.slides?.some(s=>s.objects?.some(o=>o.kind==='text'&&!o.hidden&&o.binding!=='copyright'&&o.binding!=='reference'&&String(o.text||'').toLocaleLowerCase().includes(q))))lyrics.push(p);
+ }
+ return [...titles,...lyrics].slice(0,50);
+}
 export function sameLookup(a,b){return !!a&&!!b&&a.kind===b.kind&&(a.kind==='song'?['presentationId','slideId','cueIndex'].every(k=>a[k]===b[k]):['id','book','chapter','verse','translation','text'].every(k=>a[k]===b[k]))}
 export function remoteCue(status,target) {
   return !!status?.online && (status.songs || []).some(p =>
@@ -65,7 +74,7 @@ export function createMobileCompanion({h,React,boot,visibleServices,cues,renderC
    cachePreferences?.({...window.hwpAccountPreferences,...next});
    setAppearanceStatus('savingAppearance');clearTimeout(appearanceTimer.current);appearanceTimer.current=setTimeout(saveAppearance,250);
   }
-  const [tap,setTap]=useState(null);const tapSequence=useRef(0),tapTimer=useRef(null);useEffect(()=>()=>clearTimeout(tapTimer.current),[]);
+  const [selectedTile,setSelectedTile]=useState('');const [tap,setTap]=useState(null);const tapSequence=useRef(0),tapTimer=useRef(null);useEffect(()=>()=>clearTimeout(tapTimer.current),[]);
   const request=useRef(null),lock=useRef(false),lookupVersion=useRef(0),generation=useRef(0),revision=useRef(null);
   useEffect(()=>{
    let alive=true,timer,working=false,system;revision.current=null;setError('');setSyncError(false);
@@ -93,6 +102,7 @@ export function createMobileCompanion({h,React,boot,visibleServices,cues,renderC
   const p=doc?.presentations?.find(p=>p.id===row?.presentationId);
   const slideCues=p?cues(p):[];
   const sid=service?.hwpScheduleId||'';
+  useEffect(()=>{if(serviceId||!doc||!request.current)return;let alive=true;request.current({action:'worshipControlMobileServices'}).then(result=>{if(!alive)return;const capable=(result.services||[]).filter(s=>s.online&&s.lookupCapable);const best=capable.find(s=>s.audienceOn)||capable[0];const match=services.find(s=>s.hwpScheduleId===best?.id);if(match)setServiceId(old=>old||match.id)}).catch(()=>{});return()=>{alive=false}},[doc,serviceId]);
   useEffect(()=>{let alive=true,timer;generation.current++;setStatus(null);setStatusError(false);setFeedback('');setCommand(null);lock.current=false;if(!sid)return;
     async function poll(){try{let result;try{result=await request.current({action:'worshipControlMobileStatus',serviceId:sid})}catch(error){if(error?.code!=='functions/invalid-argument')throw error;result=await request.current({action:'worshipControlStatus',serviceId:sid})}if(alive){setStatus({...result,serviceId:sid});setStatusError(false)}}catch{if(alive){setStatus(null);setStatusError(true)}}finally{if(alive)timer=setTimeout(poll,1200)}}
     void poll();return()=>{alive=false;clearTimeout(timer)}
@@ -104,7 +114,7 @@ export function createMobileCompanion({h,React,boot,visibleServices,cues,renderC
   const currentSid=useRef(sid);currentSid.current=sid;
   async function take(cue){
    const target={itemId:row.id,presentationId:p.id,slideId:cue.slide.id,cueIndex:cue.index};
-   const touch=++tapSequence.current;setTap({rowId:row.id,index:cue.index,sequence:touch});clearTimeout(tapTimer.current);tapTimer.current=setTimeout(()=>setTap(null),420);
+   setSelectedTile('service:'+row.id+':'+cue.index);const touch=++tapSequence.current;setTap({rowId:row.id,index:cue.index,sequence:touch});clearTimeout(tapTimer.current);tapTimer.current=setTimeout(()=>setTap(null),420);
    if(lock.current||status?.serviceId!==sid||!remoteCue(status,target))return;
    const attempt=generation.current;lock.current=true;setFeedback('pending');
    try{const result=await request.current({action:'worshipControlSelect',serviceId:sid,target});
@@ -114,14 +124,14 @@ export function createMobileCompanion({h,React,boot,visibleServices,cues,renderC
    }catch(e){if(currentSid.current===sid&&generation.current===attempt){setFeedback('failed');lock.current=false}}
   }
   async function takeLookup(target,key){
-   const touch=++tapSequence.current;setTap({rowId:key,index:0,sequence:touch});clearTimeout(tapTimer.current);tapTimer.current=setTimeout(()=>setTap(null),420);
-   if(lock.current||!sid||status?.serviceId!==sid||!status.online||!status.lookupCapable){if(!lock.current)setFeedback('failed');return}
+   setSelectedTile('lookup:'+key);const touch=++tapSequence.current;setTap({rowId:key,index:0,sequence:touch});clearTimeout(tapTimer.current);tapTimer.current=setTimeout(()=>setTap(null),420);
+   if(lock.current)return;if(!sid||!request.current){setFeedback('screenUnavailable');return}
    const attempt=generation.current;lock.current=true;setFeedback('pending');
    try{const result=await request.current({action:'worshipControlLookup',serviceId:sid,target});
     if(currentSid.current!==sid||generation.current!==attempt)return;
     if(!result.commandId||!Number.isFinite(result.expiresAt))throw Error('Invalid lookup command response');
     setCommand({id:result.commandId,expiresAt:result.expiresAt,target,serviceId:sid,scope:'lookup'});setFeedback('sent')
-   }catch{if(currentSid.current===sid&&generation.current===attempt){setFeedback('failed');lock.current=false}}
+   }catch(error){if(currentSid.current===sid&&generation.current===attempt){setFeedback(error?.message||'failed');lock.current=false}}
   }
   async function toggleScreen(role,on){
    if(lock.current||!sid||status?.serviceId!==sid||!status.online||!status.screenCapable)return;
@@ -134,10 +144,16 @@ export function createMobileCompanion({h,React,boot,visibleServices,cues,renderC
     setCommand({id:result.commandId,expiresAt:result.expiresAt,target,serviceId:sid,scope:'screen'});setFeedback('sent');
    }catch{if(currentSid.current===sid&&generation.current===attempt){setFeedback('failed');lock.current=false}}
   }
-  useEffect(()=>{lookupVersion.current++;setLookup(null);setLookupError('');setLookupBusy(false)},[kind,query,translation]);
-  async function findScripture(){const version=++lookupVersion.current;setLookupBusy(true);setLookupError('');try{const result=await lookupScripture(query,translation,doc.settings);if(version===lookupVersion.current){setLookup(result?{...result,id:crypto.randomUUID()}:null);if(!result)setLookupError('empty')}}catch(e){if(version===lookupVersion.current)setLookupError(e?.message||String(e))}finally{if(version===lookupVersion.current)setLookupBusy(false)}}
+  useEffect(()=>{
+   const version=++lookupVersion.current;setLookup(null);setLookupError('');setLookupBusy(false);
+   // Never fetch an entire chapter while a verse reference is still being typed.
+   if(kind!=='scripture'||!doc||!/:\s*\d+\s*(?:[-–]\s*\d+)?\s*$/.test(query.trim()))return;
+   setLookupBusy(true);
+   const timer=setTimeout(async()=>{try{const result=await lookupScripture(query,translation,doc.settings);if(version===lookupVersion.current){setLookup(result?{...result,id:crypto.randomUUID()}:null);if(!result?.verses?.length)setLookupError('empty')}}catch(e){if(version===lookupVersion.current)setLookupError(e?.message||String(e))}finally{if(version===lookupVersion.current)setLookupBusy(false)}},350);
+   return()=>{clearTimeout(timer);lookupVersion.current++};
+  },[kind,query,translation,doc]);
   const search=query.trim().toLowerCase();
-  const found=kind==='song'&&search?(doc?.presentations||[]).filter(p=>p.category==='song'&&(p.name?.toLowerCase().includes(search)||p.slides?.some(s=>s.objects?.some(o=>o.kind==='text'&&String(o.text||'').toLowerCase().includes(search))))).slice(0,50):[];
+  const found=kind==='song'?searchSongs(doc?.presentations,search):[];
   const active=status?.serviceId===sid&&status.online?status.active:null;
   const liveLookup=status?.serviceId===sid&&status.online?status.lookupActive:null;
   const activeP=liveLookup&&doc?buildLookup(doc,liveLookup,service):doc?.presentations?.find(p=>p.id===active?.presentationId);
@@ -147,19 +163,19 @@ export function createMobileCompanion({h,React,boot,visibleServices,cues,renderC
   const icon=(name,title,onClick,props={})=>btn(h(Icon,{name,size:23}),onClick,{className:'hwp-mobile-icon',title,'aria-label':title,...props});
   const modeIcons={presenter:'audience',livestream:'video',mixer:'audio'};
   function selectRow(id){setRowId(id);setTab('slides')}
-  function selectService(id){if(id===sid||id===service?.id)return;generation.current++;setServiceId(id);setRowId('');setTab('slides')}
+  function selectService(id){if(id===sid||id===service?.id)return;generation.current++;setServiceId(id);setRowId('');setSelectedTile('');setTab('slides')}
   const picker=h('select',{'aria-label':L.presentation,value:row?.id||'',onChange:e=>selectRow(e.target.value)},...(presentations.length?presentations.map(r=>h('option',{key:r.id,value:r.id},doc.presentations.find(p=>p.id===r.presentationId)?.name||r.id)):[h('option',{value:''},L.choose)]));
   const serviceList=h('aside',{className:'hwp-mobile-setlist'},h('h2',null,L.presentation),...rows.map(r=>r.header?h('div',{key:r.id,className:'hwp-mobile-section',style:{background:r.bgColor||undefined,color:r.fontColor||undefined}},r.header):btn(doc.presentations.find(p=>p.id===r.presentationId)?.name||r.id,()=>selectRow(r.id),{key:r.id,className:'hwp-mobile-row'+(row?.id===r.id?' selected':''),'aria-pressed':row?.id===r.id})));
   const preview=h('section',{className:'hwp-mobile-preview'},h('div',{className:'hwp-mobile-caption'},h('strong',null,L.preview),h('span',null,activeP?.name||'')),h('div',{className:'hwp-mobile-artboard'},activeCue?renderCue(doc,activeP,activeCue):h('span',null,L.noCue)));
-  const slideGrid=h('section',{className:'hwp-mobile-slides'},h('div',{className:'hwp-mobile-caption'},h('strong',null,p?.name||L.choose),h('label',null,L.size,' ',h('input',{type:'range',min:120,max:260,step:10,value:size,onChange:e=>setSize(Number(e.target.value))}))),h('div',{className:'hwp-mobile-slide-grid',style:{'--hwp-mobile-tile':size+'px'}},...slideCues.map(c=>{const target={itemId:row.id,presentationId:p.id,slideId:c.slide.id,cueIndex:c.index},live=sameCue(active,target),enabled=status?.serviceId===sid&&remoteCue(status,target),color=(doc.labels||[]).find(l=>String(l.name).toLowerCase()===String(c.group.name).toLowerCase())?.color||c.group.color;return btn(h('span',{className:'hwp-mobile-slide-content'},h('span',{className:'hwp-mobile-artboard'},renderCue(doc,p,c),live&&h('span',{className:'live-tag hwp-mobile-live-tag'},'LIVE'),tap?.rowId===row.id&&tap.index===c.index&&h('span',{key:tap.sequence,className:'hwp-mobile-tap-flash','aria-hidden':true})),h('span',{className:'hwp-mobile-slide-label',style:color?{background:color,color:accentInk(color)}:undefined},c.group.name)),()=>take(c),{key:c.index,className:'hwp-mobile-slide'+(live?' live':''),'aria-disabled':!enabled||!!command||feedback==='pending','aria-label':c.group.name+(enabled?'':': '+L.readOnly),title:enabled?c.group.name:L.readOnly})})),p&&slideCues.length>0&&!slideCues.some(c=>remoteCue(status,{itemId:row.id,presentationId:p.id,slideId:c.slide.id,cueIndex:c.index}))&&h('p',{className:'hwp-mobile-note'},L.readOnly));
+  const slideGrid=h('section',{className:'hwp-mobile-slides'},h('div',{className:'hwp-mobile-caption'},h('strong',null,p?.name||L.choose),h('label',null,L.size,' ',h('input',{type:'range',min:120,max:260,step:10,value:size,onChange:e=>setSize(Number(e.target.value))}))),h('div',{className:'hwp-mobile-slide-grid',style:{'--hwp-mobile-tile':size+'px'}},...slideCues.map(c=>{const target={itemId:row.id,presentationId:p.id,slideId:c.slide.id,cueIndex:c.index},live=sameCue(active,target),enabled=status?.serviceId===sid&&remoteCue(status,target),color=(doc.labels||[]).find(l=>String(l.name).toLowerCase()===String(c.group.name).toLowerCase())?.color||c.group.color;return btn(h('span',{className:'hwp-mobile-slide-content'},h('span',{className:'hwp-mobile-artboard'},renderCue(doc,p,c),live&&h('span',{className:'live-tag hwp-mobile-live-tag'},'LIVE'),tap?.rowId===row.id&&tap.index===c.index&&h('span',{key:tap.sequence,className:'hwp-mobile-tap-flash','aria-hidden':true})),h('span',{className:'hwp-mobile-slide-label',style:color?{background:color,color:accentInk(color)}:undefined},c.group.name)),()=>take(c),{key:c.index,className:'hwp-mobile-slide'+(live?' live':'')+(selectedTile==='service:'+row.id+':'+c.index?' selected':''),'aria-disabled':!enabled||!!command||feedback==='pending','aria-label':c.group.name+(enabled?'':': '+L.readOnly),title:enabled?c.group.name:L.readOnly})})),p&&slideCues.length>0&&!slideCues.some(c=>remoteCue(status,{itemId:row.id,presentationId:p.id,slideId:c.slide.id,cueIndex:c.index}))&&h('p',{className:'hwp-mobile-note'},L.readOnly));
   function lookupTile(p,c,target,key){
    const live=sameLookup(liveLookup,target),enabled=status?.serviceId===sid&&status.online&&status.lookupCapable&&c.slide.enabled!==false;
    const color=(doc.labels||[]).find(l=>String(l.name).toLowerCase()===String(c.group.name).toLowerCase())?.color||c.group.color;
    const label=target.kind==='scripture'?target.book+' '+target.chapter+':'+target.verse+' · '+target.translation:c.group.name;
-   return btn(h('span',{className:'hwp-mobile-slide-content'},h('span',{className:'hwp-mobile-artboard'},renderCue(doc,p,c),live&&h('span',{className:'live-tag hwp-mobile-live-tag'},'LIVE'),tap?.rowId===key&&h('span',{key:tap.sequence,className:'hwp-mobile-tap-flash','aria-hidden':true})),h('span',{className:'hwp-mobile-slide-label',style:color?{background:color,color:accentInk(color)}:undefined},label)),()=>{if(c.slide.enabled!==false)takeLookup(target,key)},{key,className:'hwp-mobile-slide'+(live?' live':''),'aria-disabled':!enabled||!!command||feedback==='pending','aria-label':label,title:label});
+   return btn(h('span',{className:'hwp-mobile-slide-content'},h('span',{className:'hwp-mobile-artboard'},renderCue(doc,p,c),live&&h('span',{className:'live-tag hwp-mobile-live-tag'},'LIVE'),tap?.rowId===key&&h('span',{key:tap.sequence,className:'hwp-mobile-tap-flash','aria-hidden':true})),h('span',{className:'hwp-mobile-slide-label',style:color?{background:color,color:accentInk(color)}:undefined},label)),()=>{if(c.slide.enabled!==false)takeLookup(target,key)},{key,className:'hwp-mobile-slide'+(live?' live':'')+(selectedTile==='lookup:'+key?' selected':''),'aria-disabled':!enabled||!!command||feedback==='pending','aria-label':label,title:label});
   }
   const lookupGrid=tiles=>h('div',{className:'hwp-mobile-slide-grid',style:{'--hwp-mobile-tile':size+'px'}},...tiles);
-  const quick=h('section',{className:'hwp-mobile-lookup'},h('h2',null,L.lookup),h('div',{className:'hwp-mobile-tabs'},...['song','scripture'].map(k=>btn(L[k],()=>{setKind(k);setQuery('');setOpenedSong('')},{key:k,'aria-pressed':kind===k}))),h('p',{className:'hwp-mobile-note'},L.lookupNote),h('form',{onSubmit:e=>{e.preventDefault();if(kind==='scripture'&&query.trim()&&doc)findScripture()}},h('input',{value:query,onChange:e=>{setQuery(e.target.value);setOpenedSong('')},placeholder:kind==='song'?L.search:L.reference,'aria-label':kind==='song'?L.search:L.reference}),kind==='scripture'&&h('div',{className:'hwp-mobile-tabs'},h('select',{value:translation,onChange:e=>setTranslation(e.target.value),'aria-label':'Bible translation'},...translations.map(t=>h('option',{key:t,value:t},t))),h('button',{type:'submit',disabled:lookupBusy||!query.trim()||!doc},lookupBusy?'…':L.find))),kind==='song'&&search&&(!found.length?h('p',null,L.empty):found.map(p=>h('div',{key:p.id,className:'hwp-mobile-song-result'},btn(p.name,()=>setOpenedSong(openedSong===p.id?'':p.id),{'aria-expanded':openedSong===p.id}),openedSong===p.id&&lookupGrid(cues(p).map(c=>lookupTile(p,c,{kind:'song',presentationId:p.id,slideId:c.slide.id,cueIndex:c.index},p.id+':'+c.index)))))),lookupError&&h('p',{role:'status'},L[lookupError]||lookupError),lookup&&lookupGrid(lookup.verses.flatMap(v=>{const target={kind:'scripture',id:lookup.id+'_'+v.n,book:lookup.book,chapter:lookup.chapter,verse:v.n,translation,text:v.text},p=buildLookup(doc,target,service);return p?cues(p).map(c=>lookupTile(p,c,target,target.id)):[]})),(!status?.lookupCapable||!status.online)&&h('p',{className:'hwp-mobile-note'},L.screenUnavailable));
+  const quick=h('section',{className:'hwp-mobile-lookup'},h('h2',null,L.lookup),h('div',{className:'hwp-mobile-tabs'},...['song','scripture'].map(k=>btn(L[k],()=>{setKind(k);setQuery('');setOpenedSong('')},{key:k,'aria-pressed':kind===k}))),h('p',{className:'hwp-mobile-note'},L.lookupNote),h('form',{onSubmit:e=>e.preventDefault()},h('input',{value:query,onChange:e=>{setQuery(e.target.value);setOpenedSong('')},placeholder:kind==='song'?L.search:L.reference,'aria-label':kind==='song'?L.search:L.reference}),kind==='scripture'&&h('div',{className:'hwp-mobile-tabs'},h('select',{value:translation,onChange:e=>setTranslation(e.target.value),'aria-label':'Bible translation'},...translations.map(t=>h('option',{key:t,value:t},t))),lookupBusy&&h('span',{role:'status','aria-live':'polite'},language==='es'?'Buscando…':'Searching…'))),kind==='song'&&search&&(!found.length?h('p',null,L.empty):found.map(p=>h('div',{key:p.id,className:'hwp-mobile-song-result'},btn(p.name,()=>setOpenedSong(openedSong===p.id?'':p.id),{'aria-expanded':openedSong===p.id}),openedSong===p.id&&lookupGrid(cues(p).map(c=>lookupTile(p,c,{kind:'song',presentationId:p.id,slideId:c.slide.id,cueIndex:c.index},p.id+':'+c.index)))))),lookupError&&h('p',{role:'status'},L[lookupError]||lookupError),lookup&&lookupGrid(lookup.verses.flatMap(v=>{const target={kind:'scripture',id:lookup.id+'_'+v.n,book:lookup.book,chapter:lookup.chapter,verse:v.n,translation,text:v.text},p=buildLookup(doc,target,service);return p?cues(p).map(c=>lookupTile(p,c,target,target.id)):[]})),(!status?.lookupCapable||!status.online)&&h('p',{className:'hwp-mobile-note'},L.screenUnavailable));
   const cameras=cameraRoster(doc),camera=selectAvailable(cameras,cameraId);
   const monitor=(title)=>h('section',{className:'hwp-mobile-monitor'},h('strong',null,title),h('div',{className:'hwp-mobile-artboard hwp-mobile-offline-video'},h(Icon,{name:'video',size:26}),h('span',null,L.noVideo)));
   const cameraCard=c=>btn(h('span',{className:'hwp-mobile-camera-name'},h('span',{className:'hwp-mobile-camera-dot',style:{background:c.color||'var(--dim)'}}),c.name),()=>setCameraId(c.id),{key:c.id,'aria-pressed':camera?.id===c.id});
