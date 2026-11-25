@@ -355,3 +355,29 @@ test("Presenter Sound Mixer companion shares selected mix, channel levels, maste
  assert.equal(scope.hwpMixerNearestPage(3000,300,4),4);
  assert.ok(html.includes("hwpFaderBank(pages,channels,strip,current.name+' channel faders',false"));
 });
+
+test("Mixer EQ confirms copy, paste and reset without changing the layout",()=>{
+ const start=html.indexOf("const hwpMixerEqIcon"),end=html.indexOf("function HwpMixerCompanionChannelEdit",start);
+ assert.ok(start>=0&&end>start);
+ const h=(tag,props,...children)=>({tag,props,children});
+ let slots=[],cursor=0,timers=new Map(),timerId=0;
+ const hooks={useState:v=>{const i=cursor++;if(!(i in slots))slots[i]=v;return [slots[i],x=>{slots[i]=typeof x==="function"?x(slots[i]):x}]},useRef:v=>{const i=cursor++;if(!(i in slots))slots[i]={current:v};return slots[i]},useEffect:()=>{}};
+ const scope=createContext({l:hooks,hwpMixerNode:h,setTimeout:fn=>{timers.set(++timerId,fn);return timerId},clearTimeout:id=>timers.delete(id)});
+ runInContext(html.slice(start,end),scope);
+ let channel={name:"Vocal",eq:scope.hwpMixerEqDefault()};channel.eq.bands[0].gain=4;
+ const render=()=>{cursor=0;return scope.HwpMixerEqPanel({channel,onChange:eq=>{channel={...channel,eq}}})};
+ function flat(n){return !n||typeof n!=="object"?[]:[n,...(Array.isArray(n.children)?n.children:[n.children]).flatMap(flat)]}
+ let view=render();
+ const button=label=>flat(view).find(n=>n.tag==="button"&&n.children[0]===label);
+ const status=()=>flat(view).find(n=>n.props?.role==="status");
+ assert.ok(button("Paste").props.disabled);
+ button("Copy").props.onClick();view=render();
+ assert.ok(!button("Paste").props.disabled);assert.ok(button("Copy").props.className.includes("hwp-eq-confirmed"));assert.equal(status().children[0].children[0],"✓ EQ copied");
+ button("Reset").props.onClick();view=render();
+ assert.equal(channel.eq.bands[0].gain,0);assert.equal(status().children[0].children[0],"✓ EQ reset");
+ button("Paste").props.onClick();view=render();
+ assert.equal(channel.eq.bands[0].gain,4);assert.equal(status().children[0].children[0],"✓ EQ pasted");
+ for(const fn of timers.values())fn();view=render();assert.ok(!button("Paste").props.className.includes("hwp-eq-confirmed"));
+ assert.ok(html.includes('id="hwp-matte-metal-fader-v1"'));
+ assert.ok(!html.includes("Yamaha QL1 · Offline demo"));
+});
