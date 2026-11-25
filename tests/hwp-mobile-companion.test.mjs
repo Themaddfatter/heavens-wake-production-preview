@@ -156,3 +156,17 @@ test('tablet recovery initializes isolated Firebase email sign-in without old pe
  const sdk={getApps:()=>[{name:'hwp-shared'}],initializeApp:(config,name)=>{assert.equal(name,'hwp-shared-recovery');return app},initializeAuth:(a,options)=>{assert.equal(a,app);assert.deepEqual(options,{persistence:[session,memory]});calls.push('initialize');return auth},browserSessionPersistence:session,inMemoryPersistence:memory,getAuth:()=>{throw Error('must not load old session')}};
  assert.deepEqual(await initializeHwpSignIn(sdk,{projectId:'sion-schedule-next'},{recovery:true}),{app,auth});assert.deepEqual(calls,['initialize','ready']);
 });
+
+
+test('HWP startup loads the verified public project configuration without network or browser storage',async()=>{
+ const {loadHwpConfig,HWP_PUBLIC_FIREBASE_CONFIG,validHwpConfig}=await import('../sync-staging/hwp-auth.mjs');
+ const originalFetch=globalThis.fetch;
+ try{
+  globalThis.fetch=async()=>{throw Error('External configuration network blocked')};
+  const result=await loadHwpConfig();
+  assert.equal(validHwpConfig(result),true);
+  assert.deepEqual(result,HWP_PUBLIC_FIREBASE_CONFIG);
+  assert.equal(result.projectId,'sion-schedule-next');
+  assert.notEqual(result,HWP_PUBLIC_FIREBASE_CONFIG);
+ }finally{globalThis.fetch=originalFetch}
+});

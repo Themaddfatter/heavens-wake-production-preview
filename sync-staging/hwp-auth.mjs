@@ -78,26 +78,14 @@ export async function loadHwpFirebaseSdk(){
 export function validHwpConfig(value){
  return value?.projectId==='sion-schedule-next'&&typeof value.apiKey==='string'&&value.apiKey.length>0&&typeof value.appId==='string'&&value.appId.length>0&&typeof value.authDomain==='string'&&value.authDomain.length>0;
 }
+// The public Firebase web SDK configuration is part of the release, just as
+// in the other Heaven's Wake applications. It contains no private credentials.
+// CI compares it against the live project configuration before release.
+export const HWP_PUBLIC_FIREBASE_CONFIG=Object.freeze({"apiKey":"AIzaSyDcRhzXDT1Yl8fMzq319D1XKUnkRJkHu7g","authDomain":"sion-schedule-next.firebaseapp.com","projectId":"sion-schedule-next","appId":"1:976065664179:web:e35733a3981e1508be4cc6","messagingSenderId":"976065664179"});
 export async function loadHwpConfig(){
- const endpoints=['https://us-central1-sion-schedule-next.cloudfunctions.net/hwpFirebaseConfig','https://sion-schedule-next.firebaseapp.com/__/firebase/init.json'];
- const cacheKey='hwp-public-firebase-config-v1';
- let failure;
- for(const endpoint of endpoints){
-  try{
-   const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),8000);
-   let response;
-   try{response=await fetch(endpoint,{method:'GET',cache:'no-store',signal:controller.signal})}finally{clearTimeout(timer)}
-   if(!response.ok){const error=new Error('Configuration HTTP '+response.status);error.code='hwp/config-http-'+response.status;throw error}
-   const value=await response.json();
-   if(!validHwpConfig(value))throw Object.assign(new Error('Invalid Firebase project configuration'),{code:'hwp/config-invalid'});
-   const {apiKey,authDomain,projectId,appId,messagingSenderId}=value;
-   const config={apiKey,authDomain,projectId,appId,messagingSenderId};
-   try{localStorage.setItem(cacheKey,JSON.stringify(config))}catch{}
-   return config;
-  }catch(error){failure=error}
- }
- try{const cached=JSON.parse(localStorage.getItem(cacheKey)||'null');if(validHwpConfig(cached))return cached}catch{}
- throw Object.assign(new Error('Could not load Ministry Connect Firebase configuration.'),{code:failure?.code||'hwp/config-network'});
+ const config=HWP_PUBLIC_FIREBASE_CONFIG;
+ if(!validHwpConfig(config))throw Object.assign(new Error('Invalid bundled Ministry Connect configuration'),{code:'hwp/config-invalid'});
+ return {...config};
 }
 export async function verifyHwpAccess(system,user){
  const check=async()=>{
