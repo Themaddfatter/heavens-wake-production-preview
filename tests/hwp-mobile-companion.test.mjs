@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {isCompanionDevice,visibleSchedules,sameCue,remoteCue,selectAvailable,cameraRoster,commandFeedback,normalizeAppearance,searchSongs} from '../sync-staging/hwp-mobile-companion.mjs';
+import {isCompanionDevice,visibleSchedules,sameCue,remoteCue,selectAvailable,cameraRoster,commandFeedback,normalizeAppearance,searchSongs,sameMobileStatus} from '../sync-staging/hwp-mobile-companion.mjs';
 const cue={itemId:'row',presentationId:'p',slideId:'s',cueIndex:1};
 test('mobile detection preserves desktop by default and supports explicit QA override',()=>{
  assert.equal(isCompanionDevice('',()=>({matches:false})),false);
@@ -80,4 +80,12 @@ test('Add to Service confirmation is independent of current live slide',()=>{
  assert.equal(commandFeedback(status,command,50),'applied');
  assert.equal(commandFeedback({...status,command:{id:'wrong',status:'applied'}},command,50),null);
  assert.equal(commandFeedback({...status,command:{id:'add',status:'rejected'}},command,50),'rejected');
+});
+
+test('receiver polling does not redraw the mobile screen when only heartbeat timestamps change',()=>{
+ const before={serviceId:'s',online:true,audienceOn:true,stageOn:true,songs:[],active:null,updatedAt:100,serverTime:100};
+ assert.equal(sameMobileStatus(before,{...before,updatedAt:200,serverTime:200}),true);
+ assert.equal(sameMobileStatus(before,{...before,audienceOn:false}),false);
+ assert.equal(sameMobileStatus(before,{...before,command:{id:'c',status:'applied'}}),false);
+ assert.equal(sameMobileStatus(before,{...before,lookupActive:{kind:'song',presentationId:'p',slideId:'a',cueIndex:0}}),false);
 });
