@@ -60,8 +60,8 @@ jobs:
           [[ -n "$dmg_path" ]]
           codesign --verify --verbose=2 "$dmg_path"
           xcrun notarytool submit "$dmg_path" --apple-id "$APPLE_ID" --password "$APPLE_APP_SPECIFIC_PASSWORD" --team-id "$APPLE_TEAM_ID" --wait
-          xcrun stapler staple "$dmg_path"
-          xcrun stapler validate "$dmg_path"
+          # Do not modify the DMG after its hash has been written into the signed update manifest.
+          # The application inside the DMG has already been stapled and validated above.
           test -s dist/latest-mac.yml
           find dist -maxdepth 1 -name '*.dmg' -print -quit | grep -q .
           find dist -maxdepth 1 -name '*.zip' -print -quit | grep -q .
