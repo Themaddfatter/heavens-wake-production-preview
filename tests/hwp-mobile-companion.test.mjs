@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {isCompanionDevice,visibleSchedules,sameCue,remoteCue,selectAvailable,cameraRoster,commandFeedback,normalizeAppearance} from '../sync-staging/hwp-mobile-companion.mjs';
+import {isCompanionDevice,visibleSchedules,sameCue,remoteCue,selectAvailable,cameraRoster,commandFeedback,normalizeAppearance,searchSongs} from '../sync-staging/hwp-mobile-companion.mjs';
 const cue={itemId:'row',presentationId:'p',slideId:'s',cueIndex:1};
 test('mobile detection preserves desktop by default and supports explicit QA override',()=>{
  assert.equal(isCompanionDevice('',()=>({matches:false})),false);
@@ -65,4 +65,11 @@ test('lookup acknowledgement requires the exact live song or scripture',()=>{
   assert.equal(commandFeedback({...status,lookupActive:null},command,50),null);
   assert.equal(commandFeedback({...status,lookupActive:{...target,kind:'other'}},command,50),null);
  }
+});
+
+test('song titles always precede lyric-only matches, and duplicate titles do not repeat',()=>{
+ const song=(id,name,text,binding='lyrics')=>({id,name,category:'song',slides:[{objects:[{kind:'text',binding,text}]}]});
+ const songs=[song('lyrics','Other song','Amazing Grace'),song('title','Amazing Grace','Amazing Grace'),song('copyright','Copyright','Amazing Grace','copyright'),song('title2','Amazing Love','Something else'),{...song('other','Amazing','Amazing'),category:'scripture'}];
+ assert.deepEqual(searchSongs(songs,'amazing').map(p=>p.id),['title','title2','lyrics']);
+ assert.deepEqual(searchSongs(songs,'   '),[]);
 });
