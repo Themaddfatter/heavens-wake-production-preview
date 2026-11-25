@@ -362,6 +362,58 @@ html[data-hwp-appearance="light"] .hwp-mixer-strip.master{border-color:var(--amb
 .hwp-mixer-track.hwp-mc-fader-track .hwp-mixer-calibrated-scale .hwp-mixer-travel>span.hwp-fader-unity::after{width:4px}
 .hwp-mixer-strip .hwp-mixer-track{gap:2px}
 .hwp-mixer-strip .hwp-mixer-track>.hwp-mixer-meter{flex:0 0 5px}
+</style>
+<style id="hwp-machined-console-metal-v2">
+/* One machined, black anodized metal assembly per channel. The raised outer
+   shoulders and milled interior are painted in place, without altering sizing. */
+.hwp-mixer-strip,.hwp-mc-channel,html[data-hwp-appearance="light"] :is(.hwp-mixer-strip,.hwp-mc-channel){
+ --hwp-strip-face:#383c40;--hwp-strip-base:#17191b;--hwp-strip-rim:#08090b;--hwp-strip-shine:#9da3a65c;
+ border:1px solid #08090a;border-radius:5px;
+ background:
+ linear-gradient(90deg,#08090a 0%,#565b5f 1px,#35393d 3px,#24272a 6px,transparent 10px,transparent calc(100% - 8px),#101113 calc(100% - 3px),#62676b calc(100% - 2px),#101113 100%),
+ repeating-linear-gradient(0deg,#ffffff08 0 1px,#00000008 1px 2px,transparent 2px 4px),
+ linear-gradient(180deg,#464b50 0%,#2b2f33 9%,#303438 35%,#202327 85%,#151719 100%);
+ box-shadow:inset 0 2px 0 #8b92985c,inset 0 -3px 0 #0b0c0e,inset 2px 0 0 #b1b7bb1b,inset -2px 0 0 #050607,0 2px 0 #090a0b,0 4px 5px #0007;
+}
+.hwp-mixer-strip.master,html[data-hwp-appearance="light"] .hwp-mixer-strip.master{border-color:var(--amber)}
+.hwp-mc-channel,html[data-hwp-appearance="light"] .hwp-mc-channel{border-top:3px solid var(--hwp-mc-color)}
+.hwp-mc-master-bank>.hwp-mc-channel{background:linear-gradient(90deg,#151719,#44494d 4%,#24282c 12%,#292d31 80%,#101214 97%,#555b60),linear-gradient(#3b4044,#1b1e20)}
+.hwp-mixer-strip>.hwp-mixer-track,.hwp-mc-channel>.hwp-mixer-track,.hwp-mixer-gain-track,.hwp-mc-gain-strip>.hwp-mixer-track{
+ --hwp-fader-plate-edge:#08090a;--hwp-fader-plate-highlight:#8b929559;
+ background:linear-gradient(90deg,#090b0d,#646b70 3%,#25292d 8%,#101214 92%,#464c51 97%,#0a0c0e);
+ box-shadow:0 1px 0 #a8afb44a,0 -1px 0 #050607,inset 0 2px 4px #000b;
+ border-radius:4px
+}
+.hwp-mixer-strip>.hwp-mixer-track::before,.hwp-mc-channel>.hwp-mixer-track::before,.hwp-mixer-track::before{
+ inset:2px 3px;
+ background:
+ repeating-linear-gradient(0deg,#ffffff05 0 1px,#00000008 1px 2px,transparent 2px 4px),
+ linear-gradient(90deg,#101315 0%,#33383c 12%,#292e32 34%,#1c2023 80%,#0b0d0f 100%);
+ border-radius:2px;box-shadow:inset 2px 2px 5px #000c,inset -1px -1px 0 #7a828841
+}
+.hwp-mixer-track .hwp-mixer-calibrated-slider::before{
+ background:linear-gradient(90deg,#0a0c0e 0%,#383f45 12%,#24292d 20%,#15191c 50%,#33393e 80%,#0d0f11 100%);
+ box-shadow:inset 1px 1px 3px #000a,1px 0 0 #91999f3d;
+ inset:-2px 3px;border-radius:2px
+}
+.hwp-mixer-track .hwp-mixer-calibrated-rail{
+ background:linear-gradient(90deg,#030405,#08090a 25%,#020304 70%,#41474c 100%);
+ box-shadow:-1px 0 0 #727a8066,1px 0 0 #000,inset 0 2px 3px #000;
+}
+.hwp-mixer-track .hwp-mixer-calibrated-scale{color:#fff;text-shadow:0 1px 1px #000}
+.hwp-mixer-track .hwp-mixer-calibrated-thumb{
+ border:1px solid #92999e;border-radius:3px;
+ background:linear-gradient(110deg,transparent 0%,#ffffff65 21%,transparent 36%,#ffffff12 61%,#00000024 100%),
+ linear-gradient(180deg,#ffffff 0%,#c0c7cc 8%,#7b858d 18%,#dce2e6 29%,#f3f5f7 39%,#b1bac1 46%,#808b93 57%,#c7d0d6 76%,#586168 89%,#333b42 100%);
+ box-shadow:inset 0 1px 0 #fff,inset 1px 0 0 #e6edf1,inset -1px 0 0 #67737d,inset 0 -3px 0 #424b53,0 2px 0 #505a62,0 4px 0 #151a1e,2px 6px 5px #000d,0 2px 9px #0009;
+}
+.hwp-mixer-track .hwp-mixer-calibrated-thumb::before{
+ display:block;inset:2px 2px 5px;background:linear-gradient(120deg,#ffffff40 0%,transparent 32%,#ffffff22 50%,transparent 74%,#ffffff2b 100%);border-radius:1px
+}
+.hwp-mixer-track .hwp-mixer-calibrated-thumb::after{background:#11161a;box-shadow:0 1px 0 #edf2f5b0}
+.hwp-mixer-track .hwp-mixer-calibrated-slider:active .hwp-mixer-calibrated-thumb{box-shadow:inset 0 1px 0 #fff,inset 0 -3px 0 #424b53,0 2px 0 #505a62,0 3px 0 #151a1e,1px 4px 5px #000c}
+.hwp-mixer-strip .hwp-mixer-name,.hwp-mc-channel .hwp-mc-name{box-shadow:inset 0 2px 3px #000c,0 1px 0 #8a92974a}
+.hwp-mixer-strip .hwp-mixer-btn:not(.hwp-mixer-name):not(.muted):not(.cued):not(.active),.hwp-mc-channel .hwp-mc-mute:not(.muted),.hwp-mc-channel .hwp-mc-toggle:not(.active){background:linear-gradient(#484d51,#282c2f);box-shadow:inset 0 1px 0 #ffffff35,0 2px 0 #0a0b0c,0 3px 3px #0006}
 </style></head><body><script>try{document.documentElement.dataset.hwpAppearance=localStorage.getItem("hwp-appearance")==="light"?"light":"dark"}catch(e){}</script><div id="root"><div id="hwp-boot-placeholder" style="box-sizing:border-box;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;background:#071d16;color:#f3f8f4;font:600 19px Arial,sans-serif;text-align:center"><img src="./hwp-logo.png" alt="Heaven's Wake Production" style="max-width:210px;max-height:130px;object-fit:contain;margin-bottom:24px"><div>Opening Heaven's Wake Production…</div></div></div><script>
 (function(){
  var startupError="";
