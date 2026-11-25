@@ -626,3 +626,5 @@ test('Text inspector formats a selected range without modifying the rest of the 
  assert.ok(html.includes('hwpClearTextSelection()},onInput:'));assert.ok(html.includes('hwpRunEffects(e,effectId)'));
  assert.ok(css.includes('::highlight(hwp-editor-selection)'));
 });
+
+test('Partial text selection keeps box layout tools out of the selection-only scope',()=>{const start=html.indexOf('function Ar({objects:e,patch:apply})'),end=html.indexOf('function jr(',start);const text=html.slice(start,end);assert.ok(text.includes('!partial&&'));assert.ok(text.includes("selected.start===0&&selected.end===String(object.text||'').length"));assert.ok(html.includes('hwpTextEditorFormat?.(e,t)'));assert.ok(html.includes('hwpScopedRuns(o)?o.textStyle:null'));});
