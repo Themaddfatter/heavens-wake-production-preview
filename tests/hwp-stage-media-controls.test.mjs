@@ -579,3 +579,30 @@ test('Changing a filmstrip label preserves slide order even when labels repeat',
  assert.equal((html.match(/children:hwpEditorSlideRuns\(n\)/g)||[]).length,2);
  assert.ok(html.includes('preserveEditorOrder:true,history:"push"'));
 });
+
+test('Editor drag-drop updates durable presentation order without changing labels or selection',()=>{
+ const start=html.indexOf('function hwpEditorOrderedSlides('),end=html.indexOf('function HwpEditorSlideContextMenu(',start);
+ const ceStart=html.indexOf('function O(e){'),ceEnd=html.indexOf('function we(',ceStart);
+ const helpers=new Function(html.slice(start,end)+html.slice(ceStart,ceEnd)+';return {order:hwpEditorOrderedSlides,reorder:hwpEditorReorderSlides,runs:hwpEditorSlideRuns,deleteSelection:hwpEditorDeleteSelection,cues:Ce,drag:hwpEditorFilmDrag};')();
+ const p={id:'p',groups:[{id:'a',name:'Verse'},{id:'b',name:'Chorus'}],slides:[{id:'1',groupId:'a'},{id:'2',groupId:'a'},{id:'3',groupId:'b'},{id:'4',groupId:'b'}]};
+ const moved=helpers.reorder(p,'4','1',false);
+ assert.deepEqual(moved.slides.map(s=>s.id),['4','1','2','3']);
+ assert.deepEqual(helpers.cues(moved,{allGroups:true}).map(c=>c.slide.id),['4','1','2','3']);
+ assert.deepEqual(helpers.runs(moved).flatMap(r=>r.slides.map(s=>s.id)),['4','1','2','3']);
+ assert.equal(moved.slides[0].groupId,'b');assert.equal(moved.customSlideOrder,true);
+ const down=helpers.reorder(moved,'1','3',true);assert.deepEqual(down.slides.map(s=>s.id),['4','2','3','1']);
+ assert.equal(helpers.reorder(down,'3','1',false),down);assert.equal(helpers.reorder(p,'1','missing',true),p);
+ assert.deepEqual(helpers.deleteSelection(down,{selectedSlideIds:['2'],selectedObjectIds:[]},['2']).selectedSlideIds,['3']);
+ const from=html.indexOf('case`reorder-slide-exact`:'),to=html.indexOf('case`paste-slide`:',from);
+ const reduce=new Function('e','t','j','Ce','hwpEditorReorderSlides','switch(t.type){'+html.slice(from,to)+'default:return e}');
+ const state={doc:{presentations:[p]},session:{selectedSlideIds:['2'],selectedObjectIds:['object']},live:{presentationId:'p',slideId:'2',cueIndex:1}};
+ const update=(e,fn)=>({...e,doc:{presentations:[fn(e.doc.presentations[0])]}});
+ const next=reduce(state,{type:'reorder-slide-exact',editorOrder:true,presentationId:'p',slideId:'4',targetId:'1',after:false},update,helpers.cues,helpers.reorder);
+ assert.equal(next.session,state.session);assert.equal(next.live.slideId,'2');assert.equal(next.live.cueIndex,2);
+ const calls=[],classes=new Set(),root={querySelectorAll:()=>[]},element={closest:()=>root,getBoundingClientRect:()=>({top:10,height:40}),classList:{add:x=>classes.add(x),contains:x=>classes.has(x),remove:(...xs)=>xs.forEach(x=>classes.delete(x))}};
+ const handlers=helpers.drag(p,p.slides[0],a=>calls.push(a));
+ handlers.onDrop({currentTarget:element,clientY:45,preventDefault(){},stopPropagation(){},dataTransfer:{types:['application/x-hwp-editor-slide'],getData:()=>JSON.stringify({presentationId:'p',slideId:'4'})}});
+ assert.deepEqual(calls,[{type:'reorder-slide-exact',presentationId:'p',slideId:'4',targetId:'1',after:true,editorOrder:true,history:'push'}]);
+ assert.equal((html.match(/\.\.\.hwpEditorFilmDrag\(n,i,t\)/g)||[]).length,2);
+ assert.ok(css.includes('.film-slide.hwp-film-drop-before'));
+});

@@ -1774,3 +1774,10 @@ html.hwp-ios-standalone:has(.hwp-access-shell) #hwp-native-top{background:#fff!i
  .hwp-access-shell .hwp-access-card{max-height:none}
 }
 @media(max-height:500px) and (orientation:landscape) and (pointer:coarse){.hwp-access-shell .hwp-access-header{padding-top:8px;flex-direction:row;flex-wrap:wrap;gap:8px}.hwp-access-shell .hwp-access-header img{width:140px;max-height:80px}.hwp-access-shell .hwp-access-connect{width:auto}}
+
+/* Slide editor filmstrip: reorder slides vertically without changing their labels. */
+.film-slides .film-slide[draggable="true"]{position:relative;cursor:default}
+.film-slides .film-slide.hwp-film-dragging{opacity:.65}
+.film-slides .film-slide.hwp-film-drop-before::before,.film-slides .film-slide.hwp-film-drop-after::after{content:"";position:absolute;left:0;right:0;height:3px;border-radius:2px;background:var(--accent,#9a70f4);z-index:5;pointer-events:none}
+.film-slides .film-slide.hwp-film-drop-before::before{top:0}
+.film-slides .film-slide.hwp-film-drop-after::after{bottom:0}
