@@ -2,7 +2,6 @@
 from PIL import Image
 from pathlib import Path
 from io import BytesIO
-import base64
 
 root = Path(__file__).resolve().parent.parent
 art = Image.open(root / 'hwp-logo.png').convert('RGBA')
@@ -29,9 +28,13 @@ for name, size, fraction in [
     decoded = Image.open(BytesIO(data))
     assert decoded.size == (size, size) and decoded.mode == 'RGB'
     assert decoded.getpixel((0,0)) == (255,255,255)
-    (root / name).write_bytes(data)
-    print('HWP_ICON_BEGIN ' + name, flush=True)
-    encoded = base64.b64encode(data).decode('ascii')
-    for offset in range(0, len(encoded), 4000):
-        print('HWP_ICON_DATA ' + encoded[offset:offset+4000], flush=True)
-    print('HWP_ICON_END ' + name, flush=True)
+    path = root / name
+    if path.exists():
+        existing = Image.open(path)
+        assert existing.size == (size, size) and existing.mode == 'RGB'
+        assert existing.getpixel((0,0)) == (255,255,255)
+        # Compare pixels, not compressor-specific file bytes.
+        assert existing.tobytes() == decoded.tobytes(), 'Icon differs from official logo: ' + name
+    else:
+        path.write_bytes(data)
+    print('Validated ' + name, flush=True)
