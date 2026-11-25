@@ -114,30 +114,30 @@
 .hwp-mobile-lookup-result-body{display:grid;gap:8px;margin-top:8px}
 .hwp-mobile-companion .hwp-mobile-add-lookup{width:100%;margin-block:7px;background:var(--amber);color:var(--hwp-accent-ink);border-color:var(--amber);font-weight:700;text-align:center}
 
-/* Match HWW's installed-iOS fix: a dedicated opaque fixed status-bar surface.
-   Do not let the light theme turn the white native status glyphs invisible. */
+/* Match the FINAL HWW installed iOS implementation: opaque native chrome,
+   a real edge-touching guard, and browser-managed safe areas. */
+#hwp-native-top{display:none}
 html.hwp-mobile-active,html.hwp-mobile-active body,html.hwp-mobile-active #root{overscroll-behavior:none}
 .hwp-mobile-companion{box-sizing:border-box;overscroll-behavior:none}
-.hwp-mobile-companion .hwp-mobile-header{box-shadow:none!important;filter:none!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
-html.hwp-ios-standalone,html.hwp-ios-standalone body,html.hwp-ios-standalone #root{background:#142338!important}
-html.hwp-ios-standalone .hwp-mobile-companion{
- padding-top:env(safe-area-inset-top,0px);
- padding-bottom:env(safe-area-inset-bottom,0px);
- padding-left:env(safe-area-inset-left,0px);
- padding-right:env(safe-area-inset-right,0px);
- height:100dvh;min-height:0;overflow:hidden;
+html.hwp-ios-standalone,html.hwp-ios-standalone body{
+ background-color:var(--hwp-native-chrome,#202328);
+ background-image:none;
 }
-html.hwp-ios-standalone #root::before{
- content:"";position:fixed;top:0;left:0;right:0;
- height:env(safe-area-inset-top,0px);background:#142338;
- background-image:none;box-shadow:none;filter:none;
- -webkit-backdrop-filter:none;backdrop-filter:none;
+html.hwp-ios-standalone #hwp-native-top{
+ display:block;position:fixed;top:0;left:0;right:0;height:16px;
+ background-color:var(--hwp-native-chrome,#202328);
+ opacity:1;filter:none!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;
  pointer-events:none;z-index:10001;
 }
-html.hwp-ios-standalone .hwp-mobile-companion>.hwp-mobile-header{
- top:auto;-webkit-backdrop-filter:none;backdrop-filter:none;
- box-shadow:none;filter:none;background-image:none;
+html.hwp-ios-standalone .hwp-mobile-companion{
+ --hwp-top-guard:16px;
+ padding-top:var(--hwp-top-guard);height:100vh;height:100dvh;min-height:0;overflow:hidden;
 }
-html.hwp-ios-standalone .hwp-mobile-main{padding-bottom:14px}
-html.hwp-ios-standalone .hwp-mobile-remote-workspace{padding-bottom:16px}
-html.hwp-ios-standalone .hwp-access-shell{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+html.hwp-ios-standalone .hwp-mobile-companion>.hwp-mobile-header{
+ background:var(--hwp-native-chrome,#202328);opacity:1;isolation:isolate;
+ background-image:none;box-shadow:none;filter:none!important;
+ backdrop-filter:none!important;-webkit-backdrop-filter:none!important;
+}
+html.hwp-ios-standalone .hwp-mobile-companion>.hwp-mobile-header::before,
+html.hwp-ios-standalone .hwp-mobile-companion>.hwp-mobile-header::after{filter:none!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
+html.hwp-ios-standalone .hwp-access-shell{box-sizing:border-box;padding-top:16px}
