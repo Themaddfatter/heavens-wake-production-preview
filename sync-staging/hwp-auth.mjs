@@ -1,4 +1,24 @@
 // Firebase credentials are handled by Firebase Auth, never embedded in library data.
+const transientCodes=new Set(['functions/unauthenticated','functions/unavailable','functions/deadline-exceeded','functions/internal','functions/unknown','auth/network-request-failed','auth/internal-error','auth/timeout','hwp/config-network']);
+export function isTransientHwpConnection(error){return transientCodes.has(error?.code)||['TypeError','AbortError','NetworkError','TimeoutError'].includes(error?.name)}
+const delay=ms=>new Promise(resolve=>setTimeout(resolve,ms));
+// A read-only retry uses the same authenticated callable endpoint. Never retry
+// a mutating command through a second transport after an ambiguous response.
+export async function readHwpCallable({call,user,data,fetcher=fetch,endpoint='https://us-central1-sion-schedule-next.cloudfunctions.net/hwpWorkspace'}){
+ try{return (await call(data)).data}catch(error){
+  if(!isTransientHwpConnection(error)||!user)throw error;
+  const token=await user.getIdToken(error?.code==='functions/unauthenticated');
+  const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),10000);
+  try{
+   const response=await fetcher(endpoint,{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},body:JSON.stringify({data}),signal:controller.signal,cache:'no-store'});
+   const body=await response.json();
+   if(body?.error){const status=String(body.error.status||'UNKNOWN').toLowerCase().replaceAll('_','-');throw Object.assign(new Error(body.error.message||'Ministry Connect request failed'),{code:'functions/'+status})}
+   if(!response.ok||!Object.prototype.hasOwnProperty.call(body,'result'))throw Object.assign(new Error('Ministry Connect connection failed'),{code:'functions/unavailable'});
+   return body.result;
+  }finally{clearTimeout(timer)}
+ }
+}
+const readActions=new Set(['access','get','preferences.get','worshipControlMobileServices','worshipControlMobileStatus','worshipControlStatus']);
 export async function createHwpAuth({loadConfig,loadSdk}) {
  const [config,sdk]=await Promise.all([loadConfig(),loadSdk()]);
  if(config?.projectId!=='sion-schedule-next'||!config.apiKey||!config.appId)throw new Error('HWP sign-in is temporarily unavailable.');
@@ -22,7 +42,7 @@ export async function createHwpAuth({loadConfig,loadSdk}) {
   async signIn(email,password){return sdk.signInWithEmailAndPassword(auth,email.trim(),password)},
   async signOut(){return sdk.signOut(auth)},
   async resetPassword(email){return sdk.sendPasswordResetEmail(auth,String(email||'').trim())},
-  async workspace(data){return (await workspace(data)).data},
+  async workspace(data){return readActions.has(data?.action)?readHwpCallable({call:workspace,user:auth.currentUser,data}):(await workspace(data)).data},
   async media(data){return (await media(data)).data},
   async songLibrary(data){return (await songLibrary(data)).data},
   async syncWorshipLibrary(){return (await songLibrary({action:'syncHwpLibrary'})).data}
@@ -33,7 +53,7 @@ export async function configureHwpPersistence(auth,sdk){
  let failure;
  for(const choice of choices){
   try{await sdk.setPersistence(auth,choice);return}
-  catch(error){failure=error;if(!['auth/web-storage-unsupported','auth/operation-not-supported-in-this-environment','auth/internal-error','auth/quota-exceeded'].includes(error?.code)&&!['SecurityError','QuotaExceededError','InvalidStateError','NotSupportedError'].includes(error?.name))throw error}
+  catch(error){failure=error;if(!['auth/web-storage-unsupported','auth/operation-not-supported-in-this-environment','auth/internal-error','auth/quota-exceeded','auth/unsupported-persistence-type'].includes(error?.code)&&!['SecurityError','QuotaExceededError','InvalidStateError','NotSupportedError','UnknownError','AbortError'].includes(error?.name))throw error}
  }
  throw failure||new Error('No supported sign-in storage is available.');
 }
@@ -52,7 +72,9 @@ export async function loadHwpConfig(){
  let failure;
  for(const endpoint of endpoints){
   try{
-   const response=await fetch(endpoint,{method:'GET',cache:'no-store'});
+   const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),8000);
+   let response;
+   try{response=await fetch(endpoint,{method:'GET',cache:'no-store',signal:controller.signal})}finally{clearTimeout(timer)}
    if(!response.ok){const error=new Error('Configuration HTTP '+response.status);error.code='hwp/config-http-'+response.status;throw error}
    const value=await response.json();
    if(!validHwpConfig(value))throw Object.assign(new Error('Invalid Firebase project configuration'),{code:'hwp/config-invalid'});
@@ -70,9 +92,16 @@ export async function verifyHwpAccess(system,user){
   try{return await system.auth.workspace({action:'access'})}
   catch(error){if(error?.code==='functions/invalid-argument')return system.auth.workspace({action:'get'});throw error}
  };
- try{return await check()}catch(error){
-  if(!['functions/unauthenticated','functions/unavailable','functions/deadline-exceeded','auth/network-request-failed','functions/internal'].includes(error?.code))throw error;
-  await user.getIdToken?.(true);
-  return check();
+ let failure;
+ for(let attempt=0;attempt<3;attempt++){
+  try{return await check()}catch(error){
+   failure=error;
+   if(!isTransientHwpConnection(error))throw error;
+   if(attempt===2)break;
+   // A failed forced refresh is itself transient on some mobile browsers.
+   try{await user.getIdToken?.(true)}catch(refreshError){if(!isTransientHwpConnection(refreshError))throw refreshError}
+   await delay(attempt===0?350:1000);
+  }
  }
+ throw failure;
 }

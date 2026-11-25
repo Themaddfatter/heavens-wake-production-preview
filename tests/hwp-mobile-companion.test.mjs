@@ -137,3 +137,14 @@ test('remote schedule updates merge with unrelated unsaved local changes and pre
  assert.match(html,/previous=signature.current===null\?null:JSON.parse\(signature.current\)\[0\]/);
  assert.match(html,/finally\{loading.current=false;if\(ready.current\)window.setTimeout\(\(\)=>run.current\(\),0\)\}/);
 });
+
+
+test('tablet access retries a transient callable failure using an authenticated read, never bypasses permission denial',async()=>{
+ const {readHwpCallable,verifyHwpAccess}=await import('../sync-staging/hwp-auth.mjs');
+ const data={action:'access'},user={getIdToken:async()=> 'test-token'};let requests=0;
+ const result=await readHwpCallable({data,user,call:async()=>{throw Object.assign(Error('offline'),{code:'functions/unavailable'})},fetcher:async(url,options)=>{requests++;assert.equal(options.headers.Authorization,'Bearer test-token');assert.deepEqual(JSON.parse(options.body),{data});return {ok:true,json:async()=>({result:{allowed:true}})}}});
+ assert.equal(result.allowed,true);assert.equal(requests,1);
+ await assert.rejects(readHwpCallable({data,user,call:async()=>{throw Object.assign(Error('denied'),{code:'functions/permission-denied'})},fetcher:async()=>{throw Error('must not call')}}),/denied/);
+ let calls=0;const access=await verifyHwpAccess({auth:{workspace:async()=>{if(++calls===1)throw Object.assign(Error('network'),{code:'functions/unavailable'});return {allowed:true}}}},user);
+ assert.equal(access.allowed,true);assert.equal(calls,2);
+});
