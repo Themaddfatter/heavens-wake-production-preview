@@ -7,7 +7,7 @@ on:
       - '.github/workflows/hwp-mac-preview.yml'
   workflow_dispatch:
 permissions:
-  contents: read
+  contents: write
 concurrency:
   group: hwp-mac-preview
   cancel-in-progress: false
@@ -39,7 +39,7 @@ jobs:
           hdiutil verify dist-preview/HWP.dmg
           app_path="$(find dist-preview -maxdepth 2 -name HWP.app -type d -print -quit)"
           test -n "$app_path"
-          lipo -verify_arch x86_64 arm64 "$app_path/Contents/MacOS/HWP"
+          lipo "$app_path/Contents/MacOS/HWP" -verify_arch x86_64 arm64
           test -s "$app_path/Contents/Resources/icon.icns"
       - name: Upload preview installer
         uses: actions/upload-artifact@v4
@@ -48,3 +48,9 @@ jobs:
           path: desktop/mac/dist-preview/HWP.dmg
           if-no-files-found: error
           retention-days: 1
+      - name: Publish downloadable HWP preview
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gh release create "hwp-mac-preview-${GITHUB_RUN_NUMBER}" dist-preview/HWP.dmg --target "$GITHUB_SHA" --title "HWP for Mac — Preview" --notes "Universal Intel and Apple Silicon test installer. Ad-hoc signed, not Apple notarized. Native automatic updates are disabled in this preview; web content uses the production HWP site. Not intended for live service use until tested." --prerelease --latest=false
