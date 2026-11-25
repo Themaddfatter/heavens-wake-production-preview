@@ -50,7 +50,7 @@ jobs:
           endpoint="https://us-central1-sion-schedule-next.cloudfunctions.net"
           curl -fsS --max-time 25 -H "Origin: $origin" -D "$RUNNER_TEMP/hwp-config-headers" "$endpoint/hwpFirebaseConfig" -o "$RUNNER_TEMP/hwp-config.json"
           grep -iF "access-control-allow-origin: $origin" "$RUNNER_TEMP/hwp-config-headers"
-          node -e 'const c=JSON.parse(require("node:fs").readFileSync(process.argv[1]));if(c.projectId!=="sion-schedule-next"||!c.apiKey||!c.appId||!c.authDomain)process.exit(1);console.log("Verified public HWP Firebase config and origin")' "$RUNNER_TEMP/hwp-config.json"
+          node -e 'const c=JSON.parse(require("node:fs").readFileSync(process.argv[1]));if(c.projectId!=="sion-schedule-next"||!c.apiKey||!c.appId||!c.authDomain)process.exit(1);console.log("Verified public HWP Firebase config and origin");console.log("HWP_PUBLIC_WEB_CONFIG="+JSON.stringify({apiKey:c.apiKey,authDomain:c.authDomain,projectId:c.projectId,appId:c.appId,messagingSenderId:c.messagingSenderId||""}))' "$RUNNER_TEMP/hwp-config.json"
           curl -fsS --max-time 20 -X OPTIONS -H "Origin: $origin" -H "Access-Control-Request-Method: POST" -H "Access-Control-Request-Headers: authorization,content-type" -D "$RUNNER_TEMP/hwp-workspace-headers" "$endpoint/hwpWorkspace" -o /dev/null
           grep -iF "access-control-allow-origin: $origin" "$RUNNER_TEMP/hwp-workspace-headers"
 
