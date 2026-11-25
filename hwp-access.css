@@ -1754,3 +1754,9 @@
 .hwp-access-shell{background:#fff!important}
 .hwp-access-shell .hwp-access-connect{color:#245e4c}
 html:has(.hwp-access-shell),body:has(.hwp-access-shell){background:#fff!important}
+
+/* White sign-in canvas and glossy pearl card. Scope all contrast changes to access screen. */
+html body .hwp-access-shell{background:#fff!important;color:#183150}
+.hwp-access-shell .hwp-access-card{background:linear-gradient(135deg,#fff 0%,#f8f7f4 25%,#fff 47%,#eceff2 73%,#fdfcf9 100%)!important;color:#183150;box-shadow:0 12px 32px rgba(31,38,47,.12),inset 0 1px 0 #fff,inset 0 0 18px rgba(255,255,255,.75)}
+.hwp-access-shell .hwp-access-field,.hwp-access-shell .hwp-access-message,.hwp-access-shell .hwp-access-message h2,.hwp-access-shell .hwp-access-note{color:#183150}
+html.hwp-ios-standalone:has(.hwp-access-shell) #hwp-native-top{background:#fff!important}

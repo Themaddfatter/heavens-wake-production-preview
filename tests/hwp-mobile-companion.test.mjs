@@ -170,3 +170,13 @@ test('HWP startup loads the verified public project configuration without networ
   assert.notEqual(result,HWP_PUBLIC_FIREBASE_CONFIG);
  }finally{globalThis.fetch=originalFetch}
 });
+
+
+test('HWP login loads fresh white canvas and pearl card stylesheet',async()=>{
+ const {readFileSync}=await import('node:fs');
+ const html=readFileSync(new URL('../index.html',import.meta.url),'utf8');
+ const css=readFileSync(new URL('../hwp-access.css',import.meta.url),'utf8');
+ assert.match(html,/hwp-access\.css\?v=[^"]+pearl-login-v1/);
+ assert.match(css,/html body \.hwp-access-shell\{background:#fff!important/);
+ assert.match(css,/\.hwp-access-shell \.hwp-access-card\{background:linear-gradient\(135deg,#fff 0%,#f8f7f4/);
+});
