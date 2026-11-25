@@ -194,9 +194,9 @@
 .hwp-mixer-console>.hwp-mixer-bank,.hwp-mc-console>.hwp-mc-list{display:grid;grid-template-columns:minmax(0,1fr);grid-template-rows:none;grid-auto-rows:100%;gap:0;overflow-x:hidden;overflow-y:auto;position:relative;isolation:isolate;scroll-snap-type:y mandatory;overscroll-behavior-y:contain;touch-action:pan-y;scrollbar-width:none}
 .hwp-mixer-console>.hwp-mixer-bank::-webkit-scrollbar,.hwp-mc-console>.hwp-mc-list::-webkit-scrollbar{display:none}
 .hwp-mixer-console>.hwp-mixer-bank.hwp-fader-dragging,.hwp-mc-console>.hwp-mc-list.hwp-fader-dragging{scroll-snap-type:none;cursor:grabbing;user-select:none}
-.hwp-fader-bank-page{display:flex;align-items:stretch;gap:6px;min-width:0;min-height:0;scroll-snap-align:start;scroll-snap-stop:normal}
+.hwp-fader-bank-page{display:flex;align-items:stretch;gap:6px;min-width:0;min-height:0;box-sizing:border-box;padding-bottom:6px;scroll-snap-align:start;scroll-snap-stop:normal}
 .hwp-fader-bank-page>.hwp-mixer-strip{box-sizing:border-box}
-.hwp-fader-bank-page.compact{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:3px}
+.hwp-fader-bank-page.compact{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:3px;padding-bottom:3px}
 .hwp-fader-bank-page.compact>.hwp-mc-channel{width:100%;min-width:0;padding:5px 2px;gap:5px}
 .hwp-fader-bank-page.compact>.hint{grid-column:1/-1}
 .hwp-fader-bank-page[inert]{pointer-events:none}
