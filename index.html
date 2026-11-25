@@ -2288,7 +2288,7 @@ function HwpMixerCompanion({data,setData,mix,setMix}){
    h('span',{className:'hwp-mc-number'},master?'OUTPUT':c.id<32?'CH '+String(c.id+1).padStart(2,'0'):'ST '+String(c.id-31).padStart(2,'0')),
    h(master?'span':'button',{className:'hwp-mc-name',title:master?name:'Edit '+name,style:{'--hwp-strip-channel-color':color},...(!master?{type:'button','aria-label':'Edit '+name,'data-hwp-mc-toggle':true,onClick:()=>openPanel('edit',c.id)}:{})},name),
    h('output',{className:'hwp-mc-db'},fmt(level)),
-   h('div',{className:'hwp-mixer-track hwp-mc-fader-track'},hwpMixerCalibratedFader({min:-80,max:10,step:.5,value:level,ticks:[10,0,-10,-20,-40,-60,-80],label:name+' fader',valueText:fmt(level),onChange:v=>change(c?.id,master,'level',v),formatTick:v=>v===-80?'−∞':v>0?'+'+v:String(v)})),
+   h('div',{className:'hwp-mixer-track hwp-mc-fader-track'},hwpMixerCalibratedFader({min:-80,max:10,step:.5,value:level,volumeScale:true,ticks:[10,5,0,-5,-10,-20,-40,-60,-80],label:name+' fader',valueText:fmt(level),onChange:v=>change(c?.id,master,'level',v),formatTick:v=>v===-80?'−∞':v>0?'+'+v:String(v)})),
    h('button',{type:'button',className:'hwp-mc-mute'+(on?'':' muted'),'aria-label':(on?'Mute ':'Unmute ')+name,'aria-pressed':!on,title:(on?'Mute ':'Unmute ')+name,onClick:()=>change(c?.id,master,'on')},on?'ON':'MUTED'),
    master?null:h('div',{className:'hwp-mc-tools'},icon('Gain: '+name,gainIcon,gainId===c.id,()=>{setMasterOpen(false);setPanel(null);setGainId(old=>old===c.id?null:c.id)},{'data-hwp-mc-toggle':true}),icon('EQ: '+name,hwpMixerEqIcon,panel?.type==='eq'&&panel.id===c.id,()=>openPanel('eq',c.id),{'data-hwp-mc-toggle':true})));
  }
@@ -3503,9 +3503,26 @@ function hwpMixerInitial(){
  try{const v=JSON.parse(localStorage.getItem('hwp-mixer-layout-v1')||'null');if(v&&v.channels?.length===40&&v.buses?.length===17)return {...v,favorites:Array.isArray(v.favorites)?v.favorites:[]};}catch{}
  return {channels,buses,favorites:[]};
 }
-function hwpMixerDbPosition(value,min,max){return (max-Math.max(min,Math.min(max,Number(value))))/(max-min)*100}
-function hwpMixerCalibratedFader({min,max,step,value,ticks,label,valueText,onChange,formatTick}){
- const h=hwpMixerNode,pos=v=>hwpMixerDbPosition(v,min,max)+'%';
+function hwpMixerDbPosition(value,min,max,volumeScale=false){
+ const v=Math.max(min,Math.min(max,Number(value)));
+ if(!volumeScale)return (max-v)/(max-min)*100;
+ return 100-hwpMixerFaderInterpolate(v,0,1)/10;
+}
+const hwpMixerVolumeCurve=[[-80,0],[-60,80],[-40,170],[-20,290],[-10,440],[-5,570],[0,700],[5,850],[10,1000]];
+function hwpMixerFaderInterpolate(value,from,to){
+ const curve=hwpMixerVolumeCurve,v=Math.max(curve[0][from],Math.min(curve[curve.length-1][from],Number(value)));
+ for(let i=1;i<curve.length;i++){const a=curve[i-1],b=curve[i];if(v<=b[from])return a[to]+(v-a[from])/(b[from]-a[from])*(b[to]-a[to])}
+ return curve[curve.length-1][to];
+}
+function hwpMixerCalibratedFader({min,max,step,value,ticks,label,valueText,onChange,formatTick,volumeScale=false}){
+ const h=hwpMixerNode,pos=v=>hwpMixerDbPosition(v,min,max,volumeScale)+'%';
+ const commit=v=>onChange(Math.max(min,Math.min(max,Math.round(v/step)*step)));
+ const keyboard=e=>{
+  if(!volumeScale)return;
+  const offsets={ArrowUp:step,ArrowRight:step,ArrowDown:-step,ArrowLeft:-step,PageUp:5,PageDown:-5};
+  if(e.key==='Home'||e.key==='End'){e.preventDefault();commit(e.key==='Home'?min:max)}
+  else if(Object.prototype.hasOwnProperty.call(offsets,e.key)){e.preventDefault();commit(Number(value)+offsets[e.key])}
+ };
  return h('div',{className:'hwp-mixer-calibrated'},
   h('div',{className:'hwp-mixer-scale hwp-mixer-calibrated-scale','aria-hidden':true},
    h('div',{className:'hwp-mixer-travel'},...ticks.map(v=>h('span',{key:v,className:v===0?'hwp-fader-unity':'',style:{top:pos(v)}},formatTick(v))))),
@@ -3513,7 +3530,7 @@ function hwpMixerCalibratedFader({min,max,step,value,ticks,label,valueText,onCha
    h('div',{className:'hwp-mixer-travel','aria-hidden':true},
     h('div',{className:'hwp-mixer-calibrated-rail'}),
     h('div',{className:'hwp-mixer-calibrated-thumb',style:{top:pos(value)}})),
-   h('input',{type:'range',className:'hwp-mixer-fader hwp-mixer-calibrated-input',min,max,step,value,'aria-label':label,'aria-valuetext':valueText,onChange:e=>onChange(Number(e.target.value)),onDoubleClick:()=>onChange(0)})));
+   h('input',{type:'range',className:'hwp-mixer-fader hwp-mixer-calibrated-input',min:volumeScale?0:min,max:volumeScale?1000:max,step:volumeScale?.01:step,value:volumeScale?Math.round(hwpMixerFaderInterpolate(value,0,1)*100)/100:value,'aria-label':label,'aria-valuetext':valueText,...(volumeScale?{'aria-valuemin':min,'aria-valuemax':max,'aria-valuenow':value,onKeyDown:keyboard}:{}),onChange:e=>volumeScale?commit(hwpMixerFaderInterpolate(e.target.value,1,0)):onChange(Number(e.target.value)),onDoubleClick:()=>onChange(0)})));
 }
 function HwpSoundMixer({data,setData,mix,setMix}){
  const h=hwpMixerNode, [category,setCategory]=l.useState('All Channels'),[editor,setEditor]=l.useState(null),[cue,setCue]=l.useState([]),[multiple,setMultiple]=l.useState(false),[volume,setVolume]=l.useState(50),[width,setWidth]=l.useState('Standard'),[hex,setHex]=l.useState('');
@@ -3541,7 +3558,7 @@ function HwpSoundMixer({data,setData,mix,setMix}){
     btn(name,()=>master?setEditor({type:'buses'}):openChannel(c.id),'hwp-mixer-name',{title:master?'Monitor settings':'Channel settings: '+name,style:{'--hwp-strip-channel-color':color}}),
     btn('CUE',()=>selectCue(id),cue.includes(id)?'cued':'',{'aria-pressed':cue.includes(id),'aria-label':'Cue '+name}),
     h('div',{className:'hwp-mixer-value'},fmt(level)),
-    h('div',{className:'hwp-mixer-track'},hwpMixerCalibratedFader({min:-80,max:10,step:.5,value:level,ticks:[10,0,-10,-20,-40,-60,-80],label:name+' fader',valueText:fmt(level),onChange:change,formatTick:v=>v===-80?'−∞':v>0?'+'+v:String(v)}),
+    h('div',{className:'hwp-mixer-track'},hwpMixerCalibratedFader({min:-80,max:10,step:.5,value:level,volumeScale:true,ticks:[10,5,0,-5,-10,-20,-40,-60,-80],label:name+' fader',valueText:fmt(level),onChange:change,formatTick:v=>v===-80?'−∞':v>0?'+'+v:String(v)}),
     h('div',{className:'hwp-mixer-meter',title:'Meter unavailable — mixer disconnected','aria-label':'No live meter signal'})),
     btn(on?'ON':'MUTED',toggle,on?'':'muted',{'aria-label':(on?'Mute ':'Unmute ')+name,'aria-pressed':!on}),
     master?btn('Mix settings',()=>setEditor({type:'buses'})):h('div',{className:'hwp-mixer-channel-tools'},channelTool('Gain',name,()=>setEditor({type:'gain',id:c.id}),editor?.type==='gain'&&editor.id===c.id),channelTool('EQ',name,()=>setEditor({type:'eq',id:c.id}),editor?.type==='eq'&&editor.id===c.id)),

@@ -292,11 +292,11 @@ test("Presenter Sound Mixer companion shares selected mix, channel levels, maste
  assert.equal(find("Open full Sound Mixer"),undefined);
  const bankPositions=()=>flat(view,true).filter(n=>n.props?.["data-bank-index"]!==undefined).map(n=>[n.props["data-bank-index"],n.props.inert]);
  assert.deepEqual(bankPositions(),[[0,false],[1,true]]);
- find("Vocal fader").props.onChange({target:{value:"-5.5"}});
+ find("Vocal fader").props.onChange({target:{value:String(scope.hwpMixerFaderInterpolate(-5.5,0,1))}});
  find("Mute Vocal").props.onClick();
  find("Master fader").props.onClick();view=render();
  assert.equal(find("Master fader").props["aria-pressed"],true);
- find("Mix 01 Master fader").props.onChange({target:{value:"0"}});
+ find("Mix 01 Master fader").props.onChange({target:{value:String(scope.hwpMixerFaderInterpolate(0,0,1))}});
  find("Master fader").props.onClick();view=render();assert.equal(find("Master fader").props["aria-pressed"],false);
  find("Gain: Vocal").props.onClick();view=render();assert.equal(find("Gain: Vocal").props["aria-pressed"],true);
  find("Vocal A.GAIN").props.onChange({target:{value:"12"}});
@@ -380,4 +380,26 @@ test("Mixer EQ confirms copy, paste and reset without changing the layout",()=>{
  for(const fn of timers.values())fn();view=render();assert.ok(!button("Paste").props.className.includes("hwp-eq-confirmed"));
  assert.ok(html.includes('id="hwp-matte-metal-fader-v1"'));
  assert.ok(!html.includes("Yamaha QL1 · Offline demo"));
+});
+
+test("Volume faders reserve thirty percent of travel above unity and keep gain linear",()=>{
+ const start=html.indexOf("function hwpMixerDbPosition("),end=html.indexOf("function HwpSoundMixer(",start);
+ const h=(tag,props,...children)=>({tag,props,children});
+ const scope=createContext({hwpMixerNode:h});
+ runInContext(html.slice(start,end),scope);
+ for(let v=-80;v<=10;v+=.5)assert.ok(Math.abs(scope.hwpMixerFaderInterpolate(scope.hwpMixerFaderInterpolate(v,0,1),1,0)-v)<1e-8);
+ assert.equal(scope.hwpMixerDbPosition(10,-80,10,true),0);
+ assert.equal(scope.hwpMixerDbPosition(5,-80,10,true),15);
+ assert.equal(scope.hwpMixerDbPosition(0,-80,10,true),30);
+ assert.equal(scope.hwpMixerDbPosition(-80,-80,10,true),100);
+ assert.equal(scope.hwpMixerDbPosition(0,-10,10),50);
+ let level=0;
+ const tree=scope.hwpMixerCalibratedFader({min:-80,max:10,step:.5,value:0,volumeScale:true,ticks:[10,5,0,-5,-10,-20,-40,-60,-80],label:"Volume",valueText:"0 dB",onChange:v=>level=v,formatTick:String});
+ function flat(n){return !n||typeof n!=="object"?[]:[n,...(Array.isArray(n.children)?n.children:[n.children]).flatMap(flat)]}
+ const nodes=flat(tree),input=nodes.find(n=>n.tag==="input"),cap=nodes.find(n=>n.props?.className==="hwp-mixer-calibrated-thumb"),tick=nodes.find(n=>n.tag==="span"&&n.children[0]==="0");
+ assert.equal(input.props.value,700);assert.equal(cap.props.style.top,"30%");assert.equal(tick.props.style.top,"30%");
+ input.props.onChange({target:{value:"850"}});assert.equal(level,5);
+ input.props.onKeyDown({key:"ArrowUp",preventDefault:()=>{}});assert.equal(level,.5);
+ input.props.onKeyDown({key:"End",preventDefault:()=>{}});assert.equal(level,10);
+ input.props.onDoubleClick();assert.equal(level,0);
 });
