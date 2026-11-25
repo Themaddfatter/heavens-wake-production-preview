@@ -628,3 +628,22 @@ test('Text inspector formats a selected range without modifying the rest of the 
 });
 
 test('Partial text selection keeps box layout tools out of the selection-only scope',()=>{const start=html.indexOf('function Ar({objects:e,patch:apply})'),end=html.indexOf('function jr(',start);const text=html.slice(start,end);assert.ok(text.includes('!partial&&'));assert.ok(text.includes("selected.start===0&&selected.end===String(object.text||'').length"));assert.ok(html.includes('hwpTextEditorFormat?.(e,t)'));assert.ok(html.includes('hwpScopedRuns(o)?o.textStyle:null'));});
+
+test('Returning to Show restores the local browsing position, not the live cue',()=>{
+ const start=html.indexOf('const HWP_SHOW_POSITION_KEYS='),end=html.indexOf('function qt(e,t){switch(t.type)',start);
+ const {remember,capture,restore}=new Function(html.slice(start,end)+';return {remember:hwpRememberShowPosition,capture:hwpCaptureShowScroll,restore:hwpRestoreShowScroll};')();
+ const doc={presentations:[{id:'viewed',slides:[{id:'a'},{id:'b'}]},{id:'on-air',slides:[{id:'c'}]}],playlists:[{id:'service',items:[{id:'row',presentationId:'viewed'}]}]};
+ const initial={doc,session:{mode:'show',playlistId:'service',activePresentationId:'viewed',selectedSlideIds:['b'],serviceNavId:'row',serviceNavSeq:7,hwpPresentationView:'all',thumbSize:180},live:{presentationId:'on-air',slideId:'c'}};
+ const edit=remember(initial,{...initial,session:{...initial.session,mode:'edit',selectedSlideIds:['a']}},{type:'edit-media-background'});
+ const changed={...edit,session:{...edit.session,activePresentationId:'on-air',selectedSlideIds:['c']},live:{presentationId:'on-air',slideId:'c',cueIndex:0}};
+ const back=remember(changed,{...changed,session:{...changed.session,mode:'show'}},{type:'session',patch:{mode:'show'}});
+ assert.equal(back.session.activePresentationId,'viewed');assert.deepEqual(back.session.selectedSlideIds,['b']);assert.equal(back.session.serviceNavSeq,7);assert.equal(back.session.thumbSize,180);assert.equal(back.live,changed.live);
+ const direct=remember(changed,{...changed,session:{...changed.session,mode:'show'}},{type:'select-presentation',id:'on-air'});assert.equal(direct.session.activePresentationId,'on-air');
+ const removed={...changed,doc:{...doc,presentations:[{id:'viewed',slides:[{id:'a'}]},doc.presentations[1]]}};
+ const deleted=remember(removed,{...removed,session:{...removed.session,mode:'show'}},{type:'session',patch:{mode:'show'}});assert.deepEqual(deleted.session.selectedSlideIds,[]);
+ const nodes={'.service-list':{scrollTop:120,scrollLeft:0},'.slide-scroll':{scrollTop:940,scrollLeft:3},'.preview-body':{scrollTop:22,scrollLeft:0}},root={querySelector:key=>nodes[key]},memory={};
+ for(const node of Object.values(nodes))capture(memory,root,node);
+ for(const node of Object.values(nodes)){node.scrollTop=0;node.scrollLeft=0}restore(memory,root);
+ assert.equal(nodes['.slide-scroll'].scrollTop,940);assert.equal(nodes['.service-list'].scrollTop,120);assert.equal(nodes['.preview-body'].scrollTop,22);
+ assert.ok(html.includes('showNavSeen.current=i.serviceNavSeq;hwpRestoreShowScroll'));assert.ok(html.includes('hwpRememberShowPosition(n,qt(n,t),t)'));
+});
