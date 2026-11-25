@@ -131,6 +131,10 @@ jobs:
               && grep -Fq '.hwp-service-theme-editor .hwp-theme-header-row' "$RUNNER_TEMP/hwp-access.css" \
               && curl --fail --silent --show-error --location --max-time 20 -H "Cache-Control: no-cache" "$domain/sync-staging/hwp-auth.mjs?hwp_release=$GITHUB_SHA" -o "$RUNNER_TEMP/hwp-auth.mjs" \
               && cmp -s sync-staging/hwp-auth.mjs "$RUNNER_TEMP/hwp-auth.mjs" \
+              && curl -fsSL --max-time 20 -H "Cache-Control: no-cache" "$domain/sync-staging/hwp-mobile-companion.mjs?hwp_release=$GITHUB_SHA" -o "$RUNNER_TEMP/hwp-mobile-companion.mjs" \
+              && cmp -s sync-staging/hwp-mobile-companion.mjs "$RUNNER_TEMP/hwp-mobile-companion.mjs" \
+              && curl -fsSL --max-time 20 -H "Cache-Control: no-cache" "$domain/hwp-mobile-companion.css?hwp_release=$GITHUB_SHA" -o "$RUNNER_TEMP/hwp-mobile-companion.css" \
+              && cmp -s hwp-mobile-companion.css "$RUNNER_TEMP/hwp-mobile-companion.css" \
               && cmp -s index.html "$RUNNER_TEMP/hwp-home.html" \
               && cmp -s hwp-access.css "$RUNNER_TEMP/hwp-access.css" \
               && test -s "$RUNNER_TEMP/hwp-logo.png"; then
