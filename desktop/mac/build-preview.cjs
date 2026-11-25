@@ -14,13 +14,14 @@ config.productName = 'HWP';
 config.directories.output = 'dist-preview';
 config.forceCodeSigning = false;
 config.mac.identity = '-';
+config.mac.artifactName = 'HWP.${ext}';
 config.mac.hardenedRuntime = false;
 config.mac.notarize = false;
 config.mac.target = ['dmg'];
 config.dmg.sign = false;
 config.publish = null;
 config.extraMetadata = { hwpPreview: true };
-const arch = process.arch === 'arm64' ? Arch.arm64 : Arch.x64;
+const arch = process.env.HWP_PREVIEW_UNIVERSAL === '1' ? Arch.universal : (process.arch === 'arm64' ? Arch.arm64 : Arch.x64);
 build({projectDir: __dirname, config, targets: Platform.MAC.createTarget(['dmg'], arch), publish: 'never'})
   .then(files => {
     const dmgs = files.filter(file => file.endsWith('.dmg') && fs.statSync(file).size > 0);
