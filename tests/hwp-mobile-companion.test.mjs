@@ -89,3 +89,14 @@ test('receiver polling does not redraw the mobile screen when only heartbeat tim
  assert.equal(sameMobileStatus(before,{...before,command:{id:'c',status:'applied'}}),false);
  assert.equal(sameMobileStatus(before,{...before,lookupActive:{kind:'song',presentationId:'p',slideId:'a',cueIndex:0}}),false);
 });
+
+test('installed iOS companion paints the status bar separately like HWW',async()=>{
+ const {readFileSync}=await import('node:fs');
+ const html=readFileSync(new URL('../index.html',import.meta.url),'utf8');
+ const css=readFileSync(new URL('../hwp-mobile-companion.css',import.meta.url),'utf8');
+ assert.match(html,/navigator\.standalone === true/);
+ assert.match(html,/apple-mobile-web-app-status-bar-style" content="black-translucent"/);
+ assert.match(html,/iosStandalone\?",viewport-fit=cover":",viewport-fit=auto"/);
+ assert.match(css,/html\.hwp-ios-standalone #root::before\{[\s\S]*?height:env\(safe-area-inset-top,0px\);background:#142338/);
+ assert.match(css,/html\.hwp-ios-standalone \.hwp-mobile-companion\{[\s\S]*?padding-top:env\(safe-area-inset-top,0px\);[\s\S]*?padding-bottom:env\(safe-area-inset-bottom,0px\)/);
+});
