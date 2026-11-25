@@ -102,7 +102,7 @@ export function createMobileCompanion({h,React,boot,visibleServices,cues,renderC
      if(!hasWorkspace.current||revision.current!==result.revision){revision.current=result.revision;hasWorkspace.current=true;setDoc(result.workspace)}
      setError('');setSyncError(false);
     }catch(e){if(alive){if(!hasWorkspace.current)setError(e?.message||String(e));else setSyncError(true)}}
-    finally{working=false;if(alive){clearTimeout(timer);timer=setTimeout(pollLibrary,document.hidden?60000:signalAvailable?15000:5000)}}
+    finally{working=false;if(alive){clearTimeout(timer);timer=setTimeout(pollLibrary,document.hidden?60000:signalAvailable?10000:2000)}}
    }
    void pollLibrary();
    return()=>{alive=false;clearTimeout(timer);clearTimeout(signalTimer);stopSignal()};

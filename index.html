@@ -2671,7 +2671,7 @@ draggable:!0,onDragStart:event=>{event.dataTransfer.setData(`application/x-hwp-s
  (0,M.jsx)(Ji,{kind:`labels`,items:t.doc.labels})
 ]}),i===`Tags`&&(0,M.jsx)(Ji,{kind:`tags`,items:t.doc.tags}),i===`Reset`&&(0,M.jsx)(`button`,{className:`btn danger`,onClick:()=>{r({title:`Reset to the sample library?`,body:`Presentations and settings return to the sample service.`,ok:`Reset`,danger:!0}).then(e=>{e&&n({type:`restore-demo`,history:`push`})})},children:`Reset sample library`})]})]})]})})}let hwpCloudBootPromise=null;
 async function hwpCloudBoot(){
- if(!hwpCloudBootPromise)hwpCloudBootPromise=Promise.all([import('./sync-staging/hwp-auth.mjs?v=service-realtime-v1'),import('./sync-staging/hwp-sync-client.mjs?v=mobile-preview-v1'),import('./sync-staging/hwp-sync-controller.mjs?v=hwp-media-deletion-safety-v1'),import('./sync-staging/hwp-firebase-media-remote.mjs?v=mobile-preview-v1'),import('./sync-staging/hwp-local-media-sync.mjs')]).then(async([a,b,c,d,e])=>{
+ if(!hwpCloudBootPromise)hwpCloudBootPromise=Promise.all([import('./sync-staging/hwp-auth.mjs?v=service-realtime-v2'),import('./sync-staging/hwp-sync-client.mjs?v=mobile-preview-v1'),import('./sync-staging/hwp-sync-controller.mjs?v=hwp-media-deletion-safety-v1'),import('./sync-staging/hwp-firebase-media-remote.mjs?v=mobile-preview-v1'),import('./sync-staging/hwp-local-media-sync.mjs')]).then(async([a,b,c,d,e])=>{
   const auth=await a.createHwpAuth({loadConfig:a.loadHwpConfig,loadSdk:a.loadHwpFirebaseSdk});
   const remote=d.createHwpFirebaseMediaRemote({storage:auth.firebaseStorage,auth:auth.firebaseAuth,sdk:auth.storageSdk});
   const local=e.createHwpLocalMediaSync({listRemote:remote.listRemote,download:remote.download});
@@ -2835,6 +2835,53 @@ function HwpWorshipServiceAgent({getLatest,serviceId}){
  },[serviceId]);
  return null;
 }
+// Merge a remote schedule update into local edits without treating navigation
+// or account preferences as a library conflict. A genuine overlapping edit
+// still fails closed rather than overwriting the operator's work.
+function hwpMergeScheduleWorkspace(base,local,remote){
+ const same=(a,b)=>JSON.stringify(a)===JSON.stringify(b);
+ const managed=row=>row?.hwpScheduleSync==="song";
+ const mergePlaylist=(b,l,r)=>{
+  if(!b||!l||!r||!Array.isArray(l.items)||!Array.isArray(r.items))return null;
+  const manual=p=>({...p,items:p.items.filter(row=>!managed(row))});
+  if(!same(manual(b),manual(r)))return null;
+  const incoming=r.items.filter(managed);
+  const rows=l.items.filter(row=>!managed(row));
+  const headerId=incoming[0]?.groupHeaderId||r.items.find(row=>row.permanentHeaderKey==="praise-songs")?.id;
+  const at=rows.findIndex(row=>row.id===headerId);
+  if(incoming.length&&at<0)return null;
+  if(incoming.length)rows.splice(at+1,0,...incoming);
+  return {...l,items:rows};
+ };
+ const mergeRows=(b,l,r,playlist)=>{
+  if(![b,l,r].every(Array.isArray))return null;
+  if(![b,l,r].every(rows=>rows.every(row=>typeof row?.id==="string")&&new Set(rows.map(row=>row.id)).size===rows.length))return null;
+  const bm=new Map(b.map(row=>[row.id,row])),lm=new Map(l.map(row=>[row.id,row])),rm=new Map(r.map(row=>[row.id,row])),out=[];
+  // Remote order wins for imported services; preserve local-only additions.
+  for(const id of new Set([...r.map(row=>row.id),...l.map(row=>row.id)])){
+   const before=bm.get(id),mine=lm.get(id),theirs=rm.get(id);
+   let next;
+   if(same(mine,before))next=theirs;
+   else if(same(theirs,before)||same(mine,theirs))next=mine;
+   else if(playlist){next=mergePlaylist(before,mine,theirs);if(!next)return null}
+   else return null;
+   if(next)out.push(next);
+  }
+  return out;
+ };
+ if(!base||!local||!remote)return null;
+ const result={...remote};
+ for(const key of new Set([...Object.keys(base),...Object.keys(local),...Object.keys(remote)])){
+  const b=base[key],l=local[key],r=remote[key];
+  if(same(l,b))continue;
+  if(same(r,b)||same(l,r)){if(l===undefined)delete result[key];else result[key]=l;continue}
+  if(key==="playlists"||key==="presentations"){
+   const merged=mergeRows(b,l,r,key==="playlists");if(!merged)return null;result[key]=merged;continue;
+  }
+  return null;
+ }
+ return result;
+}
 function HwpCloudAgent({getLatest}){
  const {state,dispatch}=N(),
   latest=(0,l.useRef)(state.doc),
@@ -2845,6 +2892,7 @@ function HwpCloudAgent({getLatest}){
   paused=(0,l.useRef)(false),
   timer=(0,l.useRef)(null),
   signature=(0,l.useRef)(null),
+  appliedRevision=(0,l.useRef)(null),
   refresh=(0,l.useRef)(async()=>{}),
   run=(0,l.useRef)(async()=>{});
  latest.current=state.doc;
@@ -2864,7 +2912,7 @@ function HwpCloudAgent({getLatest}){
   let alive=true,stop=()=>{},stopWorkspaceSignal=()=>{},pollId=null,bootRetryId=null,signalTimer=null,bootBusy=false,signalAvailable=false,signalRevision=-1,pollTicks=0,authenticated=false;
   function refreshSignaledWorkspace(){
    window.clearTimeout(signalTimer);
-   if(!alive||!authenticated||paused.current||!engine.current||signalRevision<=(engine.current.getRevision()??-1))return;
+   if(!alive||!authenticated||paused.current||!engine.current||signalRevision<=(appliedRevision.current??-1))return;
    if(working.current||loading.current){signalTimer=window.setTimeout(refreshSignaledWorkspace,250);return}
    void load();
   }
@@ -2875,6 +2923,7 @@ function HwpCloudAgent({getLatest}){
    window.clearTimeout(timer.current);
    try{
     const localRevision=await g("hwpCloudRevision");
+    if(appliedRevision.current===null)appliedRevision.current=localRevision??-1;
     const remote=await engine.current.inspect();
     if(!alive||paused.current)return;
     // Never automatically restore files from a stale safety backup.
@@ -2917,32 +2966,33 @@ function HwpCloudAgent({getLatest}){
       window.hwpHadStoredLibrary=true;
       dispatch({type:"import-library",doc:result.migratedDoc,history:"none"});
      }finally{window.hwpPersistGuard=false}
-     signature.current=JSON.stringify([result.migratedDoc,appearance,prefs]);
+     appliedRevision.current=result.revision;
+     signature.current=JSON.stringify([next.doc,appearance,prefs]);
      emit("syncing");
      window.setTimeout(()=>{if(alive)void refresh.current()},200);
      return;
     }
     if(remote.revision>0&&remote.workspace){
      if(localRevision!==remote.revision){
-      // Do not discard edits that have not yet reached the cloud when another
-      // device advances the remote revision. Keep the current local copy intact
-      // and ask the operator to resolve the conflict deliberately.
+      // A selection, appearance or account-preference change is not an
+      // unsaved library edit. Compare normalized document content only.
       if(window.hwpExpectedSharedDoc&&JSON.stringify(latest.current)!==window.hwpExpectedSharedDoc){
-       emit("syncing");
-       return;
+       emit("syncing");window.setTimeout(()=>{if(alive)void refresh.current()},100);return;
       }
-      if(signature.current!==null){
-       const current=getLatest(),
-        currentKey=JSON.stringify([current.doc,localStorage.getItem("hwp-appearance")==="light"?"light":"dark",hwpSharedPrefs(current.session)]);
-       if(currentKey!==signature.current){
+      const current=getLatest(),remoteDoc=Kt({...current,doc:remote.workspace}).doc;
+      const previous=signature.current===null?null:JSON.parse(signature.current)[0];
+      let doc=remoteDoc;
+      if(previous&&JSON.stringify(current.doc)!==JSON.stringify(previous)){
+       const merged=hwpMergeScheduleWorkspace(previous,current.doc,remoteDoc);
+       if(!merged){
         ready.current=false;emit("conflict");
-        reportError(new Error("The shared library changed on another device while this computer has unsaved work. Local changes were not overwritten. Review the shared library before loading it."),"Cloud revision conflict");
+        reportError(new Error("A conflicting library edit exists on another device. Local work was preserved."),"Cloud revision conflict");
         return;
        }
+       doc=merged;
       }
-      const current=getLatest(),doc=remote.workspace,
-       prefs=hwpSharedPrefs({...current.session,...(doc.hwpSessionPreferences||{})}),
-       next=hwpStateWithSharedPrefs(current,doc);
+      // Keep this instance's selected service, presentation and slide.
+      const prefs=hwpSharedPrefs(current.session),next=Kt({...current,doc});
       if(JSON.stringify(current.doc)!==JSON.stringify(doc)){
        await _("hwpLocalLibraryBackup",{
         doc:current.doc,appearance:localStorage.getItem("hwp-appearance"),
@@ -2954,15 +3004,11 @@ function HwpCloudAgent({getLatest}){
        await hwpPersistStateAndRevision(next,remote.revision);
        window.hwpExpectedSharedDoc=JSON.stringify(next.doc);
        window.hwpHadStoredLibrary=true;
-       dispatch({type:"import-library",doc,history:"none"});
-       dispatch({type:"session",patch:prefs});
+       dispatch({type:"import-library",doc:next.doc,history:"none"});
       }finally{window.hwpPersistGuard=false}
-      if(doc.hwpAppearance==="light"||doc.hwpAppearance==="dark"){
-       localStorage.setItem("hwp-appearance",doc.hwpAppearance);
-       document.documentElement.dataset.hwpAppearance=doc.hwpAppearance;
-      }
+      appliedRevision.current=remote.revision;
       signature.current=JSON.stringify([
-       doc,localStorage.getItem("hwp-appearance")==="light"?"light":"dark",prefs
+       remoteDoc,localStorage.getItem("hwp-appearance")==="light"?"light":"dark",prefs
       ]);
       emit("syncing");
       window.setTimeout(()=>{if(alive)void refresh.current()},200);
@@ -2996,14 +3042,13 @@ function HwpCloudAgent({getLatest}){
      else emit("syncing");
      void hwpBackfillExistingWorshipSongs();
      void hwpBackfillPublishedServices();
-     void run.current();
     }else{emit(navigator.onLine?"error":"offline")}
    }catch(e){
     if(alive){
      emit(navigator.onLine?"error":"offline");
      reportError(e,"Could not connect to shared storage.");
     }
-   }finally{loading.current=false}
+   }finally{loading.current=false;if(ready.current)window.setTimeout(()=>run.current(),0)}
   }
   refresh.current=load;
   function reload(){paused.current=false;emit("syncing");if(!engine.current)bootCloud();else void load()}
@@ -3029,7 +3074,7 @@ function HwpCloudAgent({getLatest}){
     stopWorkspaceSignal();window.clearTimeout(signalTimer);signalAvailable=false;signalRevision=-1;authenticated=!!user;
     if(!user){
      hwpWorshipBackfillComplete=false;hwpWorshipBackfillRetryAt=0;hwpServiceBackfillDone=false;hwpServiceBackfillRetryAt=0;
-     ready.current=false;paused.current=false;signature.current=null;
+     ready.current=false;paused.current=false;signature.current=null;appliedRevision.current=null;
      window.hwpExpectedSharedDoc=null;emit("signed-out");return;
     }
     paused.current=false;
@@ -3041,7 +3086,7 @@ function HwpCloudAgent({getLatest}){
    });
    // Firestore revision notifications refresh immediately. A bounded poll
    // still catches offline recovery, denied signal reads and other changes.
-   pollId=window.setInterval(()=>{pollTicks++;if(authenticated&&!document.hidden&&(!signalAvailable||pollTicks%3===0))void load()},5000);
+   pollId=window.setInterval(()=>{pollTicks++;if(authenticated&&!document.hidden&&(!signalAvailable||pollTicks%5===0))void load()},2000);
   }).catch(error=>{
    bootBusy=false;
    if(!alive)return;
@@ -3074,6 +3119,7 @@ function HwpCloudAgent({getLatest}){
    const previous=engine.current.getRevision();
    const result=await engine.current.save(snapshot,appearance,preferences,previous);
    await hwpPersistStateAndRevision(getLatest(),result.revision);
+   appliedRevision.current=result.revision;
    const replacements=new Map(result.migratedDoc.media.map(item=>[item.id,item]));
    const changed=snapshot.media.some(item=>item.src?.startsWith("idb:")&&replacements.get(item.id)?.src?.startsWith("cloud:"));
    if(changed){
@@ -3083,7 +3129,7 @@ function HwpCloudAgent({getLatest}){
     });
     dispatch({type:"patch-doc",patch:{media},history:"none"});
    }
-   signature.current=JSON.stringify([result.migratedDoc,appearance,preferences]);
+   signature.current=JSON.stringify([Kt({...getLatest(),doc:result.migratedDoc}).doc,appearance,preferences]);
    const savedSettings=snapshot.settings||{};
    const savedPrefs={appearance,accent:savedSettings.appearance?.accent,medleyGlow:savedSettings.appearance?.medleyGlow,confirmClearAll:savedSettings.general?.confirmClearAll,hotkeysEnabled:savedSettings.shortcuts?.hotkeysEnabled,defaultTranslation:savedSettings.bible?.defaultTranslation,defaultTranslationCount:savedSettings.bible?.defaultTranslationCount,session:preferences};
    window.hwpAccountPreferences=savedPrefs;hwpWriteAccountCache("hwp-account-prefs",savedPrefs);
@@ -3819,7 +3865,7 @@ function hwpIsCompanionDevice(){
 function HwpMobileCompanionGate({signOut}){
  const signOutRef=l.useRef(signOut);signOutRef.current=signOut;
  const [Component,setComponent]=l.useState(null),[failure,setFailure]=l.useState('');
- l.useEffect(()=>{let alive=true;import('./sync-staging/hwp-mobile-companion.mjs?v=12').then(({createMobileCompanion})=>{
+ l.useEffect(()=>{let alive=true;import('./sync-staging/hwp-mobile-companion.mjs?v=13').then(({createMobileCompanion})=>{
   if(!alive)return;
   const companion=createMobileCompanion({
    h:hwpMixerNode,React:l,boot:hwpCloudBoot,visibleServices:hwpVisibleServices,cues:p=>Ce(p,{allGroups:true}),

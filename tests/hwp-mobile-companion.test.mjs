@@ -115,8 +115,25 @@ test('published song-list revision signals refresh both desktop and mobile witho
  assert.match(auth,/watchWorkspaceSignal[\s\S]*?sionProductionLive','hwp-workspace-signal/);
  assert.match(html,/stopWorkspaceSignal=system\.auth\.watchWorkspaceSignal/);
  assert.match(html,/if\(working\.current\|\|loading\.current\)\{signalTimer=window\.setTimeout\(refreshSignaledWorkspace,250\)/);
- assert.match(html,/signalRevision<=\(engine\.current\.getRevision\(\)\?\?-1\)/);
+ assert.match(html,/signalRevision<=\(appliedRevision\.current\?\?-1\)/);
  assert.match(mobile,/stopSignal=system\.auth\.watchWorkspaceSignal/);
  assert.match(mobile,/revision\.current!==result\.revision/);
- assert.match(mobile,/signalAvailable\?15000:5000/);
+ assert.match(mobile,/signalAvailable\?10000:2000/);
+});
+
+
+test('remote schedule updates merge with unrelated unsaved local changes and preserve manual rows',async()=>{
+ const {readFileSync}=await import('node:fs');
+ const html=readFileSync(new URL('../index.html',import.meta.url),'utf8');
+ const code=html.slice(html.indexOf('function hwpMergeScheduleWorkspace('),html.indexOf('function HwpCloudAgent('));
+ const merge=new Function(code+';return hwpMergeScheduleWorkspace')();
+ const header={id:'praise',header:'Praise Songs',permanentHeaderKey:'praise-songs'},old={id:'old',presentationId:'p1',hwpScheduleSync:'song',groupHeaderId:'praise'},fresh={id:'fresh',presentationId:'p2',hwpScheduleSync:'song',groupHeaderId:'praise'};
+ const base={playlists:[{id:'service',items:[header,old]}],presentations:[{id:'p1'}],settings:{theme:'dark'}};
+ const local=structuredClone(base);local.playlists[0].items.push({id:'manual',presentationId:'manual'});local.settings.theme='light';
+ const remote=structuredClone(base);remote.playlists[0].items=[header,fresh];remote.presentations.push({id:'p2'});
+ const merged=merge(base,local,remote);
+ assert.deepEqual(merged.playlists[0].items,[header,fresh,{id:'manual',presentationId:'manual'}]);
+ assert.deepEqual(merged.presentations,remote.presentations);assert.equal(merged.settings.theme,'light');
+ assert.match(html,/previous=signature.current===null\?null:JSON.parse\(signature.current\)\[0\]/);
+ assert.match(html,/finally\{loading.current=false;if\(ready.current\)window.setTimeout\(\(\)=>run.current\(\),0\)\}/);
 });
