@@ -57,7 +57,7 @@ export function createMobileCompanion({h,React,boot,visibleServices,cues,renderC
   const [appearance,setAppearance]=useState(()=>normalizeAppearance(window.hwpAccountPreferences)),[appearanceStatus,setAppearanceStatus]=useState('');
   const appearanceRef=useRef(appearance),appearanceQueue=useRef(null),appearanceBusy=useRef(false),appearanceTimer=useRef(null);
   useEffect(()=>{document.documentElement.classList.add('hwp-mobile-active');return()=>document.documentElement.classList.remove('hwp-mobile-active')},[]);
-  useEffect(()=>{document.documentElement.dataset.hwpAppearance=appearance.appearance;document.querySelector('meta[name="theme-color"]')?.setAttribute('content',navigator.standalone===true?'#142338':appearance.appearance==='light'?'#ffffff':'#202328');try{localStorage.setItem('hwp-appearance',appearance.appearance)}catch{}},[appearance.appearance]);
+  useEffect(()=>{document.documentElement.dataset.hwpAppearance=appearance.appearance;const chrome=appearance.appearance==='light'?'#ffffff':'#202328';document.documentElement.style.setProperty('--hwp-native-chrome',chrome);document.querySelector('meta[name="theme-color"]')?.setAttribute('content',chrome);try{localStorage.setItem('hwp-appearance',appearance.appearance)}catch{}},[appearance.appearance]);
   useEffect(()=>()=>clearTimeout(appearanceTimer.current),[]);
   async function saveAppearance(){
    if(appearanceBusy.current||!appearanceQueue.current)return;
