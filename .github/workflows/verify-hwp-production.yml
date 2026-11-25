@@ -9,6 +9,11 @@ on:
       - hwp-style.css
       - hwp-access.css
       - hwp-mobile-companion.css
+      - hwp-update-notice.js
+      - hwp-update-notice.css
+      - hwp.webmanifest
+      - scripts/hwp-branding.py
+      - 'hwp-*-white.png'
       - hwp-logo.png
       - hwp-font-catalog.json
       - hwp-bibles/**
@@ -31,6 +36,11 @@ jobs:
     steps:
       - name: Check out HWP source
         uses: actions/checkout@v4
+
+      - name: Generate official opaque white HWP icons
+        run: |
+          python -m pip install --quiet Pillow
+          python scripts/hwp-branding.py
 
       - name: Verify all inline application JavaScript parses
         shell: bash
