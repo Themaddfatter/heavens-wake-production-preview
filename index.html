@@ -433,7 +433,7 @@ html[data-hwp-appearance="light"] .hwp-mixer-strip.master{border-color:var(--amb
 .hwp-mixer-gain-dialog .hwp-mixer-gain-track .hwp-mixer-calibrated-slider input.hwp-mixer-calibrated-input:active{cursor:grabbing!important}
 .hwp-mixer-calibrated-slider input.hwp-mixer-calibrated-input:active::-webkit-slider-thumb{cursor:grabbing!important}
 .hwp-mixer-calibrated-slider input.hwp-mixer-calibrated-input:active::-moz-range-thumb{cursor:grabbing!important}
-</style><link rel="stylesheet" href="./hwp-mobile-companion.css?v=2"/></head><body><script>try{document.documentElement.dataset.hwpAppearance="dark"}catch(e){}</script><div id="root"><div id="hwp-boot-placeholder" style="box-sizing:border-box;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;background:#071d16;color:#f3f8f4;font:600 19px Arial,sans-serif;text-align:center"><img src="./hwp-logo.png" alt="Heaven's Wake Production" style="max-width:210px;max-height:130px;object-fit:contain;margin-bottom:24px"><div>Opening Heaven's Wake Production…</div></div></div><script>
+</style><link rel="stylesheet" href="./hwp-mobile-companion.css?v=3"/></head><body><script>try{document.documentElement.dataset.hwpAppearance="dark"}catch(e){}</script><div id="root"><div id="hwp-boot-placeholder" style="box-sizing:border-box;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;background:#071d16;color:#f3f8f4;font:600 19px Arial,sans-serif;text-align:center"><img src="./hwp-logo.png" alt="Heaven's Wake Production" style="max-width:210px;max-height:130px;object-fit:contain;margin-bottom:24px"><div>Opening Heaven's Wake Production…</div></div></div><script>
 (function(){
  var startupError="";
  function record(event){
@@ -2758,6 +2758,15 @@ function HwpWorshipServiceAgent({getLatest,serviceId}){
   function wake(force=false){if(stopped)return;if(force){owner=false;heartbeatAt=0}window.clearTimeout(timer);if(busy){queued=true;return}void run()}
   async function acknowledge(command){
    if(stopped)return;const before=current();if(!before)return;
+   if(command.scope==="screen"){
+    const target=command.target,valid=['audience','stage'].includes(target?.role)&&typeof target?.on==='boolean';
+    // Screen controls are global to the selected production receiver. Never act on an inactive service lease.
+    const selected=hwpWorshipReceiverService(before.state)?.hwpScheduleId===serviceId;
+    if(valid&&selected&&appliedCommand!==command.id){send.current({type:"set-screen",role:target.role,on:target.on});appliedCommand=command.id;}
+    const after=current(),screenOn=valid&&after?.state.live[target.role==='audience'?'audienceOn':'stageOn']===true;
+    if(!stopped&&after)await call("worshipControlAck",{commandId:command.id,applied:valid&&selected&&screenOn===target.on,screenOn});
+    return;
+   }
    const target=command.scope==="sermon"?hwpSermonTarget(before.state,before.service,command.target):hwpWorshipTarget(before.state,before.service,command.target);
    if(target&&appliedCommand!==command.id){
     send.current({type:"hwp-worship-trigger",target,serviceId,scope:command.scope});
@@ -2778,10 +2787,10 @@ function HwpWorshipServiceAgent({getLatest,serviceId}){
      });
     }
     if(!auth.firebaseAuth.currentUser){emit("signed-out","Sign in to Heaven’s Wake Production.");delay=4000;return}
-    const {state,service}=current(),songs=hwpWorshipManifest(state,service),sermons=hwpSermonManifest(state,service),sermonActive=hwpSermonActive(state,service),manifest=JSON.stringify([songs,sermons]),previewSnapshot=hwpWorshipPreviewSnapshot(state,service,songs),sermonPreviewSnapshot=hwpWorshipPreviewSnapshot(state,service,sermons,"sermon"),active=hwpWorshipActive(state,service),audienceOn=!!state.live.audienceOn&&(state.live.hwpScheduleId||hwpWorshipReceiverService(state)?.hwpScheduleId)===serviceId,activeSignature=JSON.stringify([active,sermonActive,audienceOn]);const now=Date.now();
+    const {state,service}=current(),songs=hwpWorshipManifest(state,service),sermons=hwpSermonManifest(state,service),sermonActive=hwpSermonActive(state,service),manifest=JSON.stringify([songs,sermons]),previewSnapshot=hwpWorshipPreviewSnapshot(state,service,songs),sermonPreviewSnapshot=hwpWorshipPreviewSnapshot(state,service,sermons,"sermon"),active=hwpWorshipActive(state,service),audienceOn=!!state.live.audienceOn&&(state.live.hwpScheduleId||hwpWorshipReceiverService(state)?.hwpScheduleId)===serviceId,screenCapable=hwpWorshipReceiverService(state)?.hwpScheduleId===serviceId,stageOn=!!state.live.stageOn&&screenCapable,activeSignature=JSON.stringify([active,sermonActive,audienceOn,stageOn,screenCapable]);const now=Date.now();
     let result;
     if(!owner||manifest!==manifestKey||previewSnapshot!==previewKey||sermonPreviewSnapshot!==sermonPreviewKey||activeSignature!==activeKey||now-heartbeatAt>=12000){
-     const payload={active,sermonActive,audienceOn,takeover};
+     const payload={active,sermonActive,audienceOn,stageOn,screenCapable,takeover};
      if(!owner||manifest!==manifestKey){payload.songs=songs;payload.sermons=sermons;}
      if(!owner||previewSnapshot!==previewKey)payload.previewSnapshot=previewSnapshot;
      if(!owner||sermonPreviewSnapshot!==sermonPreviewKey)payload.sermonPreviewSnapshot=sermonPreviewSnapshot;
@@ -3774,7 +3783,7 @@ function hwpIsCompanionDevice(){
 }
 function HwpMobileCompanionGate({signOut}){
  const [Component,setComponent]=l.useState(null),[failure,setFailure]=l.useState('');
- l.useEffect(()=>{let alive=true;import('./sync-staging/hwp-mobile-companion.mjs?v=2').then(({createMobileCompanion})=>{
+ l.useEffect(()=>{let alive=true;import('./sync-staging/hwp-mobile-companion.mjs?v=3').then(({createMobileCompanion})=>{
   if(!alive)return;
   const companion=createMobileCompanion({
    h:hwpMixerNode,React:l,boot:hwpCloudBoot,visibleServices:hwpVisibleServices,cues:p=>Ce(p,{allGroups:true}),
