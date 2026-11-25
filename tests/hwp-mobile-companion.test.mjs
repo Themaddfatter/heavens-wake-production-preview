@@ -90,13 +90,18 @@ test('receiver polling does not redraw the mobile screen when only heartbeat tim
  assert.equal(sameMobileStatus(before,{...before,lookupActive:{kind:'song',presentationId:'p',slideId:'a',cueIndex:0}}),false);
 });
 
-test('installed iOS companion paints the status bar separately like HWW',async()=>{
+test('installed iOS uses final HWW opaque native chrome and fixed guard',async()=>{
  const {readFileSync}=await import('node:fs');
  const html=readFileSync(new URL('../index.html',import.meta.url),'utf8');
  const css=readFileSync(new URL('../hwp-mobile-companion.css',import.meta.url),'utf8');
+ const mobile=readFileSync(new URL('../sync-staging/hwp-mobile-companion.mjs',import.meta.url),'utf8');
  assert.match(html,/navigator\.standalone === true/);
- assert.match(html,/apple-mobile-web-app-status-bar-style" content="black-translucent"/);
- assert.match(html,/iosStandalone\?",viewport-fit=cover":",viewport-fit=auto"/);
- assert.match(css,/html\.hwp-ios-standalone #root::before\{[\s\S]*?height:env\(safe-area-inset-top,0px\);background:#142338/);
- assert.match(css,/html\.hwp-ios-standalone \.hwp-mobile-companion\{[\s\S]*?padding-top:env\(safe-area-inset-top,0px\);[\s\S]*?padding-bottom:env\(safe-area-inset-bottom,0px\)/);
+ assert.match(html,/apple-mobile-web-app-status-bar-style" content="default"/);
+ assert.match(html,/viewport-fit=auto/);
+ assert.doesNotMatch(html,/viewport-fit=cover|content="black-translucent"/);
+ assert.match(html,/<body><div id="hwp-native-top" aria-hidden="true"><\/div>/);
+ assert.match(css,/html\.hwp-ios-standalone #hwp-native-top\{[\s\S]*?height:16px;[\s\S]*?background-color:var\(--hwp-native-chrome,#202328\)/);
+ assert.match(css,/html\.hwp-ios-standalone \.hwp-mobile-companion\{[\s\S]*?--hwp-top-guard:16px;[\s\S]*?padding-top:var\(--hwp-top-guard\)/);
+ assert.doesNotMatch(css,/html\.hwp-ios-standalone #root::before/);
+ assert.match(mobile,/style\.setProperty\('--hwp-native-chrome',chrome\)/);
 });
