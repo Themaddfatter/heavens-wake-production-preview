@@ -1,0 +1,68 @@
+{
+  "name": "heavens-wake-production-desktop",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Heaven's Wake Production for macOS",
+  "author": "Zion House of Prayer",
+  "main": "main.cjs",
+  "scripts": {
+    "start": "electron .",
+    "check": "node --check main.cjs",
+    "dist:mac": "electron-builder --mac --universal --publish never"
+  },
+  "dependencies": {
+    "electron-updater": "6.8.11"
+  },
+  "devDependencies": {
+    "electron": "45.5.0",
+    "electron-builder": "26.18.0"
+  },
+  "build": {
+    "appId": "com.sioncdo.hwp",
+    "productName": "Heaven's Wake Production",
+    "asar": true,
+    "files": [
+      "main.cjs",
+      "package.json"
+    ],
+    "directories": {
+      "output": "dist"
+    },
+    "forceCodeSigning": true,
+    "mac": {
+      "category": "public.app-category.productivity",
+      "hardenedRuntime": true,
+      "notarize": true,
+      "target": [
+        {
+          "target": "dmg",
+          "arch": [
+            "universal"
+          ]
+        },
+        {
+          "target": "zip",
+          "arch": [
+            "universal"
+          ]
+        }
+      ],
+      "extendInfo": {
+        "NSCameraUsageDescription": "HWP uses cameras for production and livestreaming.",
+        "NSMicrophoneUsageDescription": "HWP uses microphones and audio inputs for production and livestreaming.",
+        "NSLocalNetworkUsageDescription": "HWP connects to production equipment on your local network."
+      }
+    },
+    "dmg": {
+      "sign": true
+    },
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "Themaddfatter",
+        "repo": "heavens-wake-production-preview",
+        "releaseType": "release"
+      }
+    ]
+  }
+}
