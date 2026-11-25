@@ -50,7 +50,7 @@ jobs:
           NODE
 
       - name: Run Bible and local media regression tests
-        run: node --test tests/hwp-mixer-cursor.test.mjs tests/hwp-service-medleys.test.mjs tests/hwp-bible-presentations.test.mjs tests/hwp-song-labels.test.mjs tests/hwp-stage-media-controls.test.mjs sync-staging/hwp-local-media-sync.test.mjs sync-staging/hwp-cloud-media.test.mjs sync-staging/hwp-recovery.test.mjs
+        run: node --test tests/hwp-sermon-control.test.mjs tests/hwp-mixer-cursor.test.mjs tests/hwp-service-medleys.test.mjs tests/hwp-bible-presentations.test.mjs tests/hwp-song-labels.test.mjs tests/hwp-stage-media-controls.test.mjs sync-staging/hwp-local-media-sync.test.mjs sync-staging/hwp-cloud-media.test.mjs sync-staging/hwp-recovery.test.mjs
 
       - name: Confirm live HWP Bible and service medley release
         shell: bash
@@ -74,6 +74,7 @@ jobs:
               && grep -Fq 'function hwpLibraryFolderEdit' "$RUNNER_TEMP/hwp-home.html" \
               && grep -Fq 'function hwpLoadBibleFile' "$RUNNER_TEMP/hwp-home.html" \
               && grep -Fq 'hwp-fixed-header-v1' "$RUNNER_TEMP/hwp-home.html" \
+              && grep -Fq 'function hwpSermonManifest' "$RUNNER_TEMP/hwp-home.html" \
               && grep -Fq 'function HwpWorshipControlAgent' "$RUNNER_TEMP/hwp-home.html" \
               && grep -Fq 'worshipControlAck' "$RUNNER_TEMP/hwp-home.html" \
               && grep -Fq 'function hwpUnmergeServiceScriptures' "$RUNNER_TEMP/hwp-home.html" \
