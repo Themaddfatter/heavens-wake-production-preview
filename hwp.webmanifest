@@ -26,5 +26,9 @@
       "type": "image/png",
       "purpose": "maskable"
     }
-  ]
+  ],
+  "display_override": [
+    "standalone"
+  ],
+  "description": "Heaven’s Wake Production mobile companion and production console"
 }
