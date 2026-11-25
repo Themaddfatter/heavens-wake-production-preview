@@ -1749,3 +1749,8 @@
   visibility:visible;color:#fff!important;background:#b51d31!important;border-color:#d43b4d;
 }
 .app .all-pres-bar > .hwp-selection-title {min-width:0;flex:1;overflow-wrap:anywhere}
+
+/* White sign-in page only; keep the original gold trim and dark form card. */
+.hwp-access-shell{background:#fff!important}
+.hwp-access-shell .hwp-access-connect{color:#245e4c}
+html:has(.hwp-access-shell),body:has(.hwp-access-shell){background:#fff!important}
