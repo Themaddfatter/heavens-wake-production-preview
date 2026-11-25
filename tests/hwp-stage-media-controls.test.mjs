@@ -138,8 +138,9 @@ test('deleted media stays deleted and stale backups cannot auto-resurrect images
 });
 
 test('production dynamically loads versioned media-safety modules',()=>{
- for(const name of ['hwp-sync-client','hwp-sync-controller','hwp-firebase-media-remote'])
-  assert.ok(html.includes("import('./sync-staging/"+name+".mjs?v=hwp-media-deletion-safety-v1')"),name);
+ for(const [name,version] of [['hwp-sync-client','mobile-preview-v1'],['hwp-sync-controller','hwp-media-deletion-safety-v1'],['hwp-firebase-media-remote','mobile-preview-v1']])
+  assert.ok(html.includes("import('./sync-staging/"+name+".mjs?v="+version+"')"),name);
+ assert.ok(html.includes('if(companion||!auth.firebaseAuth.currentUser||!navigator.onLine)return;'));
 });
 
 test("Operator workflow changes are present",()=>{for(const part of ["+ Create Template","Create and edit","hwpPresentationView","Type a message first.","hwpMergeServiceScriptures","hwpNormalizeMediaFolders","Choose existing media","Create a medley with the first selected song"])assert.ok(html.includes(part),part);assert.ok(!html.slice(html.indexOf("function HwpStageMessageComposer()"),html.indexOf("function Ni(")).includes("disabled:"));});
