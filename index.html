@@ -2671,7 +2671,7 @@ draggable:!0,onDragStart:event=>{event.dataTransfer.setData(`application/x-hwp-s
  (0,M.jsx)(Ji,{kind:`labels`,items:t.doc.labels})
 ]}),i===`Tags`&&(0,M.jsx)(Ji,{kind:`tags`,items:t.doc.tags}),i===`Reset`&&(0,M.jsx)(`button`,{className:`btn danger`,onClick:()=>{r({title:`Reset to the sample library?`,body:`Presentations and settings return to the sample service.`,ok:`Reset`,danger:!0}).then(e=>{e&&n({type:`restore-demo`,history:`push`})})},children:`Reset sample library`})]})]})]})})}let hwpCloudBootPromise=null;
 async function hwpCloudBoot(){
- if(!hwpCloudBootPromise)hwpCloudBootPromise=Promise.all([import('./sync-staging/hwp-auth.mjs?v=hwp-native-song-creator-v1'),import('./sync-staging/hwp-sync-client.mjs?v=hwp-media-deletion-safety-v1'),import('./sync-staging/hwp-sync-controller.mjs?v=hwp-media-deletion-safety-v1'),import('./sync-staging/hwp-firebase-media-remote.mjs?v=hwp-media-deletion-safety-v1'),import('./sync-staging/hwp-local-media-sync.mjs')]).then(async([a,b,c,d,e])=>{
+ if(!hwpCloudBootPromise)hwpCloudBootPromise=Promise.all([import('./sync-staging/hwp-auth.mjs?v=mobile-auth-recovery-v2'),import('./sync-staging/hwp-sync-client.mjs?v=hwp-media-deletion-safety-v1'),import('./sync-staging/hwp-sync-controller.mjs?v=hwp-media-deletion-safety-v1'),import('./sync-staging/hwp-firebase-media-remote.mjs?v=hwp-media-deletion-safety-v1'),import('./sync-staging/hwp-local-media-sync.mjs')]).then(async([a,b,c,d,e])=>{
   const auth=await a.createHwpAuth({loadConfig:a.loadHwpConfig,loadSdk:a.loadHwpFirebaseSdk});
   const remote=d.createHwpFirebaseMediaRemote({storage:auth.firebaseStorage,auth:auth.firebaseAuth,sdk:auth.storageSdk});
   const local=e.createHwpLocalMediaSync({listRemote:remote.listRemote,download:remote.download});
@@ -3838,11 +3838,11 @@ function HwpAccessGate({mode}){
      setPhase(err?.code==='functions/permission-denied'?'denied':'error');
      setError(err?.code==='functions/permission-denied'
        ?'Your Ministry Connect account is not authorized for Heaven’s Wake Production.'
-       :'Could not confirm your Ministry Connect access. Check your connection and try again.');
+       :'Could not confirm your Ministry Connect access. '+(typeof err?.code==='string'?'('+err.code+') ':'')+'Check your connection and try again.');
     }
    });
-  }).catch(()=>{
-   if(alive){setPhase('error');setError('Ministry Connect sign-in is temporarily unavailable. Please retry.')}
+  }).catch(err=>{
+   if(alive){setPhase('error');setError('Ministry Connect sign-in could not initialize. '+(typeof err?.code==='string'?'('+err.code+') ':'')+'Please retry.');console.warn('HWP sign-in initialization failed:',err?.code||err?.name,err?.message)}
   });
   return()=>{alive=false;sequence++;stop()};
  },[]);
