@@ -2671,8 +2671,8 @@ draggable:!0,onDragStart:event=>{event.dataTransfer.setData(`application/x-hwp-s
  (0,M.jsx)(Ji,{kind:`labels`,items:t.doc.labels})
 ]}),i===`Tags`&&(0,M.jsx)(Ji,{kind:`tags`,items:t.doc.tags}),i===`Reset`&&(0,M.jsx)(`button`,{className:`btn danger`,onClick:()=>{r({title:`Reset to the sample library?`,body:`Presentations and settings return to the sample service.`,ok:`Reset`,danger:!0}).then(e=>{e&&n({type:`restore-demo`,history:`push`})})},children:`Reset sample library`})]})]})]})})}let hwpCloudBootPromise=null;
 async function hwpCloudBoot(){
- if(!hwpCloudBootPromise)hwpCloudBootPromise=Promise.all([import('./sync-staging/hwp-auth.mjs?v=tablet-connection-v3'),import('./sync-staging/hwp-sync-client.mjs?v=mobile-preview-v1'),import('./sync-staging/hwp-sync-controller.mjs?v=hwp-media-deletion-safety-v1'),import('./sync-staging/hwp-firebase-media-remote.mjs?v=mobile-preview-v1'),import('./sync-staging/hwp-local-media-sync.mjs')]).then(async([a,b,c,d,e])=>{
-  const auth=await a.createHwpAuth({loadConfig:a.loadHwpConfig,loadSdk:a.loadHwpFirebaseSdk});
+ if(!hwpCloudBootPromise)hwpCloudBootPromise=Promise.all([import('./sync-staging/hwp-auth.mjs?v=tablet-connection-v4'),import('./sync-staging/hwp-sync-client.mjs?v=mobile-preview-v1'),import('./sync-staging/hwp-sync-controller.mjs?v=hwp-media-deletion-safety-v1'),import('./sync-staging/hwp-firebase-media-remote.mjs?v=mobile-preview-v1'),import('./sync-staging/hwp-local-media-sync.mjs')]).then(async([a,b,c,d,e])=>{
+  const auth=await a.createHwpAuth({loadConfig:a.loadHwpConfig,loadSdk:a.loadHwpFirebaseSdk,recovery:new URLSearchParams(location.search).get('authRecovery')==='1'});
   const remote=d.createHwpFirebaseMediaRemote({storage:auth.firebaseStorage,auth:auth.firebaseAuth,sdk:auth.storageSdk});
   const local=e.createHwpLocalMediaSync({listRemote:remote.listRemote,download:remote.download});
   const companion=hwpIsCompanionDevice()&&!['audience','stage'].includes(new URLSearchParams(location.search).get('display'));const client=b.createHwpSyncClient({workspaceCall:data=>auth.workspace(data),mediaCall:data=>auth.media(data),cloudMedia:{remote,local},companion});
@@ -3899,8 +3899,11 @@ function HwpAccessGate({mode}){
  const [error,setError]=(0,l.useState)('');
  const [notice,setNotice]=(0,l.useState)('');
  const [connectionAttempt,setConnectionAttempt]=(0,l.useState)(0);
+ const recovery=new URLSearchParams(location.search).get('authRecovery')==='1';
+ const restartSignIn=()=>{const url=new URL(location.href);url.searchParams.set('authRecovery','1');url.searchParams.set('authReload',String(Date.now()));location.assign(url.href)};
  (0,l.useEffect)(()=>{
   let alive=true,stop=()=>{},sequence=0,verifiedUid=null,retryTimer=null;
+  const startupTimer=setTimeout(()=>{if(alive)setPhase(old=>{if(old!=='checking')return old;setError('Sign-in is taking too long. Restart the sign-in session to recover.');return 'error'})},20000);
   const retry=()=>{if(alive){clearTimeout(retryTimer);retryTimer=setTimeout(()=>setConnectionAttempt(value=>value+1),2500)}};
   hwpCloudBoot().then(sys=>{
    if(!alive)return;
@@ -3938,14 +3941,14 @@ function HwpAccessGate({mode}){
   });
   const online=()=>{clearTimeout(retryTimer);setConnectionAttempt(value=>value+1)};
   window.addEventListener('online',online);
-  return()=>{alive=false;sequence++;stop();clearTimeout(retryTimer);window.removeEventListener('online',online)};
+  return()=>{alive=false;sequence++;stop();clearTimeout(retryTimer);clearTimeout(startupTimer);window.removeEventListener('online',online)};
  },[connectionAttempt]);
  async function submit(event){
   event.preventDefault();
   if(!system||busy)return;
   setBusy(true);setError('');setNotice('');
   try{await system.auth.signIn(email,password);setPassword('')}
-  catch(err){setError('Could not sign in. Check your Ministry Connect email and password.')}
+  catch(err){setError('Could not sign in. '+(err?.code?'('+err.code+') ':'')+'Check your Ministry Connect credentials or connection.')}
   finally{setBusy(false)}
  }
  async function resetPassword(){
@@ -4005,9 +4008,10 @@ function HwpAccessGate({mode}){
     ]}):(0,M.jsxs)('div',{className:'hwp-access-message',children:[
       (0,M.jsx)('h2',{children:phase==='checking'?'Checking Ministry Connect access':'Connection unavailable'}),
       (0,M.jsx)('p',{children:phase==='checking'?'Verifying your account and ministry permissions…':error||'Could not connect to Ministry Connect.'}),
-      phase==='error'&&(0,M.jsxs)('div',{className:'hwp-access-actions',children:[
+      (phase==='error'||phase==='checking'&&recovery)&&(0,M.jsxs)('div',{className:'hwp-access-actions',children:[
        user&&(0,M.jsx)('button',{className:'hwp-access-reset',onClick:signOut,children:'Use another account'}),
-       (0,M.jsx)('button',{className:'hwp-access-reset',onClick:()=>{setPhase('checking');setConnectionAttempt(value=>value+1)},children:'Try again'})
+       (0,M.jsx)('button',{className:'hwp-access-reset',onClick:()=>{setPhase('checking');setConnectionAttempt(value=>value+1)},children:'Try again'}),
+       (0,M.jsx)('button',{className:'hwp-access-reset',onClick:restartSignIn,children:recovery?'Restart sign-in session':'Restart sign-in (keep saved work)'})
       ]})
     ]})
    ]})

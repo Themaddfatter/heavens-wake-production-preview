@@ -19,17 +19,29 @@ export async function readHwpCallable({call,user,data,fetcher=fetch,endpoint='ht
  }
 }
 const readActions=new Set(['access','get','preferences.get','worshipControlMobileServices','worshipControlMobileStatus','worshipControlStatus']);
-export async function createHwpAuth({loadConfig,loadSdk}) {
+// Separate, opt-in recovery session: no old IndexedDB auth record or
+// popup/redirect resolver is needed for email/password authentication.
+export async function initializeHwpSignIn(sdk,config,{recovery=false}={}){
+ const name=recovery?'hwp-shared-recovery':'hwp-shared';
+ const existing=sdk.getApps().find(app=>app.name===name);
+ const app=existing||sdk.initializeApp(config,name);
+ let auth;
+ if(recovery&&!existing&&typeof sdk.initializeAuth==='function'){
+  const persistence=[sdk.browserSessionPersistence,sdk.inMemoryPersistence].filter(Boolean);
+  auth=sdk.initializeAuth(app,{persistence});
+ }else{
+  auth=sdk.getAuth(app);
+  if(!recovery)await configureHwpPersistence(auth,sdk);
+ }
+ if(typeof auth.authStateReady==='function')await auth.authStateReady();
+ return {app,auth};
+}
+export async function createHwpAuth({loadConfig,loadSdk,recovery=false}) {
  const [config,sdk]=await Promise.all([loadConfig(),loadSdk()]);
  if(config?.projectId!=='sion-schedule-next'||!config.apiKey||!config.appId)throw new Error('HWP sign-in is temporarily unavailable.');
- const existing=sdk.getApps().find(app=>app.name==='hwp-shared');
- const app=existing||sdk.initializeApp(config,'hwp-shared');
- const auth=sdk.getAuth(app),functions=sdk.getFunctions(app,'us-central1');
+ const {app,auth}=await initializeHwpSignIn(sdk,config,{recovery});
+ const functions=sdk.getFunctions(app,'us-central1');
  const storage=sdk.getStorage(app,'gs://sion-schedule-next.firebasestorage.app');
- // Safari/private browsing may reject persistent storage. Retain authenticated
- // session checks even when browser-local persistence is unavailable.
- await configureHwpPersistence(auth,sdk);
- if(typeof auth.authStateReady==='function')await auth.authStateReady();
  const workspace=sdk.httpsCallable(functions,'hwpWorkspace');
  const media=sdk.httpsCallable(functions,'hwpMedia');
  const songLibrary=sdk.httpsCallable(functions,'zionServiceSongs');

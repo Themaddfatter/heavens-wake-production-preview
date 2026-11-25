@@ -148,3 +148,11 @@ test('tablet access retries a transient callable failure using an authenticated 
  let calls=0;const access=await verifyHwpAccess({auth:{workspace:async()=>{if(++calls===1)throw Object.assign(Error('network'),{code:'functions/unavailable'});return {allowed:true}}}},user);
  assert.equal(access.allowed,true);assert.equal(calls,2);
 });
+
+
+test('tablet recovery initializes isolated Firebase email sign-in without old persistent auth data',async()=>{
+ const {initializeHwpSignIn}=await import('../sync-staging/hwp-auth.mjs');
+ const session={},memory={},calls=[];const app={name:'hwp-shared-recovery'},auth={authStateReady:async()=>{calls.push('ready')}};
+ const sdk={getApps:()=>[{name:'hwp-shared'}],initializeApp:(config,name)=>{assert.equal(name,'hwp-shared-recovery');return app},initializeAuth:(a,options)=>{assert.equal(a,app);assert.deepEqual(options,{persistence:[session,memory]});calls.push('initialize');return auth},browserSessionPersistence:session,inMemoryPersistence:memory,getAuth:()=>{throw Error('must not load old session')}};
+ assert.deepEqual(await initializeHwpSignIn(sdk,{projectId:'sion-schedule-next'},{recovery:true}),{app,auth});assert.deepEqual(calls,['initialize','ready']);
+});
