@@ -32,3 +32,16 @@ The workflow is designed to run on main when desktop files change or on manual d
 - Check signed update metadata and upgrade from an installed earlier version; verify download while running and install only on normal quit or explicit restart.
 - Test new web deployments on desktop, mobile, and tablet; verify existing web cache/update behavior and avoid forced refresh during service.
 - Add a Download for Mac link to the live website once the verified release exists. Native display management, offline media storage and hardware bridge integration need further work and are not claimed by this initial wrapper.
+
+## Build a local test DMG before signing credentials are ready
+
+On the Mac, with Node.js 24 and Xcode command line tools installed:
+
+```sh
+cd desktop/mac
+npm install --no-audit --no-fund
+npm run check
+npm run dist:preview
+```
+
+The output is in `dist-preview/`. This is a local, ad-hoc-signed preview, not an Apple-notarized distribution. It has its own app ID and disables native automatic updates; website updates still use the production site. Do not publish preview installers to the signed update feed. The Mac release requires the Apple credentials and real-device tests above.
