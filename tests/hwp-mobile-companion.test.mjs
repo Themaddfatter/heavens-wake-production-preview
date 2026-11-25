@@ -73,3 +73,11 @@ test('song titles always precede lyric-only matches, and duplicate titles do not
  assert.deepEqual(searchSongs(songs,'amazing').map(p=>p.id),['title','title2','lyrics']);
  assert.deepEqual(searchSongs(songs,'   '),[]);
 });
+
+test('Add to Service confirmation is independent of current live slide',()=>{
+ const command={id:'add',serviceId:'a',scope:'addLookup',expiresAt:100,target:{kind:'song',presentationId:'p'}};
+ const status={serviceId:'a',command:{id:'add',status:'applied'},active:cue};
+ assert.equal(commandFeedback(status,command,50),'applied');
+ assert.equal(commandFeedback({...status,command:{id:'wrong',status:'applied'}},command,50),null);
+ assert.equal(commandFeedback({...status,command:{id:'add',status:'rejected'}},command,50),'rejected');
+});
