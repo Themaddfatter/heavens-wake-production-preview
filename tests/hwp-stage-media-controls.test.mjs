@@ -645,5 +645,24 @@ test('Returning to Show restores the local browsing position, not the live cue',
  for(const node of Object.values(nodes))capture(memory,root,node);
  for(const node of Object.values(nodes)){node.scrollTop=0;node.scrollLeft=0}restore(memory,root);
  assert.equal(nodes['.slide-scroll'].scrollTop,940);assert.equal(nodes['.service-list'].scrollTop,120);assert.equal(nodes['.preview-body'].scrollTop,22);
- assert.ok(html.includes('showNavSeen.current=i.serviceNavSeq;hwpRestoreShowScroll'));assert.ok(html.includes('hwpRememberShowPosition(n,qt(n,t),t)'));
+ assert.ok(html.includes('showNavSeen.current=i.serviceNavSeq;hwpRestoreShowScroll'));assert.ok(html.includes('hwpRememberShowPosition(n,hwpResolveEditorSelection(qt(n,t)),t)'));
+});
+
+test('Right-click Edit opens the exact song and slide even when a different presentation is selected or live',()=>{
+ const start=html.indexOf('function hwpOpenEditorSlide('),end=html.indexOf('/* Show browsing state',start);
+ const orderStart=html.indexOf('function hwpEditorOrderedSlides('),orderEnd=html.indexOf('function hwpEditorSlideRuns(',orderStart);
+ const {open,repair}=new Function(html.slice(start,end)+html.slice(orderStart,orderEnd)+';return {open:hwpOpenEditorSlide,repair:hwpResolveEditorSelection};')();
+ const a={id:'song-a',groups:[{id:'g'}],slides:[{id:'a1',groupId:'g'},{id:'a2',groupId:'g'}]},b={id:'song-b',groups:[{id:'g'}],slides:[{id:'b1',groupId:'g'},{id:'b2',groupId:'g'}]};
+ const state={doc:{presentations:[a,b]},live:{presentationId:'song-a',slideId:'a1'},session:{mode:'show',activePresentationId:'song-a',selectedSlideIds:['a2'],selectedObjectIds:['old'],editingTemplateId:null,stageSlideContent:true}};
+ const next=open(state,'song-b','b2');
+ assert.equal(next.session.mode,'edit');assert.equal(next.session.activePresentationId,'song-b');assert.deepEqual(next.session.selectedSlideIds,['b2']);assert.deepEqual(next.session.selectedObjectIds,[]);assert.equal(next.session.stageSlideContent,false);assert.equal(next.live,state.live);assert.equal(next.doc,state.doc);
+ assert.equal(open(state,'song-a','b2'),state);
+ const mismatch={...state,session:{...state.session,mode:'edit',selectedSlideIds:['b2']}};
+ assert.equal(repair(mismatch).session.activePresentationId,'song-b');assert.deepEqual(repair(mismatch).session.selectedSlideIds,['b2']);
+ const noSelection={...mismatch,session:{...mismatch.session,selectedSlideIds:[]}};
+ assert.deepEqual(repair(noSelection).session.selectedSlideIds,['a1']);
+ assert.equal(repair(state),state);
+ assert.ok(html.includes('type:"hwp-open-editor-slide",presentationId:a.cue.presentationId,slideId:a.cue.slide.id'));
+ assert.ok(html.includes('type:"hwp-open-editor-slide",presentationId:o.id,slideId:e.slide.id'));
+ assert.ok(html.includes('type:"hwp-open-editor-slide",presentationId:presentation.id,slideId'));
 });
