@@ -544,3 +544,19 @@ test('HWP header keeps permanent slots across workspace and status changes',()=>
 });
 
 test('authentication recovers transient access errors without overriding denial',async()=>{const {verifyHwpAccess,validHwpConfig}=await import('../sync-staging/hwp-auth.mjs');let calls=0,refresh=0;const user={getIdToken:async force=>{assert.equal(force,true);refresh++}};const system={auth:{workspace:async data=>{assert.equal(data.action,'access');if(++calls===1)throw Object.assign(Error(),{code:'functions/unavailable'});return {ok:true}}}};assert.deepEqual(await verifyHwpAccess(system,user),{ok:true});assert.equal(calls,2);assert.equal(refresh,1);calls=0;await assert.rejects(verifyHwpAccess({auth:{workspace:async()=>{calls++;throw Object.assign(Error(),{code:'functions/permission-denied'})}}},user),{code:'functions/permission-denied'});assert.equal(calls,1);assert.equal(refresh,1);assert.equal(validHwpConfig({projectId:'wrong',apiKey:'x',appId:'x',authDomain:'x'}),false);});
+
+test('Editor deletion selects the next visible slide, then the previous one, without leaving edit mode',()=>{
+ const start=html.indexOf('function hwpEditorDeleteSelection('),end=html.indexOf('function HwpEditorSlideContextMenu(',start);
+ assert.ok(start>=0&&end>start);
+ const select=new Function(html.slice(start,end)+';return hwpEditorDeleteSelection;')();
+ const p={groups:[{id:'a'},{id:'b'}],slides:[{id:'1',groupId:'a'},{id:'3',groupId:'b'},{id:'2',groupId:'a'},{id:'4',groupId:'b'}]};
+ const session={mode:'edit',activePresentationId:'p',selectedSlideIds:['2'],selectedObjectIds:['old-object'],inspectorTab:'text'};
+ const next=select(p,session,['2']);assert.deepEqual(next.selectedSlideIds,['3']);assert.deepEqual(next.selectedObjectIds,[]);assert.equal(next.inspectorTab,'slide');assert.equal(next.mode,'edit');assert.equal(next.activePresentationId,'p');
+ assert.deepEqual(select(p,{...session,selectedSlideIds:['4']},['4']).selectedSlideIds,['3']);
+ assert.deepEqual(select(p,session,['2','3']).selectedSlideIds,['4']);
+ assert.deepEqual(select(p,session,['2','3','4']).selectedSlideIds,['1']);
+ assert.deepEqual(select(p,session,['1','2','3','4']).selectedSlideIds,[]);
+ assert.deepEqual(select(p,session,['3']).selectedSlideIds,['2']);
+ assert.deepEqual(select(p,session,['3']).selectedObjectIds,['old-object']);
+ assert.ok(html.includes('session:e.session.mode===`edit`?hwpEditorDeleteSelection(ke(e),e.session,t.ids)'));
+});
