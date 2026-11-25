@@ -40,9 +40,37 @@ export async function loadHwpFirebaseSdk(){
  const [app,auth,functions,storage]=await Promise.all([import(base+'firebase-app.js'),import(base+'firebase-auth.js'),import(base+'firebase-functions.js'),import(base+'firebase-storage.js')]);
  return {...app,...auth,...functions,...storage};
 }
+// These are public Firebase SDK configuration fields, never account credentials.
+export function validHwpConfig(value){
+ return value?.projectId==='sion-schedule-next'&&typeof value.apiKey==='string'&&value.apiKey.length>0&&typeof value.appId==='string'&&value.appId.length>0&&typeof value.authDomain==='string'&&value.authDomain.length>0;
+}
 export async function loadHwpConfig(){
- const endpoint='https://us-central1-sion-schedule-next.cloudfunctions.net/hwpFirebaseConfig';
- const response=await fetch(endpoint,{method:'GET',cache:'no-store'});
- if(!response.ok){const error=new Error('Ministry Connect configuration request failed (HTTP '+response.status+').');error.code='hwp/config-http-'+response.status;throw error}
- return response.json();
+ const endpoints=['https://us-central1-sion-schedule-next.cloudfunctions.net/hwpFirebaseConfig','https://sion-schedule-next.firebaseapp.com/__/firebase/init.json'];
+ const cacheKey='hwp-public-firebase-config-v1';
+ let failure;
+ for(const endpoint of endpoints){
+  try{
+   const response=await fetch(endpoint,{method:'GET',cache:'no-store'});
+   if(!response.ok){const error=new Error('Configuration HTTP '+response.status);error.code='hwp/config-http-'+response.status;throw error}
+   const value=await response.json();
+   if(!validHwpConfig(value))throw Object.assign(new Error('Invalid Firebase project configuration'),{code:'hwp/config-invalid'});
+   const {apiKey,authDomain,projectId,appId,messagingSenderId}=value;
+   const config={apiKey,authDomain,projectId,appId,messagingSenderId};
+   try{localStorage.setItem(cacheKey,JSON.stringify(config))}catch{}
+   return config;
+  }catch(error){failure=error}
+ }
+ try{const cached=JSON.parse(localStorage.getItem(cacheKey)||'null');if(validHwpConfig(cached))return cached}catch{}
+ throw Object.assign(new Error('Could not load Ministry Connect Firebase configuration.'),{code:failure?.code||'hwp/config-network'});
+}
+export async function verifyHwpAccess(system,user){
+ const check=async()=>{
+  try{return await system.auth.workspace({action:'access'})}
+  catch(error){if(error?.code==='functions/invalid-argument')return system.auth.workspace({action:'get'});throw error}
+ };
+ try{return await check()}catch(error){
+  if(!['functions/unauthenticated','functions/unavailable','functions/deadline-exceeded','auth/network-request-failed','functions/internal'].includes(error?.code))throw error;
+  await user.getIdToken?.(true);
+  return check();
+ }
 }
