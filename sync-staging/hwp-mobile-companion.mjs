@@ -79,23 +79,33 @@ export function createMobileCompanion({h,React,boot,visibleServices,cues,renderC
   const [selectedTile,setSelectedTile]=useState('');const [tap,setTap]=useState(null);const tapSequence=useRef(0),tapTimer=useRef(null);useEffect(()=>()=>clearTimeout(tapTimer.current),[]);
   const request=useRef(null),lock=useRef(false),lookupVersion=useRef(0),generation=useRef(0),revision=useRef(null),hasWorkspace=useRef(false);
   useEffect(()=>{
-   let alive=true,timer,working=false,system;
+   let alive=true,timer,signalTimer,working=false,system,stopSignal=()=>{},watching=false,signalAvailable=false,signalRevision=-1;
+   function refreshSignaledWorkspace(){
+    clearTimeout(signalTimer);
+    if(!alive||signalRevision<=(revision.current??-1))return;
+    if(working){signalTimer=setTimeout(refreshSignaledWorkspace,250);return}
+    clearTimeout(timer);void pollLibrary();
+   }
    async function pollLibrary(){
     if(!alive||working)return;working=true;
     try{
      system=system||await boot();
      if(!alive)return;
      request.current=data=>system.auth.workspace(data);
+     if(!watching&&typeof system.auth.watchWorkspaceSignal==='function'){
+      watching=true;
+      stopSignal=system.auth.watchWorkspaceSignal(next=>{signalAvailable=true;if(Number.isSafeInteger(next)&&next>=0){signalRevision=Math.max(signalRevision,next);refreshSignaledWorkspace()}},()=>{signalAvailable=false});
+     }
      const result=await system.createController().inspect();
      if(!alive)return;
      if(!result.workspace){if(!hasWorkspace.current){setError('noWorkspace');setDoc(null);revision.current=null}else setSyncError(true);return}
      if(!hasWorkspace.current||revision.current!==result.revision){revision.current=result.revision;hasWorkspace.current=true;setDoc(result.workspace)}
      setError('');setSyncError(false);
     }catch(e){if(alive){if(!hasWorkspace.current)setError(e?.message||String(e));else setSyncError(true)}}
-    finally{working=false;if(alive){clearTimeout(timer);timer=setTimeout(pollLibrary,document.hidden?60000:15000)}}
+    finally{working=false;if(alive){clearTimeout(timer);timer=setTimeout(pollLibrary,document.hidden?60000:signalAvailable?15000:5000)}}
    }
    void pollLibrary();
-   return()=>{alive=false;clearTimeout(timer)};
+   return()=>{alive=false;clearTimeout(timer);clearTimeout(signalTimer);stopSignal()};
   },[refresh]);
   const services=visibleSchedules(doc,visibleServices),service=selectAvailable(services,serviceId);
   const rows=(service?.items||[]).filter(r=>r.header||doc?.presentations?.some(p=>p.id===r.presentationId));

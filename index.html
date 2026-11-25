@@ -2671,7 +2671,7 @@ draggable:!0,onDragStart:event=>{event.dataTransfer.setData(`application/x-hwp-s
  (0,M.jsx)(Ji,{kind:`labels`,items:t.doc.labels})
 ]}),i===`Tags`&&(0,M.jsx)(Ji,{kind:`tags`,items:t.doc.tags}),i===`Reset`&&(0,M.jsx)(`button`,{className:`btn danger`,onClick:()=>{r({title:`Reset to the sample library?`,body:`Presentations and settings return to the sample service.`,ok:`Reset`,danger:!0}).then(e=>{e&&n({type:`restore-demo`,history:`push`})})},children:`Reset sample library`})]})]})]})})}let hwpCloudBootPromise=null;
 async function hwpCloudBoot(){
- if(!hwpCloudBootPromise)hwpCloudBootPromise=Promise.all([import('./sync-staging/hwp-auth.mjs?v=mobile-auth-recovery-v3'),import('./sync-staging/hwp-sync-client.mjs?v=mobile-preview-v1'),import('./sync-staging/hwp-sync-controller.mjs?v=hwp-media-deletion-safety-v1'),import('./sync-staging/hwp-firebase-media-remote.mjs?v=mobile-preview-v1'),import('./sync-staging/hwp-local-media-sync.mjs')]).then(async([a,b,c,d,e])=>{
+ if(!hwpCloudBootPromise)hwpCloudBootPromise=Promise.all([import('./sync-staging/hwp-auth.mjs?v=service-realtime-v1'),import('./sync-staging/hwp-sync-client.mjs?v=mobile-preview-v1'),import('./sync-staging/hwp-sync-controller.mjs?v=hwp-media-deletion-safety-v1'),import('./sync-staging/hwp-firebase-media-remote.mjs?v=mobile-preview-v1'),import('./sync-staging/hwp-local-media-sync.mjs')]).then(async([a,b,c,d,e])=>{
   const auth=await a.createHwpAuth({loadConfig:a.loadHwpConfig,loadSdk:a.loadHwpFirebaseSdk});
   const remote=d.createHwpFirebaseMediaRemote({storage:auth.firebaseStorage,auth:auth.firebaseAuth,sdk:auth.storageSdk});
   const local=e.createHwpLocalMediaSync({listRemote:remote.listRemote,download:remote.download});
@@ -2861,7 +2861,13 @@ function HwpCloudAgent({getLatest}){
   window.dispatchEvent(new CustomEvent("hwp-cloud-error",{detail}));
  }
  (0,l.useEffect)(()=>{
-  let alive=true,stop=()=>{},pollId=null,bootRetryId=null,bootBusy=false;
+  let alive=true,stop=()=>{},stopWorkspaceSignal=()=>{},pollId=null,bootRetryId=null,signalTimer=null,bootBusy=false,signalAvailable=false,signalRevision=-1,pollTicks=0,authenticated=false;
+  function refreshSignaledWorkspace(){
+   window.clearTimeout(signalTimer);
+   if(!alive||!authenticated||paused.current||!engine.current||signalRevision<=(engine.current.getRevision()??-1))return;
+   if(working.current||loading.current){signalTimer=window.setTimeout(refreshSignaledWorkspace,250);return}
+   void load();
+  }
   async function load(){
    if(!engine.current||working.current||loading.current||paused.current)return;
    loading.current=true;
@@ -3020,17 +3026,22 @@ function HwpCloudAgent({getLatest}){
    engine.current=system.createController();
    stop=system.auth.observe(user=>{
     if(!alive)return;
+    stopWorkspaceSignal();window.clearTimeout(signalTimer);signalAvailable=false;signalRevision=-1;authenticated=!!user;
     if(!user){
      hwpWorshipBackfillComplete=false;hwpWorshipBackfillRetryAt=0;hwpServiceBackfillDone=false;hwpServiceBackfillRetryAt=0;
      ready.current=false;paused.current=false;signature.current=null;
      window.hwpExpectedSharedDoc=null;emit("signed-out");return;
     }
     paused.current=false;
+    stopWorkspaceSignal=system.auth.watchWorkspaceSignal(revision=>{
+     signalAvailable=true;
+     if(Number.isSafeInteger(revision)&&revision>=0){signalRevision=Math.max(signalRevision,revision);refreshSignaledWorkspace()}
+    },()=>{signalAvailable=false});
     void load();
    });
-   // Firebase callable workspace reads are lightweight; check for changes
-   // without forcing an operator to refresh or reconnect.
-   pollId=window.setInterval(()=>{if(!document.hidden)void load()},15000);
+   // Firestore revision notifications refresh immediately. A bounded poll
+   // still catches offline recovery, denied signal reads and other changes.
+   pollId=window.setInterval(()=>{pollTicks++;if(authenticated&&!document.hidden&&(!signalAvailable||pollTicks%3===0))void load()},5000);
   }).catch(error=>{
    bootBusy=false;
    if(!alive)return;
@@ -3041,7 +3052,7 @@ function HwpCloudAgent({getLatest}){
   }
   bootCloud();
   return()=>{
-   alive=false;ready.current=false;stop();
+   alive=false;ready.current=false;stop();stopWorkspaceSignal();window.clearTimeout(signalTimer);
    window.clearTimeout(timer.current);window.clearInterval(pollId);window.clearTimeout(bootRetryId);
    window.removeEventListener("hwp-cloud-reload",reload);
    window.removeEventListener("hwp-cloud-pause",pause);
@@ -3808,7 +3819,7 @@ function hwpIsCompanionDevice(){
 function HwpMobileCompanionGate({signOut}){
  const signOutRef=l.useRef(signOut);signOutRef.current=signOut;
  const [Component,setComponent]=l.useState(null),[failure,setFailure]=l.useState('');
- l.useEffect(()=>{let alive=true;import('./sync-staging/hwp-mobile-companion.mjs?v=11').then(({createMobileCompanion})=>{
+ l.useEffect(()=>{let alive=true;import('./sync-staging/hwp-mobile-companion.mjs?v=12').then(({createMobileCompanion})=>{
   if(!alive)return;
   const companion=createMobileCompanion({
    h:hwpMixerNode,React:l,boot:hwpCloudBoot,visibleServices:hwpVisibleServices,cues:p=>Ce(p,{allGroups:true}),

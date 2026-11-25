@@ -17,6 +17,8 @@ export async function createHwpAuth({loadConfig,loadSdk}) {
   firebaseAuth:auth, firebaseStorage:storage, storageSdk:sdk,
   observe:callback=>sdk.onAuthStateChanged(auth,callback),
   watchWorshipSignal(serviceId,onChange,onError){let alive=true,stop=()=>{};import('https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js').then(fs=>{if(alive)stop=fs.onSnapshot(fs.doc(fs.getFirestore(app),'sionProductionLive','hwp-worship-signal:'+serviceId),onChange,onError)}).catch(err=>{if(alive)onError(err)});return()=>{alive=false;stop()}},
+  // The signal contains only a workspace revision, never presentation contents.
+  watchWorkspaceSignal(onChange,onError){let alive=true,stop=()=>{};import('https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js').then(fs=>{if(alive)stop=fs.onSnapshot(fs.doc(fs.getFirestore(app),'sionProductionLive','hwp-workspace-signal'),snap=>{if(alive)onChange(snap.exists()?snap.data()?.revision:null)},err=>{if(alive)onError(err)})}).catch(err=>{if(alive)onError(err)});return()=>{alive=false;stop()}},
   async signIn(email,password){return sdk.signInWithEmailAndPassword(auth,email.trim(),password)},
   async signOut(){return sdk.signOut(auth)},
   async resetPassword(email){return sdk.sendPasswordResetEmail(auth,String(email||'').trim())},

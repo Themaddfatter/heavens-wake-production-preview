@@ -105,3 +105,17 @@ test('installed iOS uses final HWW opaque native chrome and fixed guard',async()
  assert.doesNotMatch(css,/html\.hwp-ios-standalone #root::before/);
  assert.match(mobile,/style\.setProperty\('--hwp-native-chrome',chrome\)/);
 });
+
+
+test('published song-list revision signals refresh both desktop and mobile without replacing the active selection',()=>{
+ const html=readFileSync(new URL('../index.html',import.meta.url),'utf8');
+ const mobile=readFileSync(new URL('../sync-staging/hwp-mobile-companion.mjs',import.meta.url),'utf8');
+ const auth=readFileSync(new URL('../sync-staging/hwp-auth.mjs',import.meta.url),'utf8');
+ assert.match(auth,/watchWorkspaceSignal[\s\S]*?sionProductionLive','hwp-workspace-signal/);
+ assert.match(html,/stopWorkspaceSignal=system\.auth\.watchWorkspaceSignal/);
+ assert.match(html,/if\(working\.current\|\|loading\.current\)\{signalTimer=window\.setTimeout\(refreshSignaledWorkspace,250\)/);
+ assert.match(html,/signalRevision<=\(engine\.current\.getRevision\(\)\?\?-1\)/);
+ assert.match(mobile,/stopSignal=system\.auth\.watchWorkspaceSignal/);
+ assert.match(mobile,/revision\.current!==result\.revision/);
+ assert.match(mobile,/signalAvailable\?15000:5000/);
+});
