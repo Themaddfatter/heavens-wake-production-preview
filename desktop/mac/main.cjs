@@ -1,6 +1,7 @@
 'use strict';
 const { app, BrowserWindow, Menu, dialog, shell, session } = require('electron');
 const { autoUpdater } = require('electron-updater');
+const { hwpPreview = false } = require('./package.json');
 const HOME = 'https://production.sioncdo.com/';
 const ORIGIN = new URL(HOME).origin;
 let mainWindow, ready = false, checking = false, timer, updateMenu, quitting = false;
@@ -20,7 +21,7 @@ function protect(contents) {
   contents.on('will-redirect', (event, url) => { if (!isHwp(url)) event.preventDefault(); });
   contents.on('will-attach-webview', event => event.preventDefault());
   contents.setWindowOpenHandler(({url}) => {
-    if (isHwp(url)) return {action:'allow', overrideBrowserWindowOptions:{webPreferences:securePrefs}};
+    if (isHwp(url) || (url === 'about:blank' && isHwp(contents.getURL()))) return {action:'allow', overrideBrowserWindowOptions:{webPreferences:securePrefs}};
     if (isExternalHttps(url)) void shell.openExternal(url).catch(console.error);
     return {action:'deny'};
   });
@@ -42,19 +43,21 @@ function installNow() {
   if (choice === 1) { quitting = true; autoUpdater.quitAndInstall(false, true); }
 }
 async function checkUpdates(manual = false) {
-  if (!app.isPackaged) { if (manual) dialog.showMessageBox({message:'Updates are available in signed release builds only.'}); return; }
+  if (!app.isPackaged || hwpPreview) { if (manual) dialog.showMessageBox({message:'Updates are available in signed release builds only.'}); return; }
   if (ready) { if (manual) installNow(); return; }
   if (checking) return;
   checking = true;
   try {
     const result = await autoUpdater.checkForUpdates();
-    if (manual && !result?.isUpdateAvailable) await dialog.showMessageBox({message:'HWP is up to date.'});
+    if (manual && result?.isUpdateAvailable === false) await dialog.showMessageBox({message:'HWP is up to date.'});
+    else if (manual && result?.isUpdateAvailable === true && !ready) await dialog.showMessageBox({message:'HWP update found.',detail:'The update will download in the background. You can install it when it is safe.'});
   } catch (error) {
     console.error('Update check failed', error);
     if (manual) await dialog.showMessageBox({type:'warning',message:'Unable to check for updates.',detail:'HWP can continue running. Try again later.'});
   } finally { checking = false; }
 }
 function configureUpdater() {
+  if (!app.isPackaged || hwpPreview) return;
   autoUpdater.autoDownload = true;
   autoUpdater.autoInstallOnAppQuit = true;
   autoUpdater.allowPrerelease = false;
