@@ -45,6 +45,14 @@ export function createHwpFirebaseMediaRemote({ storage, auth, sdk }) {
     // Bucket CORS must allow the HWP origin for browser-to-cloud downloads.
     return sdk.getBlob(byId(item?.id));
   }
+  async function preview(id) {
+    signedIn();
+    // Mobile companions must not download the complete production library or large videos.
+    const file=byId(id),meta=await sdk.getMetadata(file);
+    const limit=8*1024*1024;
+    if(Number(meta.size)>limit)throw Object.assign(new Error('Large media preview is available on the production computer.'),{code:'hwp/mobile-preview-too-large'});
+    return sdk.getBlob(file,limit);
+  }
   async function upload(blob, displayName) {
     const user = signedIn(),uid=user.uid;
     // Firebase may retain an old email-verification token after verification.
@@ -75,5 +83,5 @@ export function createHwpFirebaseMediaRemote({ storage, auth, sdk }) {
     return { id, name: metadata.customMetadata.displayName, size: Number(meta.size),
       version: String(meta.generation || meta.updated || '') };
   }
-  return { listRemote, download, upload };
+  return { listRemote, download, preview, upload };
 }
