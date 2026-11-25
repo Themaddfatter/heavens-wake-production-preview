@@ -419,4 +419,6 @@ test('presentation selection and on-output status are distinct and stable for re
  const css=readFileSync(new URL('../hwp-access.css',import.meta.url),'utf8');
  assert.match(css,/\.hwp-presentation-live-slot\s*\{[\s\S]*?flex:0 0 36px/);
  assert.match(css,/\.hwp-presentation-selected[\s\S]*?inset 0 0 0 2px var\(--amber\)/);
+ assert.doesNotMatch(css,/\.all-service-presentation\.hwp-presentation-selected/);
+ assert.match(source,/hwp-access\.css\?v=[^"\s]*selection-v2/);
 });

@@ -1728,21 +1728,15 @@
 .hwp-mixer-fader:active::-webkit-slider-thumb{cursor:grabbing!important}
 .hwp-mixer-fader:active::-moz-range-thumb{cursor:grabbing!important}
 
-/* Personal presentation selection: visual emphasis only, no geometry changes.
-   Keep medley borders, drag targets, and shared presentation colors intact. */
+/* Personal presentation selection: left service list only.
+   Center presentation headers retain shared colors and medley borders. */
 .app .service-list .service-row.service-presentation.hwp-presentation-selected,
-.app .service-list .service-row.service-presentation.hwp-presentation-selected:hover,
-.app .all-service-scroll .all-service-presentation.hwp-presentation-selected > .all-pres-bar {
+.app .service-list .service-row.service-presentation.hwp-presentation-selected:hover {
   background:color-mix(in srgb,var(--amber) 18%,var(--bg-2))!important;
   box-shadow:inset 0 0 0 2px var(--amber),inset 5px 0 0 var(--amber),0 0 7px color-mix(in srgb,var(--amber) 38%,transparent)!important;
 }
-.app .service-list .service-row.service-presentation.hwp-presentation-selected .service-copy strong,
-.app .all-service-scroll .all-service-presentation.hwp-presentation-selected > .all-pres-bar > .hwp-selection-title {
+.app .service-list .service-row.service-presentation.hwp-presentation-selected .service-copy strong {
   color:color-mix(in srgb,var(--amber) 60%,var(--text))!important;
-}
-.app .all-service-scroll .all-service-presentation.hwp-presentation-selected {
-  outline:2px solid var(--amber)!important;
-  outline-offset:-2px;
 }
 .app .hwp-presentation-live-slot {
   display:inline-flex;align-items:center;justify-content:center;
