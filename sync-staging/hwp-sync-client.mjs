@@ -1,6 +1,6 @@
 // Client-side network operations for the shared workspace. Supply Firebase callable adapters.
 export class HwpSyncError extends Error {constructor(message,code){super(message);this.name='HwpSyncError';this.code=code}}
-export function createHwpSyncClient({workspaceCall,mediaCall,cloudMedia=null,fetcher=fetch,now=Date.now}) {
+export function createHwpSyncClient({workspaceCall,mediaCall,cloudMedia=null,companion=false,fetcher=fetch,now=Date.now}) {
  if(typeof workspaceCall!=='function'||typeof mediaCall!=='function')throw new TypeError('Authenticated callable adapters required');
  const signed=new Map();
  const localUrls=new Map();
@@ -40,7 +40,11 @@ export function createHwpSyncClient({workspaceCall,mediaCall,cloudMedia=null,fet
   return {id:sign.id};
  }
  async function mediaUrl(id){
-  if(cloudMedia){
+  if(cloudMedia&&companion){
+   const cached=localUrls.get(id);if(cached)return cached;
+   try{const blob=await cloudMedia.remote.preview(id);const url=URL.createObjectURL(blob);localUrls.set(id,url);return url}catch(error){if(error?.code!=='storage/object-not-found')throw error}
+  }
+  if(cloudMedia&&!companion){
    const cached=localUrls.get(id);
    if(cached)return cached;
    const local=await cloudMedia.local.localEntry(id);
