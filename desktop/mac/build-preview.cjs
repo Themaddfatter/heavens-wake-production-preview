@@ -10,7 +10,7 @@ if (process.platform !== 'darwin') {
 // Keep the test app isolated from the eventual signed release and its update feed.
 const config = structuredClone(pkg.build);
 config.appId = 'com.sioncdo.hwp.preview';
-config.productName = 'HWP Mac Preview';
+config.productName = 'HWP';
 config.directories.output = 'dist-preview';
 config.forceCodeSigning = false;
 config.mac.identity = '-';
@@ -20,7 +20,6 @@ config.mac.target = ['dmg'];
 config.dmg.sign = false;
 config.publish = null;
 config.extraMetadata = { hwpPreview: true };
-config.updateManifest = false;
 const arch = process.arch === 'arm64' ? Arch.arm64 : Arch.x64;
 build({projectDir: __dirname, config, targets: Platform.MAC.createTarget(['dmg'], arch), publish: 'never'})
   .then(files => {
