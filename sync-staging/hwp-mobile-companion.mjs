@@ -24,7 +24,7 @@ export function searchSongs(presentations,query){
  }
  return [...titles,...lyrics].slice(0,50);
 }
-export function sameLookup(a,b){return !!a&&!!b&&a.kind===b.kind&&(a.kind==='song'?['presentationId','slideId','cueIndex'].every(k=>a[k]===b[k]):['id','book','chapter','verse','translation','text'].every(k=>a[k]===b[k]))}
+export function sameLookup(a,b){return !!a&&!!b&&a.kind===b.kind&&(a.kind==='service'?['itemId','presentationId','slideId','cueIndex'].every(k=>a[k]===b[k]):a.kind==='song'?['presentationId','slideId','cueIndex'].every(k=>a[k]===b[k]):['id','book','chapter','verse','translation','text'].every(k=>a[k]===b[k]))}
 export function remoteCue(status,target) {
   return !!status?.online && (status.songs || []).some(p =>
     p.itemId === target.itemId && p.presentationId === target.presentationId &&
@@ -115,7 +115,8 @@ export function createMobileCompanion({h,React,boot,visibleServices,cues,renderC
   async function take(cue){
    const target={itemId:row.id,presentationId:p.id,slideId:cue.slide.id,cueIndex:cue.index};
    setSelectedTile('service:'+row.id+':'+cue.index);const touch=++tapSequence.current;setTap({rowId:row.id,index:cue.index,sequence:touch});clearTimeout(tapTimer.current);tapTimer.current=setTimeout(()=>setTap(null),420);
-   if(lock.current||status?.serviceId!==sid||!remoteCue(status,target))return;
+   if(lock.current||cue.slide.enabled===false)return;
+   if(!remoteCue(status,target)){await takeLookup({kind:'service',...target},row.id+':'+cue.index,true);return}
    const attempt=generation.current;lock.current=true;setFeedback('pending');
    try{const result=await request.current({action:'worshipControlSelect',serviceId:sid,target});
      if(currentSid.current!==sid||generation.current!==attempt)return;
@@ -123,8 +124,8 @@ export function createMobileCompanion({h,React,boot,visibleServices,cues,renderC
      setCommand({id:result.commandId,expiresAt:result.expiresAt,target,serviceId:sid});setFeedback('sent')
    }catch(e){if(currentSid.current===sid&&generation.current===attempt){setFeedback('failed');lock.current=false}}
   }
-  async function takeLookup(target,key){
-   setSelectedTile('lookup:'+key);const touch=++tapSequence.current;setTap({rowId:key,index:0,sequence:touch});clearTimeout(tapTimer.current);tapTimer.current=setTimeout(()=>setTap(null),420);
+  async function takeLookup(target,key,fromService=false){
+   if(!fromService)setSelectedTile('lookup:'+key);const touch=++tapSequence.current;setTap({rowId:key,index:0,sequence:touch});clearTimeout(tapTimer.current);tapTimer.current=setTimeout(()=>setTap(null),420);
    if(lock.current)return;if(!sid||!request.current){setFeedback('screenUnavailable');return}
    const attempt=generation.current;lock.current=true;setFeedback('pending');
    try{const result=await request.current({action:'worshipControlLookup',serviceId:sid,target});
@@ -166,7 +167,7 @@ export function createMobileCompanion({h,React,boot,visibleServices,cues,renderC
   const active=status?.serviceId===sid&&status.online?status.active:null;
   const liveLookup=status?.serviceId===sid&&status.online?status.lookupActive:null;
   const activeP=liveLookup&&doc?buildLookup(doc,liveLookup,service):doc?.presentations?.find(p=>p.id===active?.presentationId);
-  const activeCue=activeP&&cues(activeP).find(c=>liveLookup?.kind==='scripture'?c.index===0:liveLookup?.kind==='song'?c.index===liveLookup.cueIndex&&c.slide.id===liveLookup.slideId:c.index===active?.cueIndex&&c.slide.id===active?.slideId);
+  const activeCue=activeP&&cues(activeP).find(c=>liveLookup?.kind==='scripture'?c.index===0:liveLookup?.kind==='song'||liveLookup?.kind==='service'?c.index===liveLookup.cueIndex&&c.slide.id===liveLookup.slideId:c.index===active?.cueIndex&&c.slide.id===active?.slideId);
   const accent=appearance.accent;
   const btn=(text,onClick,props={})=>h('button',{type:'button',onClick,...props},text);
   const icon=(name,title,onClick,props={})=>btn(h(Icon,{name,size:23}),onClick,{className:'hwp-mobile-icon',title,'aria-label':title,...props});
@@ -176,7 +177,7 @@ export function createMobileCompanion({h,React,boot,visibleServices,cues,renderC
   const picker=h('select',{'aria-label':L.presentation,value:row?.id||'',onChange:e=>selectRow(e.target.value)},...(presentations.length?presentations.map(r=>h('option',{key:r.id,value:r.id},doc.presentations.find(p=>p.id===r.presentationId)?.name||r.id)):[h('option',{value:''},L.choose)]));
   const serviceList=h('aside',{className:'hwp-mobile-setlist'},h('h2',null,L.presentation),...rows.map(r=>r.header?h('div',{key:r.id,className:'hwp-mobile-section',style:{background:r.bgColor||undefined,color:r.fontColor||undefined}},r.header):btn(doc.presentations.find(p=>p.id===r.presentationId)?.name||r.id,()=>selectRow(r.id),{key:r.id,className:'hwp-mobile-row'+(row?.id===r.id?' selected':''),'aria-pressed':row?.id===r.id})));
   const preview=h('section',{className:'hwp-mobile-preview'},h('div',{className:'hwp-mobile-caption'},h('strong',null,L.preview),h('span',null,activeP?.name||'')),h('div',{className:'hwp-mobile-artboard'},activeCue?renderCue(doc,activeP,activeCue):h('span',null,L.noCue)));
-  const slideGrid=h('section',{className:'hwp-mobile-slides'},h('div',{className:'hwp-mobile-caption'},h('strong',null,p?.name||L.choose),h('label',null,L.size,' ',h('input',{type:'range',min:120,max:260,step:10,value:size,onChange:e=>setSize(Number(e.target.value))}))),h('div',{className:'hwp-mobile-slide-grid',style:{'--hwp-mobile-tile':size+'px'}},...slideCues.map(c=>{const target={itemId:row.id,presentationId:p.id,slideId:c.slide.id,cueIndex:c.index},live=sameCue(active,target),enabled=status?.serviceId===sid&&remoteCue(status,target),color=(doc.labels||[]).find(l=>String(l.name).toLowerCase()===String(c.group.name).toLowerCase())?.color||c.group.color;return btn(h('span',{className:'hwp-mobile-slide-content'},h('span',{className:'hwp-mobile-artboard'},renderCue(doc,p,c),live&&h('span',{className:'live-tag hwp-mobile-live-tag'},'LIVE'),tap?.rowId===row.id&&tap.index===c.index&&h('span',{key:tap.sequence,className:'hwp-mobile-tap-flash','aria-hidden':true})),h('span',{className:'hwp-mobile-slide-label',style:color?{background:color,color:accentInk(color)}:undefined},c.group.name)),()=>take(c),{key:c.index,className:'hwp-mobile-slide'+(live?' live':'')+(selectedTile==='service:'+row.id+':'+c.index?' selected':''),'aria-disabled':!enabled||!!command||feedback==='pending','aria-label':c.group.name+(enabled?'':': '+L.readOnly),title:enabled?c.group.name:L.readOnly})})),p&&slideCues.length>0&&!slideCues.some(c=>remoteCue(status,{itemId:row.id,presentationId:p.id,slideId:c.slide.id,cueIndex:c.index}))&&h('p',{className:'hwp-mobile-note'},L.readOnly));
+  const slideGrid=h('section',{className:'hwp-mobile-slides'},h('div',{className:'hwp-mobile-caption'},h('strong',null,p?.name||L.choose),h('label',null,L.size,' ',h('input',{type:'range',min:120,max:260,step:10,value:size,onChange:e=>setSize(Number(e.target.value))}))),h('div',{className:'hwp-mobile-slide-grid',style:{'--hwp-mobile-tile':size+'px'}},...slideCues.map(c=>{const target={itemId:row.id,presentationId:p.id,slideId:c.slide.id,cueIndex:c.index},live=sameCue(active,target)||sameLookup(liveLookup,{kind:'service',...target}),enabled=status?.serviceId===sid&&(remoteCue(status,target)||status.online&&status.lookupCapable&&c.slide.enabled!==false),color=(doc.labels||[]).find(l=>String(l.name).toLowerCase()===String(c.group.name).toLowerCase())?.color||c.group.color;return btn(h('span',{className:'hwp-mobile-slide-content'},h('span',{className:'hwp-mobile-artboard'},renderCue(doc,p,c),live&&h('span',{className:'live-tag hwp-mobile-live-tag'},'LIVE'),tap?.rowId===row.id&&tap.index===c.index&&h('span',{key:tap.sequence,className:'hwp-mobile-tap-flash','aria-hidden':true})),h('span',{className:'hwp-mobile-slide-label',style:color?{background:color,color:accentInk(color)}:undefined},c.group.name)),()=>take(c),{key:c.index,className:'hwp-mobile-slide'+(live?' live':'')+(selectedTile==='service:'+row.id+':'+c.index?' selected':''),'aria-disabled':!enabled||!!command||feedback==='pending','aria-label':c.group.name+(enabled?'':': '+L.readOnly),title:enabled?c.group.name:L.readOnly})})),p&&slideCues.length>0&&!status?.lookupCapable&&!slideCues.some(c=>remoteCue(status,{itemId:row.id,presentationId:p.id,slideId:c.slide.id,cueIndex:c.index}))&&h('p',{className:'hwp-mobile-note'},L.readOnly));
   function lookupTile(p,c,target,key){
    const live=sameLookup(liveLookup,target),enabled=status?.serviceId===sid&&status.online&&status.lookupCapable&&c.slide.enabled!==false;
    const color=(doc.labels||[]).find(l=>String(l.name).toLowerCase()===String(c.group.name).toLowerCase())?.color||c.group.color;
