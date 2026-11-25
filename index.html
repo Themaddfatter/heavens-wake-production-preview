@@ -433,7 +433,7 @@ html[data-hwp-appearance="light"] .hwp-mixer-strip.master{border-color:var(--amb
 .hwp-mixer-gain-dialog .hwp-mixer-gain-track .hwp-mixer-calibrated-slider input.hwp-mixer-calibrated-input:active{cursor:grabbing!important}
 .hwp-mixer-calibrated-slider input.hwp-mixer-calibrated-input:active::-webkit-slider-thumb{cursor:grabbing!important}
 .hwp-mixer-calibrated-slider input.hwp-mixer-calibrated-input:active::-moz-range-thumb{cursor:grabbing!important}
-</style><link rel="stylesheet" href="./hwp-mobile-companion.css?v=9"/></head><body><div id="hwp-native-top" aria-hidden="true"></div><script>try{document.documentElement.dataset.hwpAppearance="dark"}catch(e){}</script><div id="root"><div id="hwp-boot-placeholder" style="box-sizing:border-box;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;background:#071d16;color:#f3f8f4;font:600 19px Arial,sans-serif;text-align:center"><img src="./hwp-logo.png" alt="Heaven's Wake Production" style="max-width:210px;max-height:130px;object-fit:contain;margin-bottom:24px"><div>Opening Heaven's Wake Production…</div></div></div><script>
+</style><link rel="stylesheet" href="./hwp-mobile-companion.css?v=9"/><link rel="stylesheet" href="./hw-unified-login.css?v=1"/></head><body><div id="hwp-native-top" aria-hidden="true"></div><script>try{document.documentElement.dataset.hwpAppearance="dark"}catch(e){}</script><div id="root"><div id="hwp-boot-placeholder" style="box-sizing:border-box;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;background:#071d16;color:#f3f8f4;font:600 19px Arial,sans-serif;text-align:center"><img src="./hwp-logo.png" alt="Heaven's Wake Production" style="max-width:210px;max-height:130px;object-fit:contain;margin-bottom:24px"><div>Opening Heaven's Wake Production…</div></div></div><script>
 (function(){
  var startupError="";
  function record(event){
@@ -3969,6 +3969,24 @@ function HwpAccessGate({mode}){
   if(hwpIsCompanionDevice())return M.jsx(HwpMobileCompanionGate,{key:user?.uid,signOut});
   return(0,M.jsx)(P,{key:user?.uid,children:(0,M.jsx)(Zi,{})});
  }
+ const loginIcon=(kind,size=17)=>M.jsxs('svg',{width:size,height:size,viewBox:'0 0 24 24',fill:'none',stroke:'currentColor',strokeWidth:2,strokeLinecap:'round',strokeLinejoin:'round','aria-hidden':true,children:kind==='mail'?[M.jsx('rect',{width:20,height:16,x:2,y:4,rx:2}),M.jsx('path',{d:'m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7'})]:kind==='lock'?[M.jsx('rect',{width:18,height:11,x:3,y:11,rx:2}),M.jsx('path',{d:'M7 11V7a5 5 0 0 1 10 0v4'}),M.jsx('circle',{cx:12,cy:16,r:1})]:[M.jsx('path',{d:'M2.06 12.35a1 1 0 0 1 0-.7 10.75 10.75 0 0 1 19.88 0 1 1 0 0 1 0 .7 10.75 10.75 0 0 1-19.88 0'}),M.jsx('circle',{cx:12,cy:12,r:3}),kind==='eye-off'&&M.jsx('path',{d:'m2 2 20 20'})]});
+ const lang=localStorage.getItem('sion-lang')==='es'?'es':'en',say=(en,es)=>lang==='es'?es:en;
+ if(phase==='signed-out')return M.jsxs('div',{className:'hw-unified-login',children:[
+  M.jsxs('header',{className:'hw-login-header',children:[
+   M.jsx('div',{className:'hw-login-brand',children:M.jsx('img',{src:'./hwp-logo.png?v=hwp-service-medleys-v3',width:320,height:184,alt:"Heaven's Wake Production logo",decoding:'async'})}),
+   M.jsxs('div',{className:'hw-login-top-right',children:[
+    M.jsxs('div',{className:'hw-connection-status',children:[M.jsx('span',{className:'hw-connection-dot','aria-hidden':true}),say('Connecting to Ministry Connect...','Conectando con Ministry Connect...')]}),
+    M.jsx('a',{href:'https://schedule.sioncdo.com',className:'hw-connect-link',target:'_blank',rel:'noopener noreferrer',children:say('Open Ministry Connect','Abrir Ministry Connect')})]})]}),
+  M.jsx('main',{className:'hw-login-content',children:M.jsxs('section',{className:'hw-login-panel','aria-label':"Sign in to Heaven’s Wake Production",children:[
+   M.jsxs('form',{className:'hw-auth-form',onSubmit:submit,children:[
+    M.jsxs('label',{className:'hw-login-label',htmlFor:'hwp-email',children:[loginIcon('mail'),say('Email','Correo electrónico')]}),
+    M.jsx('input',{id:'hwp-email',autoComplete:'email',type:'email',name:'email',placeholder:say('Enter your email','Escriba su correo'),value:email,onChange:e=>setEmail(e.target.value),required:true}),
+    M.jsxs('label',{className:'hw-login-label hw-password-label',htmlFor:'hwp-password',children:[loginIcon('lock'),say('Password','Contraseña')]}),
+    M.jsxs('div',{className:'hw-password-wrap',children:[M.jsx('input',{id:'hwp-password',autoComplete:'current-password',type:showPassword?'text':'password',name:'password',placeholder:say('Enter your password','Escriba su contraseña'),value:password,onChange:e=>setPassword(e.target.value),required:true}),M.jsx('button',{type:'button',className:'hw-password-eye',onClick:()=>setShowPassword(x=>!x),'aria-label':showPassword?'Hide password':'Show password',children:loginIcon(showPassword?'eye-off':'eye',18)})]}),
+    error&&M.jsx('div',{className:'hw-login-notice danger',role:'alert',children:error}),notice&&M.jsx('div',{className:'hw-login-notice ok',role:'status',children:notice}),
+    M.jsx('button',{type:'submit',className:'hw-login-submit',disabled:busy||!system,children:busy?say('Signing in…','Iniciando sesión…'):say('Sign in','Iniciar sesión')})]}),
+   M.jsx('button',{type:'button',className:'hw-login-reset',onClick:resetPassword,disabled:busy||!system,children:say('Reset password','Restablecer contraseña')})]})}),
+  M.jsxs('svg',{className:'hw-bottom-waves','aria-hidden':true,viewBox:'0 0 1600 150',preserveAspectRatio:'none',children:[M.jsx('path',{d:'M-50 146 C 260 88 840 22 1220 11 C 1380 7 1515 10 1650 26',fill:'none',stroke:'#f2ae30',strokeWidth:1.5}),M.jsx('path',{d:'M-50 95 C 420 70 930 120 1650 145',fill:'none',stroke:'#506c82',strokeWidth:.8,opacity:'.48'})]})]});
  const waiting=phase==='checking'||phase==='error'&&!system;
  return(0,M.jsxs)('div',{className:'hwp-access-shell',children:[
   (0,M.jsxs)('header',{className:'hwp-access-header',children:[
