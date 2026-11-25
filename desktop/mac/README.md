@@ -12,7 +12,7 @@ npm install
 npm run check
 npm start
 ```
-This is not an Apple-approved installer. It uses Electron's default icon until the official HWP icon is supplied as build/icon.icns and configured in the package. Do not distribute development builds.
+This is not an Apple-approved installer. The DMG build generates the native icon from the official repository hwp-logo.png using macOS iconutil. The installed application is named HWP. Do not distribute development builds.
 
 ## Release setup
 Register a dedicated self-hosted macOS GitHub Actions runner with the macOS label (Xcode command line tools, Node, GitHub CLI and internet access). Do not run untrusted pull request jobs on this runner. Keep it separate from the existing Windows/web deployment runner. Use a Developer ID Application certificate for the church's Apple team, not an App Store certificate.
@@ -44,4 +44,4 @@ npm run check
 npm run dist:preview
 ```
 
-The output is in `dist-preview/`. This is a local, ad-hoc-signed preview, not an Apple-notarized distribution. It has its own app ID and disables native automatic updates; website updates still use the production site. Do not publish preview installers to the signed update feed. The Mac release requires the Apple credentials and real-device tests above.
+The output is in `dist-preview/` with an HWP-named DMG and an HWP.app bundle. This is a local, ad-hoc-signed preview, not an Apple-notarized distribution. It has its own app ID and disables native automatic updates; website updates still use the production site. Do not publish preview installers to the signed update feed. The Mac release requires the Apple credentials and real-device tests above.
