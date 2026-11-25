@@ -546,7 +546,7 @@ test('HWP header keeps permanent slots across workspace and status changes',()=>
 test('authentication recovers transient access errors without overriding denial',async()=>{const {verifyHwpAccess,validHwpConfig}=await import('../sync-staging/hwp-auth.mjs');let calls=0,refresh=0;const user={getIdToken:async force=>{assert.equal(force,true);refresh++}};const system={auth:{workspace:async data=>{assert.equal(data.action,'access');if(++calls===1)throw Object.assign(Error(),{code:'functions/unavailable'});return {ok:true}}}};assert.deepEqual(await verifyHwpAccess(system,user),{ok:true});assert.equal(calls,2);assert.equal(refresh,1);calls=0;await assert.rejects(verifyHwpAccess({auth:{workspace:async()=>{calls++;throw Object.assign(Error(),{code:'functions/permission-denied'})}}},user),{code:'functions/permission-denied'});assert.equal(calls,1);assert.equal(refresh,1);assert.equal(validHwpConfig({projectId:'wrong',apiKey:'x',appId:'x',authDomain:'x'}),false);});
 
 test('Editor deletion selects the next visible slide, then the previous one, without leaving edit mode',()=>{
- const start=html.indexOf('function hwpEditorDeleteSelection('),end=html.indexOf('function HwpEditorSlideContextMenu(',start);
+ const start=html.indexOf('function hwpEditorOrderedSlides('),end=html.indexOf('function HwpEditorSlideContextMenu(',start);
  assert.ok(start>=0&&end>start);
  const select=new Function(html.slice(start,end)+';return hwpEditorDeleteSelection;')();
  const p={groups:[{id:'a'},{id:'b'}],slides:[{id:'1',groupId:'a'},{id:'3',groupId:'b'},{id:'2',groupId:'a'},{id:'4',groupId:'b'}]};
@@ -559,4 +559,23 @@ test('Editor deletion selects the next visible slide, then the previous one, wit
  assert.deepEqual(select(p,session,['3']).selectedSlideIds,['2']);
  assert.deepEqual(select(p,session,['3']).selectedObjectIds,['old-object']);
  assert.ok(html.includes('session:e.session.mode===`edit`?hwpEditorDeleteSelection(ke(e),e.session,t.ids)'));
+});
+
+test('Changing a filmstrip label preserves slide order even when labels repeat',()=>{
+ const start=html.indexOf('function hwpEditorOrderedSlides('),end=html.indexOf('function HwpEditorSlideContextMenu(',start);
+ const {order,runs,select}=new Function(html.slice(start,end)+';return {order:hwpEditorOrderedSlides,runs:hwpEditorSlideRuns,select:hwpEditorDeleteSelection};')();
+ const p={groups:[{id:'verse',name:'Verse'},{id:'chorus',name:'Chorus'}],slides:[{id:'1',groupId:'verse'},{id:'2',groupId:'verse'},{id:'3',groupId:'verse'},{id:'4',groupId:'chorus'}]};
+ const from=html.indexOf('case`set-slide-label`:'),to=html.indexOf('case`set-slide-tags`:',from);
+ const change=new Function('e','t','j','hwpRegisteredLabel','hwpLabelFields','w','Ce','hwpEditorOrderedSlides','switch(t.type){'+html.slice(from,to)+'default:return e}');
+ const state={doc:{},session:{mode:'edit'}};
+ const apply=(p,slideId,name)=>change(state,{type:'set-slide-label',slideId,name,preserveEditorOrder:true},(_e,fn)=>fn(p),(_doc,name)=>({name,color:'#123456'}),o=>o,()=> 'new-label',()=>{throw Error('Editor should not use Show order')},order);
+ const changed=apply(p,'2','Chorus');
+ assert.deepEqual(changed.slides.map(s=>s.id),['1','2','3','4']);
+ assert.deepEqual(runs(changed).map(r=>[r.group.name,r.slides.map(s=>s.id)]),[['Verse',['1']],['Chorus',['2']],['Verse',['3']],['Chorus',['4']]]);
+ const custom=apply(changed,'3','Bridge');
+ assert.deepEqual(runs(custom).flatMap(r=>r.slides.map(s=>s.id)),['1','2','3','4']);
+ assert.equal(custom.slides[2].groupId,'new-label');
+ assert.deepEqual(select(changed,{selectedSlideIds:['2'],selectedObjectIds:[]},['2']).selectedSlideIds,['3']);
+ assert.equal((html.match(/children:hwpEditorSlideRuns\(n\)/g)||[]).length,2);
+ assert.ok(html.includes('preserveEditorOrder:true,history:"push"'));
 });
