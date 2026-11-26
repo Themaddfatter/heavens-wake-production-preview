@@ -49,7 +49,7 @@ function showFullscreenRetry(activate){
  if(permissionNotice)permissionNotice.remove();
  const es=document.documentElement.lang==='es',box=document.createElement('section');permissionNotice=box;box.setAttribute('role','alert');
  Object.assign(box.style,{position:'fixed',top:'70px',right:'16px',width:'min(420px,calc(100vw - 32px))',padding:'16px',borderRadius:'10px',background:'var(--bg-2,#222)',color:'var(--text,#fff)',border:'1px solid var(--line,#888)',zIndex:'2147483647',boxShadow:'0 4px 20px #0006'});
- const text=document.createElement('p');text.textContent=es?'La pantalla ya está detectada. Chrome consumió el permiso del clic al abrir la ventana. Activa la pantalla completa desde este controlador. No pulses nada en el proyector.':'Your display is already detected. Chrome used the click to create the output window. Complete fullscreen from this operator screen; do not click the Audience display.';
+ const text=document.createElement('p');text.textContent=es?'La pantalla ya está detectada. Chrome consumió el permiso del clic al abrir la ventana. Activa la pantalla completa desde este controlador. No pulses nada en el proyector.':'Your display is already detected. The browser did not carry the first click into its new output window. Complete fullscreen from this operator screen; do not click the Audience display.';
  const button=document.createElement('button');button.type='button';button.className='btn';button.textContent=es?'Activar pantalla completa':'Activate Audience fullscreen';button.onclick=activate;
  box.append(text,button);document.body.append(box);try{window.focus()}catch{}
 }
@@ -64,7 +64,7 @@ function mountAudience(host,url,onClose,targetScreen,onFailure){
  frame.id='hwp-audience-local-frame';frame.title='Audience output';frame.allow='fullscreen';frame.allowFullscreen=true;frame.src=url;
  Object.assign(frame.style,{position:'absolute',inset:'0',width:'100%',height:'100%',border:'0',margin:'0',padding:'0',background:'#000',display:'none'});
  layer.append(frame);doc.body.append(layer);
- let closed=false,wasFull=false,requesting=false,visible=true;
+ let closed=false,wasFull=false,requesting=false,delegating=false,visible=true;
  const isFull=()=>{const active=doc.fullscreenElement||doc.webkitFullscreenElement;return active===layer||active===root};
  function sync(){
   if(closed)return;
@@ -85,15 +85,16 @@ function mountAudience(host,url,onClose,targetScreen,onFailure){
  function message(event){
   if(event.origin!==location.origin)return;
   if(event.source===frame.contentWindow&&event.data?.type==='hwp-audience-close'){close(true);return}
-  if(host!==window&&event.source===window&&event.data?.type==='hwp-audience-fullscreen-delegated')enter();
+  if(host!==window&&event.source===window&&event.data?.type==='hwp-audience-fullscreen-delegated'){delegating=false;enter()}
  }
  function delegate(){
-  if(closed||isFull())return;
+  if(closed||isFull()||requesting||delegating)return;
   if(host===window){enter();return}
+  delegating=true;
   // Chrome 104+: pass the operator's real click to the existing output window.
   // The fullscreen request runs in the receiving window's message handler.
   try{host.postMessage({type:'hwp-audience-fullscreen-delegated'},{targetOrigin:location.origin,delegate:'fullscreen'})}
-  catch{fail()}
+  catch{delegating=false;fail()}
  }
  function setVisible(on){visible=!!on;sync()}
  function key(event){if(event.key==='Escape'){close(true);return}if(event.key==='f'||event.key==='F'){event.preventDefault();enter()}}
@@ -107,8 +108,8 @@ function mountAudience(host,url,onClose,targetScreen,onFailure){
  doc.addEventListener('fullscreenchange',sync);doc.addEventListener('webkitfullscreenchange',sync);
  host.addEventListener('message',message);host.addEventListener('keydown',key);
  // Request immediately while a click's transient activation is still available.
- // With automatic fullscreen permission, the popup can enter without another gesture.
- // If permission is denied, close it and explain the problem only to the operator.
+ // An existing output window can receive fullscreen capability from the operator.
+ // A newly created window may require one fresh operator-side gesture.
  return {enter,delegate,close,frame,setVisible,isFull};
 }
 function closeLocalAudience(){const entry=localAudience;if(!entry)return;localAudience=null;entry.close()}
@@ -122,7 +123,7 @@ function openOutput(d){
  const url=new URL(location.href);url.searchParams.set('display',d.role);url.searchParams.delete('nativeOutput');url.hash='';
  const b=d.bounds,operator=details?.currentScreen||screen,initial=d.role==='audience'?{x:operator.availLeft??operator.left??0,y:operator.availTop??operator.top??0,width:320,height:180}:b,features='popup=yes,left='+initial.x+',top='+initial.y+',width='+initial.width+',height='+initial.height;
  const win=window.open(d.role==='audience'?'about:blank':url.href,'hwp-output-'+d.id.replace(/[^a-z0-9]/gi,'_'),features);
- if(!win){if(d.role==='audience')audienceFailure('Chrome blocked the Audience popup.');return null;}
+ if(!win){if(d.role==='audience')audienceFailure('The browser blocked the Audience popup.');return null;}
  try{win.moveTo(initial.x,initial.y);win.resizeTo(initial.width,initial.height)}catch{}
  if(d.role==='audience'){
   try{
