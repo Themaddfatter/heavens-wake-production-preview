@@ -10,6 +10,7 @@ on:
       - hwp-access.css
       - hwp-mobile-companion.css
       - hwp-update-notice.js
+      - hwp-screen-system.js
       - hwp-update-notice.css
       - hwp.webmanifest
       - scripts/hwp-branding.py
@@ -74,7 +75,7 @@ jobs:
           NODE
 
       - name: Run Bible and local media regression tests
-        run: node --test tests/hwp-mobile-companion.test.mjs tests/hwp-sermon-control.test.mjs tests/hwp-mixer-cursor.test.mjs tests/hwp-service-medleys.test.mjs tests/hwp-bible-presentations.test.mjs tests/hwp-song-labels.test.mjs tests/hwp-stage-media-controls.test.mjs sync-staging/hwp-local-media-sync.test.mjs sync-staging/hwp-cloud-media.test.mjs sync-staging/hwp-recovery.test.mjs
+        run: node --test tests/hwp-native-screens.test.mjs tests/hwp-mobile-companion.test.mjs tests/hwp-sermon-control.test.mjs tests/hwp-mixer-cursor.test.mjs tests/hwp-service-medleys.test.mjs tests/hwp-bible-presentations.test.mjs tests/hwp-song-labels.test.mjs tests/hwp-stage-media-controls.test.mjs sync-staging/hwp-local-media-sync.test.mjs sync-staging/hwp-cloud-media.test.mjs sync-staging/hwp-recovery.test.mjs
 
       - name: Confirm live HWP Bible and service medley release
         shell: bash
