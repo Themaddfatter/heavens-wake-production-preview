@@ -1,6 +1,6 @@
 'use strict';
 const {contextBridge,ipcRenderer}=require('electron');
-// The native window owns fullscreen; never enter HTML fullscreen on top of kiosk.
+// The native output covers its own display; HTML fullscreen could hide operator system UI.
 contextBridge.exposeInMainWorld('hwpNativeOutput',true);
 function close(){void ipcRenderer.invoke('hwp:screens:closeAudience').catch(console.error);}
 // Allow the existing page handler to broadcast the off state before native teardown.
