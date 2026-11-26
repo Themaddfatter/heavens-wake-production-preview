@@ -1,5 +1,11 @@
 (()=>{'use strict';
-if(new URLSearchParams(location.search).get('display')==='audience')return;
+const params=new URLSearchParams(location.search);
+if(params.get('display')==='audience')return;
+// The operator companion is a UI for the original session, not a second operator.
+if(params.has('hwpOperatorCompanion')){
+ try{const owner=window.opener;if(owner&&owner.location.origin===location.origin&&owner.hwpOperatorCompanionToken===params.get('hwpOperatorCompanion')){window.hwpOperatorOwner=owner;window.hwpBrowserScreens=owner.hwpBrowserScreens;return}}catch{}
+ return;
+}
 const roles=['audience','stage'],listeners=new Set(),outputs=new Map();let details=null,enabled={audience:false,stage:false},assignments={};
 try{assignments=JSON.parse(localStorage.getItem('hwp-screen-assignments-v3')||'{}')}catch{}
 const id=d=>[d.label,d.left,d.top,d.width,d.height].join('|');
@@ -7,7 +13,7 @@ const displays=()=>Array.from(details?.screens||[]).map(d=>({id:id(d),label:d.la
 const status=()=>({displays:displays(),enabled:{...enabled},assignments:{...assignments},supported:typeof window.getScreenDetails==='function',permission:!!details});
 function save(){try{localStorage.setItem('hwp-screen-assignments-v3',JSON.stringify(assignments))}catch{}}
 function notify(){const value=status();listeners.forEach(fn=>fn(value));return value}
-let localAudience=null,permissionNotice=null;const audienceControllers=new Map();
+let localAudience=null,permissionNotice=null,companion=null,companionWatch=null,fullscreenTarget=null,opening=false;
 function audienceBrowserHelp(ua,es=false){
  const edge=/Edg\//i.test(ua),opera=/OPR\//i.test(ua),brave=!!navigator.brave,vivaldi=/Vivaldi\//i.test(ua),chrome=/Chrome\//i.test(ua),firefox=/Firefox\//i.test(ua),safari=/Safari\//i.test(ua)&&!chrome;
  const mobile=/Android|iPhone|iPad/i.test(ua)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
@@ -30,7 +36,16 @@ function audienceBrowserHelp(ua,es=false){
  }
  return {name,steps:es?['Este navegador no ofrece los permisos necesarios para controlar automáticamente una pantalla externa de forma fiable.','Abre HWP en Chrome o Edge de escritorio, o usa la aplicación HWP de escritorio.']:['This browser does not provide the permissions needed for reliable automatic fullscreen on a separate display.','Open HWP in desktop Chrome or Edge, or use the HWP desktop application.'],addresses:[]};
 }
-function audienceFailure(reason){enabled.audience=false;signalAudienceClosed();notify();showAudienceHelp(reason)}
+function audienceFailure(reason){
+ enabled.audience=false;signalAudienceClosed();notify();clearAudienceNotice();
+ console.error('HWP Audience output:',reason);
+ const box=document.createElement('section');permissionNotice=box;box.setAttribute('role','alert');
+ Object.assign(box.style,{position:'fixed',top:'70px',right:'16px',width:'min(460px,calc(100vw - 32px))',padding:'16px',borderRadius:'10px',background:'var(--bg-2,#222)',color:'var(--text,#fff)',border:'1px solid var(--line,#888)',zIndex:'2147483647',boxShadow:'0 4px 20px #0006'});
+ const title=document.createElement('strong');title.textContent='Audience could not start';
+ const detail=document.createElement('p');detail.textContent=String(reason);
+ const close=document.createElement('button');close.type='button';close.className='btn';close.textContent='Dismiss';close.onclick=clearAudienceNotice;
+ box.append(title,detail,close);document.body.append(box)
+}
 function showAudienceHelp(reason='Configure the browser permissions before turning Audience on.'){
  if(permissionNotice)permissionNotice.remove();
  const es=document.documentElement.lang==='es',help=audienceBrowserHelp(navigator.userAgent,es),box=document.createElement('section');permissionNotice=box;box.setAttribute('role','alert');
@@ -45,119 +60,80 @@ function showAudienceHelp(reason='Configure the browser permissions before turni
  add('p',es?'No es necesario hacer clic en la pantalla de audiencia.':'No action is required on the Audience screen.');
  const dismiss=add('button',es?'Cerrar':'Dismiss');dismiss.type='button';Object.assign(dismiss.style,{padding:'6px 14px',borderRadius:'6px',border:'1px solid var(--line,#888)',background:'var(--amber,#3276b8)',color:'var(--hwp-accent-ink,#fff)',cursor:'pointer'});dismiss.onclick=()=>{box.remove();permissionNotice=null};document.body.append(box)
 }
-function showFullscreenRetry(activate){
- if(permissionNotice)permissionNotice.remove();
- const es=document.documentElement.lang==='es',box=document.createElement('section');permissionNotice=box;box.setAttribute('role','alert');
- Object.assign(box.style,{position:'fixed',top:'70px',right:'16px',width:'min(420px,calc(100vw - 32px))',padding:'16px',borderRadius:'10px',background:'var(--bg-2,#222)',color:'var(--text,#fff)',border:'1px solid var(--line,#888)',zIndex:'2147483647',boxShadow:'0 4px 20px #0006'});
- const text=document.createElement('p');text.textContent=es?'La pantalla ya está detectada. Chrome consumió el permiso del clic al abrir la ventana. Activa la pantalla completa desde este controlador. No pulses nada en el proyector.':'Your display is already detected. The browser did not carry the first click into its new output window. Complete fullscreen from this operator screen; do not click the Audience display.';
- const button=document.createElement('button');button.type='button';button.className='btn';button.textContent=es?'Activar pantalla completa':'Activate Audience fullscreen';button.onclick=activate;
- box.append(text,button);document.body.append(box);try{window.focus()}catch{}
-}
 function clearAudienceNotice(){permissionNotice?.remove();permissionNotice=null}
 function signalAudienceClosed(){try{const bus=new BroadcastChannel('vesper-show-v1');bus.postMessage({type:'hwp-audience-close'});bus.close()}catch{}}
-function audienceUrl(){const url=new URL(location.href);url.searchParams.set('display','audience');url.searchParams.delete('nativeOutput');url.hash='';return url.href}
-// Keep the fullscreen document stable: navigating a popup after requesting fullscreen
-// exits fullscreen. The isolated audience iframe is the only visual output.
-function mountAudience(host,url,onClose,targetScreen,onFailure){
- const doc=host.document,root=doc.documentElement,layer=doc.createElement('div'),frame=doc.createElement('iframe');
- Object.assign(layer.style,{position:'fixed',inset:'0',width:'100%',height:'100%',margin:'0',padding:'0',border:'0',background:'#000',overflow:'hidden',zIndex:'2147483647',display:'grid',placeItems:'center'});
- frame.id='hwp-audience-local-frame';frame.title='Audience output';frame.allow='fullscreen';frame.allowFullscreen=true;frame.src=url;
- Object.assign(frame.style,{position:'absolute',inset:'0',width:'100%',height:'100%',border:'0',margin:'0',padding:'0',background:'#000',display:'none'});
- layer.append(frame);doc.body.append(layer);
- let closed=false,wasFull=false,requesting=false,delegating=false,visible=true;
- const isFull=()=>{const active=doc.fullscreenElement||doc.webkitFullscreenElement;return active===layer||active===root};
- function sync(){
-  if(closed)return;
-  if(isFull()){wasFull=true;frame.style.display=visible?'block':'none';clearAudienceNotice();return}
-  frame.style.display='none';
-  if(wasFull)close(true);
- }
- function fail(){if(closed||isFull())return;if(onFailure){onFailure();return}close(false);audienceFailure('Browser rejected the Audience fullscreen request.')}
- function enter(){
-  if(closed||requesting||isFull())return;
-  const request=layer.requestFullscreen||layer.webkitRequestFullscreen;
-  if(!request){fail();return}
-  requesting=true;
-  const options={navigationUI:'hide'};if(targetScreen)options.screen=targetScreen;
-  const done=()=>{requesting=false;if(closed)return;sync();if(!isFull())fail()};
-  try{Promise.resolve(request.call(layer,options)).then(done,done)}catch{done()}
- }
- function message(event){
-  if(event.origin!==location.origin)return;
-  if(event.source===frame.contentWindow&&event.data?.type==='hwp-audience-close'){close(true);return}
-  if(host!==window&&event.source===window&&event.data?.type==='hwp-audience-fullscreen-delegated'){delegating=false;enter()}
- }
- function delegate(){
-  if(closed||isFull()||requesting||delegating)return;
-  if(host===window){enter();return}
-  delegating=true;
-  // Chrome 104+: pass the operator's real click to the existing output window.
-  // The fullscreen request runs in the receiving window's message handler.
-  try{host.postMessage({type:'hwp-audience-fullscreen-delegated'},{targetOrigin:location.origin,delegate:'fullscreen'})}
-  catch{delegating=false;fail()}
- }
- function setVisible(on){visible=!!on;sync()}
- function key(event){if(event.key==='Escape'){close(true);return}if(event.key==='f'||event.key==='F'){event.preventDefault();enter()}}
- function close(user=false){
-  if(closed)return;closed=true;
-  doc.removeEventListener('fullscreenchange',sync);doc.removeEventListener('webkitfullscreenchange',sync);
-  host.removeEventListener('message',message);host.removeEventListener('keydown',key);
-  if(isFull())try{Promise.resolve((doc.exitFullscreen||doc.webkitExitFullscreen)?.call(doc)).catch(()=>{})}catch{}
-  layer.remove();onClose(user);
- }
- doc.addEventListener('fullscreenchange',sync);doc.addEventListener('webkitfullscreenchange',sync);
- host.addEventListener('message',message);host.addEventListener('keydown',key);
- // Request immediately while a click's transient activation is still available.
- // An existing output window can receive fullscreen capability from the operator.
- // A newly created window may require one fresh operator-side gesture.
- return {enter,delegate,close,frame,setVisible,isFull};
-}
-function closeLocalAudience(){const entry=localAudience;if(!entry)return;localAudience=null;entry.close()}
-function openLocalAudience(){
- if(localAudience){localAudience.enter();return}
+function audienceUrl(){const url=new URL(location.href);url.searchParams.delete('hwpOperatorCompanion');url.searchParams.set('display','audience');url.searchParams.delete('nativeOutput');url.hash='';return url.href}
+function makeAudienceLayer(){
+ const layer=document.createElement('div'),frame=document.createElement('iframe');
+ Object.assign(layer.style,{position:'fixed',inset:'0',width:'100%',height:'100%',margin:'0',padding:'0',border:'0',background:'#000',overflow:'hidden',zIndex:'2147483647'});
+ frame.id='hwp-audience-local-frame';frame.title='Audience output';frame.allow='fullscreen';frame.allowFullscreen=true;frame.src=audienceUrl();
+ Object.assign(frame.style,{position:'absolute',inset:'0',width:'100%',height:'100%',border:'0',margin:'0',padding:'0',background:'#000'});
+ layer.append(frame);document.body.append(layer);
  document.documentElement.dataset.hwpAudienceLocal='1';
- localAudience=mountAudience(window,audienceUrl(),user=>{localAudience=null;delete document.documentElement.dataset.hwpAudienceLocal;if(user){enabled.audience=false;signalAudienceClosed();notify()}});
- localAudience.enter();
+ return {layer,frame};
 }
+function closeLocalAudience(user=false){
+ const entry=localAudience;if(!entry)return;
+ localAudience=null;fullscreenTarget=null;opening=false;clearInterval(companionWatch);companionWatch=null;
+ const popup=companion;companion=null;delete window.hwpOperatorCompanionToken;
+ if(popup&&!popup.closed)try{popup.close()}catch{}
+ if(document.fullscreenElement===entry.layer||document.webkitFullscreenElement===entry.layer)try{Promise.resolve((document.exitFullscreen||document.webkitExitFullscreen).call(document)).catch(()=>{})}catch{}
+ entry.layer.remove();delete document.documentElement.dataset.hwpAudienceLocal;
+ if(user){enabled.audience=false;signalAudienceClosed();notify()}
+ try{window.focus()}catch{}
+}
+function operatorUrl(token){const url=new URL(location.href);url.searchParams.delete('display');url.searchParams.delete('nativeOutput');url.searchParams.set('hwpOperatorCompanion',token);url.hash='';return url.href}
+function operatorBounds(){const d=details?.currentScreen||window.screen;return {x:window.screenX??d.availLeft??d.left??0,y:window.screenY??d.availTop??d.top??0,width:Math.max(400,Math.min(window.outerWidth||d.availWidth,d.availWidth||d.width)),height:Math.max(300,Math.min(window.outerHeight||d.availHeight,d.availHeight||d.height))}}
+async function openLocalAudience(targetScreen){
+ if(opening||localAudience)return status();
+ clearAudienceNotice();opening=true;
+ const bounds=operatorBounds(),entry=makeAudienceLayer();localAudience=entry;fullscreenTarget=targetScreen?id(targetScreen):null;
+ try{
+  const options={navigationUI:'hide'};if(targetScreen)options.screen=targetScreen;
+  // Fullscreen FIRST, in the original click. Chromium's fullscreen companion
+  // window flow permits the following popup on a different screen.
+  const request=entry.layer.requestFullscreen||entry.layer.webkitRequestFullscreen;
+  if(!request)throw Error('Fullscreen API is unavailable');
+  await request.call(entry.layer,options);
+  if(localAudience!==entry)return status();
+  if(document.fullscreenElement!==entry.layer&&document.webkitFullscreenElement!==entry.layer)throw Error('The fullscreen request did not enter fullscreen');
+  if(targetScreen){
+   const token=crypto.randomUUID();window.hwpOperatorCompanionToken=token;
+   const features='popup=yes,left='+bounds.x+',top='+bounds.y+',width='+bounds.width+',height='+bounds.height;
+   companion=window.open(operatorUrl(token),'hwp-operator-companion',features);
+   if(!companion)throw Error('The operator companion could not open after fullscreen');
+   try{companion.focus()}catch{}
+   companionWatch=setInterval(()=>{if(companion?.closed)closeLocalAudience(true)},500);
+  }
+  opening=false;return notify()
+ }catch(error){closeLocalAudience();audienceFailure((error?.name?error.name+': ':'')+(error?.message||String(error)));return status()}
+}
+document.addEventListener('fullscreenchange',()=>{if(localAudience&&!opening&&document.fullscreenElement!==localAudience.layer&&document.webkitFullscreenElement!==localAudience.layer)closeLocalAudience(true)});
+document.addEventListener('webkitfullscreenchange',()=>{if(localAudience&&!opening&&document.fullscreenElement!==localAudience.layer&&document.webkitFullscreenElement!==localAudience.layer)closeLocalAudience(true)});
+window.addEventListener('message',event=>{if(event.origin===location.origin&&event.source===localAudience?.frame.contentWindow&&event.data?.type==='hwp-audience-close')closeLocalAudience(true)});
 function openOutput(d){
- const url=new URL(location.href);url.searchParams.set('display',d.role);url.searchParams.delete('nativeOutput');url.hash='';
- const b=d.bounds,operator=details?.currentScreen||screen,initial=d.role==='audience'?{x:operator.availLeft??operator.left??0,y:operator.availTop??operator.top??0,width:320,height:180}:b,features='popup=yes,left='+initial.x+',top='+initial.y+',width='+initial.width+',height='+initial.height;
- const win=window.open(d.role==='audience'?'about:blank':url.href,'hwp-output-'+d.id.replace(/[^a-z0-9]/gi,'_'),features);
- if(!win){if(d.role==='audience')audienceFailure('The browser blocked the Audience popup.');return null;}
- try{win.moveTo(initial.x,initial.y);win.resizeTo(initial.width,initial.height)}catch{}
- if(d.role==='audience'){
-  try{
-   const doc=win.document;doc.title='Audience';
-   Object.assign(doc.documentElement.style,{margin:'0',padding:'0',width:'100%',height:'100%',background:'#000',overflow:'hidden'});
-   Object.assign(doc.body.style,{margin:'0',padding:'0',width:'100%',height:'100%',background:'#000',overflow:'hidden'});
-   const audience=mountAudience(win,url.href,user=>{audienceControllers.delete(d.id);outputs.delete(d.id);clearAudienceNotice();if(user){enabled.audience=false;signalAudienceClosed();notify()}try{win.close()}catch{}},Array.from(details?.screens||[]).find(screen=>id(screen)===d.id),()=>showFullscreenRetry(()=>audience.delegate()));
-   audienceControllers.set(d.id,audience);
-   // The newly created popup may have consumed activation. Use delegation if
-   // available; otherwise prepare it on the operator display for a fresh click.
-   if(navigator.userActivation?.isActive)audience.delegate();else audience.enter();
-  }catch{try{win.close()}catch{}audienceFailure('Could not initialize the Audience output.');return null}
- }
- return win;
+ // Audience never opens a popup before requesting fullscreen. Stage is windowed.
+ if(d.role==='audience')return null;
+ const url=new URL(location.href);url.searchParams.set('display',d.role);url.searchParams.delete('nativeOutput');url.searchParams.delete('hwpOperatorCompanion');url.hash='';
+ const b=d.bounds,win=window.open(url.href,'hwp-output-'+d.id.replace(/[^a-z0-9]/gi,'_'),'popup=yes,left='+b.x+',top='+b.y+',width='+b.width+',height='+b.height);
+ if(win)try{win.moveTo(b.x,b.y);win.resizeTo(b.width,b.height)}catch{}return win;
 }
-function reconcile(){
+function assignAvailable(){
  const free=displays().filter(d=>!d.primary&&!d.internal&&!Object.hasOwn(assignments,d.id));
  for(const role of roles)if(enabled[role]&&!displays().some(d=>!d.primary&&!d.internal&&d.role===role)&&free.length){assignments[free.shift().id]=role;save()}
- const assigned=displays().filter(d=>d.role&&!d.primary&&!d.internal),wanted=new Map(assigned.filter(d=>enabled[d.role]).map(d=>[d.id,d]));
- if(localAudience&&[...wanted.values()].some(d=>d.role==='audience'))closeLocalAudience();
- for(const [key,entry] of outputs){
-  const controller=audienceControllers.get(key),stillAssigned=assigned.some(d=>d.id===key&&d.role===entry.role);
-  // Audience off blanks the already fullscreen output. Keep the browser window
-  // ready so the next Audience click does not consume activation opening it again.
-  if(entry.role==='audience'&&stillAssigned&&!entry.win.closed&&controller?.isFull()){controller.setVisible(enabled.audience);continue}
-  if(!wanted.has(key)||wanted.get(key).role!==entry.role||entry.win.closed){controller?.close();try{entry.win.close()}catch{}outputs.delete(key);audienceControllers.delete(key)}
- }
+}
+function reconcile(){
+ assignAvailable();
+ const wanted=new Map(displays().filter(d=>d.role==='stage'&&enabled.stage&&!d.primary&&!d.internal).map(d=>[d.id,d]));
+ for(const [key,entry] of outputs)if(!wanted.has(key)||entry.win.closed){try{entry.win.close()}catch{}outputs.delete(key)}
  for(const [key,d] of wanted)if(!outputs.has(key)){const win=openOutput(d);if(win)outputs.set(key,{win,role:d.role})}
+ if(localAudience&&fullscreenTarget&&!displays().some(d=>d.id===fullscreenTarget&&d.role==='audience'))closeLocalAudience(true);
  return notify()
 }
-async function connect(){if(!window.getScreenDetails)throw Error('This browser does not support physical display detection. Use the desktop app or a compatible desktop browser.');if(!details){details=await window.getScreenDetails();let timer;details.addEventListener('screenschange',()=>{clearTimeout(timer);timer=setTimeout(reconcile,650)});details.addEventListener('currentscreenchange',notify)}return reconcile()}
-window.hwpBrowserScreens={showAudienceHelp,list:async()=>status(),connect,assign:async(key,role)=>{if(role&&!roles.includes(role))throw Error('Invalid screen role');const d=displays().find(d=>d.id===key);if(!d||d.primary||d.internal)throw Error('Choose an external display');assignments[key]=role||'off';save();return reconcile()},activateAudience:async()=>{if(!details&&window.getScreenDetails&&window.screen?.isExtended){try{await connect()}catch{audienceFailure('Chrome denied access to the extended display.');return status()}}enabled.audience=true;return window.hwpBrowserScreens.openAudience()},openAudience:async()=>{enabled.audience=true;const external=displays().some(d=>!d.primary&&!d.internal&&(d.role==='audience'||!Object.hasOwn(assignments,d.id)));if(external){const result=reconcile();for(const [key,controller] of audienceControllers){if(controller.isFull())controller.setVisible(true);else if(navigator.userActivation?.isActive)controller.delegate()}return result}openLocalAudience();return notify()},enable:async(role,on)=>{enabled[role]=!!on;if(role==='audience'&&!on){closeLocalAudience();clearAudienceNotice()}return reconcile()},identify:async()=>{for(const d of displays()){const entry=outputs.get(d.id);if(d.role!=='audience'&&entry&&!entry.win.closed)try{const doc=entry.win.document,tag=doc.createElement('div');tag.textContent=d.label+' — '+d.width+' × '+d.height;Object.assign(tag.style,{position:'fixed',inset:'35% 10%',zIndex:2147483647,background:'#124c88',color:'white',display:'grid',placeItems:'center',font:'bold 32px system-ui'});doc.body.append(tag);setTimeout(()=>tag.remove(),2500)}catch{}}return status()},onChanged:fn=>{listeners.add(fn);return()=>listeners.delete(fn)}};
+async function connect(){if(!window.getScreenDetails)throw Error('This browser does not support physical display detection.');if(!details){details=await window.getScreenDetails();let timer;details.addEventListener('screenschange',()=>{clearTimeout(timer);timer=setTimeout(reconcile,650)});details.addEventListener('currentscreenchange',notify)}return reconcile()}
+window.hwpBrowserScreens={showAudienceHelp,list:async()=>status(),connect,assign:async(key,role)=>{if(role&&!roles.includes(role))throw Error('Invalid screen role');const d=displays().find(d=>d.id===key);if(!d||d.primary||d.internal)throw Error('Choose an external display');assignments[key]=role||'off';save();return reconcile()},activateAudience:async()=>{if(!details&&window.getScreenDetails&&window.screen?.isExtended){try{await connect()}catch(error){audienceFailure(error.message);return status()}}enabled.audience=true;return window.hwpBrowserScreens.openAudience()},openAudience:async()=>{enabled.audience=true;assignAvailable();const selected=displays().find(d=>!d.primary&&!d.internal&&d.role==='audience');const target=Array.from(details?.screens||[]).find(d=>id(d)===selected?.id);return openLocalAudience(target)},enable:async(role,on)=>{if(role==='audience'){if(on)return window.hwpBrowserScreens.activateAudience();enabled.audience=false;closeLocalAudience(true);clearAudienceNotice();return notify()}enabled[role]=!!on;return reconcile()},identify:async()=>{for(const d of displays()){const entry=outputs.get(d.id);if(d.role!=='audience'&&entry&&!entry.win.closed)try{const doc=entry.win.document,tag=doc.createElement('div');tag.textContent=d.label+' — '+d.width+' × '+d.height;Object.assign(tag.style,{position:'fixed',inset:'35% 10%',zIndex:2147483647,background:'#124c88',color:'white',display:'grid',placeItems:'center',font:'bold 32px system-ui'});doc.body.append(tag);setTimeout(()=>tag.remove(),2500)}catch{}}return status()},onChanged:fn=>{listeners.add(fn);return()=>listeners.delete(fn)}};
 if(window.getScreenDetails&&navigator.permissions)navigator.permissions.query({name:'window-management'}).then(p=>{if(p.state==='granted')connect().catch(()=>{});p.onchange=()=>{if(p.state==='granted')connect().catch(()=>{})}}).catch(()=>{});
-window.addEventListener('pagehide',()=>{for(const controller of audienceControllers.values())controller.close();for(const entry of outputs.values())try{entry.win.close()}catch{}});
+window.addEventListener('pagehide',()=>{closeLocalAudience();for(const entry of outputs.values())try{entry.win.close()}catch{}});
 const selector='.toolbar [data-tip], .toolbar [title], .hwp-mobile-head [data-tip], .hwp-mobile-head [title]';let target=null,tip=null;
 function hide(){target=null;if(tip)tip.hidden=true}
 function show(el){const value=el.getAttribute('data-tip')||el.getAttribute('title');if(!value)return;target=el;if(!tip){tip=document.createElement('div');tip.className='hwp-floating-header-tip';tip.setAttribute('role','tooltip');document.body.append(tip)}tip.textContent=value;tip.hidden=false;const rect=el.getBoundingClientRect(),bar=el.closest('.toolbar,.hwp-mobile-head');const styles=getComputedStyle(bar||el);tip.style.background=styles.getPropertyValue('--amber').trim()||'#2873b8';tip.style.color=styles.getPropertyValue('--hwp-accent-ink').trim()||'#fff';tip.style.left=Math.max(6,Math.min(innerWidth-tip.offsetWidth-6,rect.left+(rect.width-tip.offsetWidth)/2))+'px';tip.style.top=(rect.bottom+7)+'px'}
