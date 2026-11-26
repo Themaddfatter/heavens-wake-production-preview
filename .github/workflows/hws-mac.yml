@@ -1,0 +1,96 @@
+name: HWS macOS installer
+on:
+  push:
+    branches: [hws-mac-desktop]
+    paths:
+      - 'desktop/hws-mac/**'
+      - '.github/workflows/hws-mac.yml'
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: hws-mac-build
+  cancel-in-progress: false
+jobs:
+  build:
+    if: github.ref == 'refs/heads/hws-mac-desktop'
+    runs-on: macos-15
+    timeout-minutes: 45
+    defaults:
+      run:
+        working-directory: desktop/hws-mac
+    env:
+      CSC_LINK: ${{ secrets.HWP_MAC_CSC_LINK }}
+      CSC_KEY_PASSWORD: ${{ secrets.HWP_MAC_CSC_KEY_PASSWORD }}
+      APPLE_ID: ${{ secrets.HWP_MAC_APPLE_ID }}
+      APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.HWP_MAC_APPLE_APP_SPECIFIC_PASSWORD }}
+      APPLE_TEAM_ID: ${{ secrets.HWP_MAC_APPLE_TEAM_ID }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Select signed release or isolated preview
+        run: |
+          set -euo pipefail
+          if [[ -n "$CSC_LINK" && -n "$CSC_KEY_PASSWORD" && -n "$APPLE_ID" && -n "$APPLE_APP_SPECIFIC_PASSWORD" && -n "$APPLE_TEAM_ID" ]]; then
+            echo 'HWS_SIGNED=1' >> "$GITHUB_ENV"
+          else
+            echo 'HWS_SIGNED=0' >> "$GITHUB_ENV"
+            echo 'CSC_IDENTITY_AUTO_DISCOVERY=false' >> "$GITHUB_ENV"
+            echo 'Apple signing credentials absent; building an isolated unsigned preview, not an update-enabled production release.' >> "$GITHUB_STEP_SUMMARY"
+          fi
+      - name: Install, test and build universal HWS
+        run: |
+          set -euo pipefail
+          npm install --no-audit --no-fund
+          npm run check
+          npm version "0.2.${GITHUB_RUN_NUMBER}" --no-git-tag-version
+          npm run dist
+      - name: Verify installer and binary
+        run: |
+          set -euo pipefail
+          app_path="$(find dist -maxdepth 3 -name HWS.app -type d -print -quit)"
+          test -n "$app_path"
+          lipo "$app_path/Contents/MacOS/HWS" -verify_arch x86_64 arm64
+          test -s "$app_path/Contents/Resources/icon.icns"
+          dmg="$(find dist -maxdepth 1 -name '*.dmg' -print -quit)"
+          test -n "$dmg"
+          hdiutil verify "$dmg"
+          if [[ "$HWS_SIGNED" == 1 ]]; then
+            codesign --verify --deep --strict "$app_path"
+            xcrun stapler validate "$app_path"
+            spctl --assess --type execute "$app_path"
+            test -s dist/latest-mac.yml
+            test -s "$app_path/Contents/Resources/app-update.yml"
+          fi
+      - name: Upload Mac installer
+        uses: actions/upload-artifact@v4
+        with:
+          name: HWS-Mac
+          path: desktop/hws-mac/dist/*.dmg
+          if-no-files-found: error
+          retention-days: 7
+      - name: Publish isolated preview
+        if: env.HWS_SIGNED == '0'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "hws-mac-preview-${GITHUB_RUN_NUMBER}" dist/HWS.dmg --target "$GITHUB_SHA" --title "HWS for Mac — Preview" --notes "Universal Intel and Apple Silicon preview. Not Apple-notarized; native automatic updates disabled until a signed release. Uses the existing HWS website and account." --prerelease --latest=false
+      - name: Publish verified signed update channel
+        if: env.HWS_SIGNED == '1'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          version="$(node -p "require('./package.json').version")"
+          files=()
+          while IFS= read -r -d '' file; do files+=("$file"); done < <(find dist -maxdepth 1 -type f \( -name '*.dmg' -o -name '*.zip' -o -name '*.blockmap' \) -print0)
+          gh release create "hws-mac-v$version" "${files[@]}" dist/latest-mac.yml --target "$GITHUB_SHA" --title "HWS for Mac $version" --notes "Verified signed universal HWS desktop installer." --latest=false
+          if ! gh release view hws-mac-stable >/dev/null 2>&1; then
+            gh release create hws-mac-stable --target "$GITHUB_SHA" --title "HWS Mac automatic update channel" --notes "Dedicated HWS update channel. Does not change HWP releases." --latest=false
+          fi
+          gh release upload hws-mac-stable "${files[@]}" --clobber
+          gh release upload hws-mac-stable dist/latest-mac.yml --clobber

@@ -1,0 +1,52 @@
+{
+  "name": "heavens-wake-sermon-desktop",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Heaven's Wake Sermon for macOS",
+  "author": "Zion House of Prayer",
+  "main": "main.cjs",
+  "scripts": {
+    "check": "node --check main.cjs && node --check build.cjs && node --test policy.test.cjs",
+    "dist": "node build.cjs"
+  },
+  "dependencies": {
+    "electron-updater": "6.8.11"
+  },
+  "devDependencies": {
+    "electron": "45.5.0",
+    "electron-builder": "26.18.0"
+  },
+  "build": {
+    "appId": "com.sioncdo.hws",
+    "productName": "HWS",
+    "asar": true,
+    "files": [
+      "main.cjs",
+      "policy.cjs",
+      "package.json"
+    ],
+    "directories": {
+      "output": "dist"
+    },
+    "mac": {
+      "category": "public.app-category.productivity",
+      "icon": "build/icon.icns",
+      "target": [
+        "dmg",
+        "zip"
+      ],
+      "artifactName": "HWS-${version}-${arch}.${ext}",
+      "hardenedRuntime": true,
+      "notarize": true
+    },
+    "dmg": {
+      "sign": true
+    },
+    "publish": [
+      {
+        "provider": "generic",
+        "url": "https://github.com/Themaddfatter/heavens-wake-production-preview/releases/download/hws-mac-stable"
+      }
+    ]
+  }
+}
