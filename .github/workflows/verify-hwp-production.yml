@@ -75,7 +75,7 @@ jobs:
           NODE
 
       - name: Run Bible and local media regression tests
-        run: node --test tests/hwp-screen-hotplug.test.mjs tests/hwp-native-screens.test.mjs tests/hwp-mobile-companion.test.mjs tests/hwp-sermon-control.test.mjs tests/hwp-mixer-cursor.test.mjs tests/hwp-service-medleys.test.mjs tests/hwp-bible-presentations.test.mjs tests/hwp-song-labels.test.mjs tests/hwp-stage-media-controls.test.mjs sync-staging/hwp-local-media-sync.test.mjs sync-staging/hwp-cloud-media.test.mjs sync-staging/hwp-recovery.test.mjs
+        run: node --test tests/hwp-grid-controls.test.mjs tests/hwp-screen-hotplug.test.mjs tests/hwp-native-screens.test.mjs tests/hwp-mobile-companion.test.mjs tests/hwp-sermon-control.test.mjs tests/hwp-mixer-cursor.test.mjs tests/hwp-service-medleys.test.mjs tests/hwp-bible-presentations.test.mjs tests/hwp-song-labels.test.mjs tests/hwp-stage-media-controls.test.mjs sync-staging/hwp-local-media-sync.test.mjs sync-staging/hwp-cloud-media.test.mjs sync-staging/hwp-recovery.test.mjs
 
       - name: Confirm live HWP Bible and service medley release
         shell: bash
@@ -175,6 +175,7 @@ jobs:
               && cmp -s hwp-icon-512-white.png "$RUNNER_TEMP/hwp-icon-512-white.png" \
               && curl -fsSL --max-time 20 -H "Cache-Control: no-cache" "$domain/hwp-maskable-512-white.png?hwp_release=$GITHUB_SHA" -o "$RUNNER_TEMP/hwp-maskable-512-white.png" \
               && cmp -s hwp-maskable-512-white.png "$RUNNER_TEMP/hwp-maskable-512-white.png" \
+              && grep -Fq 'hwp-grid-controls-v1' "$RUNNER_TEMP/hwp-home.html" \
               && cmp -s index.html "$RUNNER_TEMP/hwp-home.html" \
               && cmp -s hwp-access.css "$RUNNER_TEMP/hwp-access.css" \
               && test -s "$RUNNER_TEMP/hwp-logo.png"; then
