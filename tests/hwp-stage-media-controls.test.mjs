@@ -20,12 +20,28 @@ test('Stage messages remain until explicitly removed, with stacked labeled actio
  assert.ok(css.includes('.hwp-stage-message-actions'));
 });
 
-test('Clear All keeps the selected background and stage strips output backgrounds',()=>{
+test('Clear All keeps the selected background',()=>{
  includes('name:`clearall`','Clear All icon');
  includes('layer:`all`','Clear All reducer action');
  includes('r===`all`&&(n.logoOn=!1,n.stageMessage=null)','all foreground overlays removed');
- includes('function hwpStagePlain(snap)','stage-only background suppression');
- includes('background:null,mediaLayer:null','stage background removed');
+});
+test('Stage current output retains media, logo, welcome and overlays while next stays independent',()=>{
+ const from=html.indexOf('function hwpStagePlain(snap)'),to=html.indexOf('function HwpStageTextSlot(',from);
+ assert.ok(from>=0&&to>from);
+ const {current,next}=new Function('hwpScreenSnap',html.slice(from,to)+';return {current:hwpStagePlain,next:hwpStageNextSnap}')((snap,target)=>({...snap,target}));
+ const slide={background:{type:'media'},objects:[{fill:{type:'media'},width:1920,height:1080}]};
+ const snap={slide,next:{key:'next'},background:{key:'bg'},mediaLayer:{kind:'video'},mediaPlaying:true,logoOn:true,welcomeOn:true,props:[{id:'p'}],message:{id:'m'},stageMessage:{id:'stage'}};
+ const live=current(snap);
+ assert.deepEqual(live,{...snap,target:'stage'});
+ const upcoming=next(live);
+ assert.equal(upcoming.slide,snap.next);
+ for(const field of ['logoOn','welcomeOn','mediaPlaying'])assert.equal(upcoming[field],false);
+ assert.equal(upcoming.mediaLayer,null);assert.equal(upcoming.message,null);assert.deepEqual(upcoming.props,[]);
+ const renderer=html.slice(html.indexOf('function Fr({snap:e'),html.indexOf('function Ir(e)'));
+ assert.ok(renderer.includes('snap:e,quality:liveOutput?`full`:`draft`'));
+ assert.ok(renderer.includes('snap:hwpStageNextSnap(e),quality:`draft`,showOverlays:!1'));
+ assert.ok(renderer.includes('quality:liveOutput?`full`:`draft`,playing:liveOutput'));
+ assert.ok(html.includes('snap:hwpStageNextSnap(e),quality:`draft`,showOverlays:!1'));
 });
 
 test('Bible multiple translation labels preserve selected abbreviation order',()=>{
