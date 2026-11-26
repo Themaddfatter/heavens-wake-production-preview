@@ -2,7 +2,7 @@ name: HWP macOS release
 on:
   workflow_dispatch:
   push:
-    branches: [main]
+    branches: [hwp-mac-desktop]
     paths:
       - 'desktop/mac/**'
       - '.github/workflows/hwp-mac-release.yml'
@@ -13,14 +13,32 @@ concurrency:
   cancel-in-progress: false
 jobs:
   release:
-    if: github.ref == 'refs/heads/main'
-    runs-on: [self-hosted, macOS]
+    if: github.ref == 'refs/heads/hwp-mac-desktop'
+    # Public repository: same standard free macOS runner as the existing preview build.
+    runs-on: macos-15
     timeout-minutes: 60
     defaults:
       run:
         working-directory: desktop/mac
     steps:
+      - name: Validate signing configuration before build
+        env:
+          CSC_LINK: ${{ secrets.HWP_MAC_CSC_LINK }}
+          CSC_KEY_PASSWORD: ${{ secrets.HWP_MAC_CSC_KEY_PASSWORD }}
+          APPLE_ID: ${{ secrets.HWP_MAC_APPLE_ID }}
+          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.HWP_MAC_APPLE_APP_SPECIFIC_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.HWP_MAC_APPLE_TEAM_ID }}
+          ELECTRON_BUILDER_UPDATE_SIGN_KEY: ${{ secrets.HWP_MAC_UPDATE_SIGN_KEY }}
+        run: |
+          set -euo pipefail
+          missing=0
+          for name in CSC_LINK CSC_KEY_PASSWORD APPLE_ID APPLE_APP_SPECIFIC_PASSWORD APPLE_TEAM_ID ELECTRON_BUILDER_UPDATE_SIGN_KEY; do
+            if [[ -z "${!name}" ]]; then echo "::error::Missing signing configuration: $name"; missing=1; fi
+          done
+          if [[ "$missing" == 1 ]]; then echo 'Configure the HWP Mac repository Actions secrets before publishing a signed release.' >> "$GITHUB_STEP_SUMMARY"; exit 1; fi
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
       - uses: actions/setup-node@v4
         with:
           node-version: '24'
@@ -29,7 +47,7 @@ jobs:
           npm install --no-audit --no-fund
           npm run check
       - name: Set monotonically increasing release version
-        run: npm version "0.1.${GITHUB_RUN_NUMBER}" --no-git-tag-version
+        run: npm version "0.2.${GITHUB_RUN_NUMBER}" --no-git-tag-version
       - name: Build signed universal Mac installer and update archive
         env:
           CSC_LINK: ${{ secrets.HWP_MAC_CSC_LINK }}
@@ -63,6 +81,7 @@ jobs:
           # Do not modify the DMG after its hash has been written into the signed update manifest.
           # The application inside the DMG has already been stapled and validated above.
           test -s dist/latest-mac.yml
+          test -s dist/latest-mac.yml.sig
           find dist -maxdepth 1 -name '*.dmg' -print -quit | grep -q .
           find dist -maxdepth 1 -name '*.zip' -print -quit | grep -q .
       - name: Publish verified native release

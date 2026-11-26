@@ -8,6 +8,7 @@ const HOME = 'https://production.sioncdo.com/';
 const ORIGIN = new URL(HOME).origin;
 let displayManager;
 let mainWindow, ready = false, checking = false, timer, updateMenu, quitting = false;
+const UPDATE_INTERVAL_MS = 5 * 60 * 1000;
 const securePrefs = { nodeIntegration: false, contextIsolation: true, sandbox: true, webSecurity: true, webviewTag: false, allowRunningInsecureContent: false };
 function isHwp(url) { try { return new URL(url).origin === ORIGIN; } catch { return false; } }
 function isExternalHttps(url) { try { return new URL(url).protocol === 'https:'; } catch { return false; } }
@@ -53,7 +54,7 @@ function installNow() {
 async function checkUpdates(manual = false) {
   if (!app.isPackaged || hwpPreview) { if (manual) dialog.showMessageBox({message:'Updates are available in signed release builds only.'}); return; }
   if (ready) { if (manual) installNow(); return; }
-  if (checking) return;
+  if (checking) { if (manual) void dialog.showMessageBox({message:'HWP is already checking for an update.'}); return; }
   checking = true;
   try {
     const result = await autoUpdater.checkForUpdates();
@@ -70,13 +71,15 @@ function configureUpdater() {
   autoUpdater.autoInstallOnAppQuit = true;
   autoUpdater.allowPrerelease = false;
   autoUpdater.allowDowngrade = false;
-  autoUpdater.on('error', error => console.error('HWP updater:',error));
+  autoUpdater.on('error', error => { console.error('HWP updater:',error); if (!ready && updateMenu) updateMenu.label = 'Check for Updates…'; });
+  autoUpdater.on('update-available', () => { if (updateMenu) updateMenu.label = 'Downloading HWP Update…'; });
+  autoUpdater.on('update-not-available', () => { if (!ready && updateMenu) updateMenu.label = 'Check for Updates…'; });
   autoUpdater.on('update-downloaded', () => {
     ready = true;
     if (updateMenu) { updateMenu.label = 'Install Downloaded Update…'; }
   });
   void checkUpdates();
-  timer = setInterval(() => void checkUpdates(), 30 * 60 * 1000);
+  timer = setInterval(() => void checkUpdates(), UPDATE_INTERVAL_MS);
   timer.unref();
 }
 function createMenu() {
