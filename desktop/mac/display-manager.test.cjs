@@ -13,6 +13,6 @@ test('a disconnected saved display cannot block the next connected projector; di
  const event={sender:op.webContents,senderFrame:op.webContents.mainFrame};
  handlers['hwp:screens:enable'](event,'audience',true);assert.equal(opened.length,0);
  attached.push({id:2,internal:false,size:{width:1920,height:1080},bounds:{x:1440,y:0,width:1920,height:1080}});
- events['display-added']();scheduled.pop()();assert.equal(opened.length,1);assert.match(opened[0].url,/display=audience/);assert.equal(JSON.parse(written)['2'],'audience');
+ events['display-added']();scheduled.pop()();assert.equal(opened.length,1);assert.match(opened[0].url,/display=audience/);assert.equal(opened[0].opts.frame,false);assert.equal(opened[0].opts.focusable,true);assert.equal(opened[0].opts.resizable,false);assert.equal(opened[0].opts.width,1920);assert.equal(opened[0].opts.height,1080);assert.equal(JSON.parse(written)['2'],'audience');
  events['display-metrics-changed']();scheduled.pop()();assert.equal(opened.length,1);assert.equal(manager.status().displays[1].role,'audience');
 });
