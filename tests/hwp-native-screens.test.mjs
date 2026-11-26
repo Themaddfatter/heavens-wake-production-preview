@@ -1,7 +1,1 @@
-import test from 'node:test';
-import assert from 'node:assert/strict';
-import {readFileSync} from 'node:fs';
-const html=readFileSync(new URL('../index.html',import.meta.url),'utf8');
-test('HWP Settings exposes native display roles, identification and hardware topology',()=>{
- for(const marker of ['function HwpNativeScreenSettings()','api.onChanged(update)',"call('identify')","call('assign',chosen.id,event.target.value)",'hwp-screen-map','hwp-screen-config-sidebar',"api.enable('audience',!!e.live.audienceOn)","api.enable('stage',!!e.live.stageOn)",'M.jsx(HwpNativeScreenSettings,{})'])assert.ok(html.includes(marker),marker);
-});
+import test from 'node:test';import assert from 'node:assert/strict';import {readFileSync} from 'node:fs';const html=readFileSync(new URL('../index.html',import.meta.url),'utf8'),script=readFileSync(new URL('../hwp-screen-system.js',import.meta.url),'utf8');test('role-first screen settings and browser output control',()=>{for(const marker of ['hwp-pp-screen-sidebar','hwp-pp-output-preview','hwp-pp-hardware',"api?.connect","window.hwpNativeScreens||window.hwpBrowserScreens",'M.jsx(HwpNativeScreenSettings,{})'])assert.ok(html.includes(marker),marker);for(const marker of ['getScreenDetails','screenschange','reconcile','window.open','document.body.append(tip)','hwp-floating-header-tip'])assert.ok(script.includes(marker),marker)});
