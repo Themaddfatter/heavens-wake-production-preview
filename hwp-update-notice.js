@@ -11,6 +11,10 @@
   'sync-staging/hwp-mobile-companion.mjs','sync-staging/sync-core.mjs',
   'sync-staging/hwp-firebase-media-remote.mjs'];
  let running=null,candidate=null,confirmations=0,checking=false,pending=false,notice=null,lastCheck=0;
+ // Use the loaded script URL as an immutable startup marker, even if the initial
+ // network snapshot already belongs to a newer deployment than this open tab.
+ const loadedScreenScript=document.querySelector('script[src*="hwp-screen-system.js"]')?.getAttribute('src')||'';
+ let loadedReleaseMismatch=false;
  function language(){try{return document.querySelector('.hwp-mobile-companion')?.lang==='es'||document.documentElement.lang==='es'||localStorage.getItem('sion-lang')==='es'}catch{return false}}
  function show(){
   if(!pending){notice?.remove();return}
@@ -42,6 +46,8 @@
    if(!body.trim())throw Error('Empty HWP release file');
    if(file==='index.html'){
     if(!/<meta\b[^>]*\bname\s*=\s*["']hwp-release["']/i.test(body))throw Error('Not an HWP release');
+    const publishedScreenScript=body.match(/<script\b[^>]*\bsrc=["']([^"']*hwp-screen-system\.js[^"']*)["']/i)?.[1]||'';
+    loadedReleaseMismatch=!!(loadedScreenScript&&publishedScreenScript&&loadedScreenScript!==publishedScreenScript);
    }else if(/^\s*(?:<!doctype\s+html|<html\b)/i.test(body)||/text\/html/i.test(reply.headers.get('content-type')||'')){
     throw Error('Unexpected HTML response for HWP release asset');
    }
@@ -55,8 +61,8 @@
   const controller=new AbortController(),timeout=window.setTimeout(()=>controller.abort(),25000);
   try{
    const latest=await releaseSnapshot(controller.signal);
-   if(running===null){running=latest;return}
-   if(latest===running){candidate=null;confirmations=0;pending=false;show();return}
+   if(running===null){running=latest;if(!loadedReleaseMismatch)return}
+   if(latest===running&&!loadedReleaseMismatch){candidate=null;confirmations=0;pending=false;show();return}
    if(latest===candidate)confirmations++;
    else{candidate=latest;confirmations=1}
    // Two successful observations of the same changed release avoid a transient
