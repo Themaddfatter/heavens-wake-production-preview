@@ -15,13 +15,13 @@ function createDisplayManager({app,home,securePrefs,getOperator}) {
  function reconcile(){autoAssign();const current=displays(),wanted=new Map(current.filter(d=>d.role&&enabled[d.role]&&!d.primary&&!d.internal).map(d=>[d.id,d]));
   for(const [id,entry] of windows)if(!wanted.has(id)||wanted.get(id).role!==entry.role)close(id);
   for(const [id,d] of wanted){const existing=windows.get(id);if(existing){if(JSON.stringify(existing.bounds)!==JSON.stringify(d.bounds)){existing.win.setBounds(d.bounds);existing.bounds=d.bounds;}continue;}
-   const win=new BrowserWindow({...d.bounds,frame:false,show:false,backgroundColor:'#000000',skipTaskbar:true,focusable:d.role==='audience',fullscreenable:false,resizable:false,movable:false,minimizable:false,maximizable:false,hasShadow:false,webPreferences:securePrefs});
+   const win=new BrowserWindow({...d.bounds,frame:false,show:false,backgroundColor:'#000000',skipTaskbar:true,focusable:d.role==='audience',fullscreenable:d.role==='audience',resizable:false,movable:false,minimizable:false,maximizable:false,hasShadow:false,webPreferences:securePrefs});
    delete failures[id];windows.set(id,{win,role:d.role,bounds:d.bounds,ready:false});
    win.setAlwaysOnTop(true,'screen-saver');win.setVisibleOnAllWorkspaces(true,{visibleOnFullScreen:true});win.setBounds(d.bounds);win.setMenuBarVisibility?.(false);
-   win.once('ready-to-show',()=>{if(!win.isDestroyed()&&windows.get(id)?.win===win){const current=windows.get(id);win.setBounds(current.bounds);win.showInactive();current.ready=true;notify();}});
-   win.on('closed',()=>{if(windows.get(id)?.win===win)windows.delete(id);});
+   win.once('ready-to-show',()=>{if(!win.isDestroyed()&&windows.get(id)?.win===win){const current=windows.get(id);win.setBounds(current.bounds);win.showInactive();if(current.role==='audience'){if(typeof win.setSimpleFullScreen==='function')win.setSimpleFullScreen(true);else win.setFullScreen?.(true);win.webContents?.setZoomFactor?.(1);}current.ready=true;notify();}});
+   win.on('closed',()=>{if(windows.get(id)?.win===win){windows.delete(id);if(d.role==='audience'){enabled.audience=false;reconcile();}notify();}});
    const url=new URL(home);url.searchParams.set('display',d.role);url.searchParams.set('nativeOutput','1');
-   if(d.role==='audience'&&win.webContents){const guard=(event,target)=>{try{const next=new URL(target);if(next.origin===url.origin&&next.searchParams.get('display')==='audience')return}catch{}event.preventDefault()};win.webContents.on('will-navigate',guard);win.webContents.on('will-redirect',guard);win.webContents.on('context-menu',event=>event.preventDefault());}
+   if(d.role==='audience'&&win.webContents){const guard=(event,target)=>{try{const next=new URL(target);if(next.origin===url.origin&&next.searchParams.get('display')==='audience')return}catch{}event.preventDefault()};win.webContents.on('will-navigate',guard);win.webContents.on('will-redirect',guard);win.webContents.on('context-menu',event=>event.preventDefault());win.webContents.on('before-input-event',(event,input)=>{if(input.type==='keyDown'&&input.key==='Escape'){event.preventDefault();setEnabled('audience',false);}});}
    win.loadURL(url.toString()).catch(error=>{if(windows.get(id)?.win!==win)return;failures[id]=String(error.message||error);console.error('HWP output:',error);close(id);notify();});
   }
  }
