@@ -25,23 +25,32 @@ test('Clear All keeps the selected background',()=>{
  includes('layer:`all`','Clear All reducer action');
  includes('r===`all`&&(n.logoOn=!1,n.stageMessage=null)','all foreground overlays removed');
 });
-test('Stage current output retains media, logo, welcome and overlays while next stays independent',()=>{
+test('Stage excludes backgrounds only, retaining foreground pictures, video, logo and welcome',()=>{
  const from=html.indexOf('function hwpStagePlain(snap)'),to=html.indexOf('function HwpStageTextSlot(',from);
  assert.ok(from>=0&&to>from);
  const {current,next}=new Function('hwpScreenSnap',html.slice(from,to)+';return {current:hwpStagePlain,next:hwpStageNextSnap}')((snap,target)=>({...snap,target}));
- const slide={background:{type:'media'},objects:[{fill:{type:'media'},width:1920,height:1080}]};
- const snap={slide,next:{key:'next'},background:{key:'bg'},mediaLayer:{kind:'video'},mediaPlaying:true,logoOn:true,welcomeOn:true,props:[{id:'p'}],message:{id:'m'},stageMessage:{id:'stage'}};
+ const picture={kind:'rect',fill:{type:'media',mediaId:'photo'},width:1920,height:1080};
+ const video={kind:'rect',fill:{type:'media',mediaId:'video'},width:1920,height:1080};
+ const slide={background:{type:'media',mediaId:'decor'},objects:[picture]};
+ const nextSlide={background:{type:'gradient'},objects:[video]};
+ const welcomeSlide={background:{type:'media',mediaId:'welcome-art'},objects:[]};
+ const snap={slide,next:nextSlide,background:{key:'bg'},mediaLayer:{kind:'video'},mediaPlaying:true,logoOn:true,welcomeOn:true,welcomeSlide,props:[{id:'p'}],message:{id:'m'},stageMessage:{id:'stage'}};
  const live=current(snap);
- assert.deepEqual(live,{...snap,target:'stage'});
+ assert.equal(live.background,null);assert.equal(live.slide.background.type,'none');assert.equal(live.next.background.type,'none');
+ assert.equal(live.slide.objects[0],picture);assert.equal(live.next.objects[0],video);
+ for(const field of ['mediaLayer','mediaPlaying','logoOn','welcomeOn','welcomeSlide','props','message','stageMessage'])assert.equal(live[field],snap[field],field);
+ assert.equal(snap.background.key,'bg');assert.equal(snap.slide.background.mediaId,'decor');
  const upcoming=next(live);
- assert.equal(upcoming.slide,snap.next);
+ assert.equal(upcoming.slide,live.next);
  for(const field of ['logoOn','welcomeOn','mediaPlaying'])assert.equal(upcoming[field],false);
  assert.equal(upcoming.mediaLayer,null);assert.equal(upcoming.message,null);assert.deepEqual(upcoming.props,[]);
+ assert.equal(current({...snap,slide:null,next:null}).slide,null);
  const renderer=html.slice(html.indexOf('function Fr({snap:e'),html.indexOf('function Ir(e)'));
- assert.ok(renderer.includes('snap:hwpStageForegroundSnap(e),quality:liveOutput?`full`:`draft`,transparent:!!e.background'));
+ assert.ok(renderer.includes('snap:e,quality:liveOutput?`full`:`draft`'));
  assert.ok(renderer.includes('snap:hwpStageNextSnap(e),quality:`draft`,showOverlays:!1'));
  assert.ok(renderer.includes('quality:liveOutput?`full`:`draft`,playing:liveOutput'));
  assert.ok(html.includes('snap:hwpStageNextSnap(e),quality:`draft`,showOverlays:!1'));
+ assert.ok(!html.includes('HwpStageBackdrop'));
 });
 
 test('Bible multiple translation labels preserve selected abbreviation order',()=>{
@@ -749,19 +758,3 @@ test('Right-click Edit opens the exact song and slide even when a different pres
  assert.ok(html.includes('type:"hwp-open-editor-slide",presentationId:presentation.id,slideId'));
 });
 
-test('Active service background fills the stage behind all layout objects without duplicate foreground playback',()=>{
- const start=html.indexOf('function hwpStageBackdropSnap('),end=html.indexOf('function HwpStageTextSlot(',start);
- const jsx=(type,props,key)=>({type,props,key});
- const tr=()=>null;
- const nr=model=>model?{...model,background:{type:'none'}}:model;
- const {backdrop,foreground,view}=new Function('M','tr','nr',html.slice(start,end)+';return {backdrop:hwpStageBackdropSnap,foreground:hwpStageForegroundSnap,view:HwpStageBackdrop};')({jsx},tr,nr);
- const background={key:'bg',width:1920,height:1080,background:{type:'media',mediaId:'video'}},slide={key:'song',background:{type:'color',color:'#000'},objects:[{kind:'text',text:'Lyrics'}]};
- const snap={background,slide,welcomeSlide:slide,mediaLayer:null,logoOn:true,welcomeOn:false,props:[{id:'p'}],message:{id:'m'},stageMessage:{id:'sm'}};
- const layer=backdrop(snap);assert.equal(layer.background,background);assert.equal(layer.slide,null);assert.equal(layer.logoOn,false);assert.deepEqual(layer.props,[]);
- const front=foreground(snap);assert.equal(front.background,null);assert.equal(front.slide.background.type,'none');assert.equal(front.slide.objects,slide.objects);assert.equal(front.logoOn,true);assert.equal(front.stageMessage,snap.stageMessage);
- assert.equal(foreground({...snap,background:null}).slide,slide);
- const rendered=view({snap,liveOutput:true});assert.equal(rendered.props.style.inset,0);assert.equal(rendered.props.children.props.quality,'full');assert.equal(rendered.props.children.props.snap.background,background);assert.equal(view({snap,liveOutput:false}).props.children.props.quality,'draft');
- const renderer=html.slice(html.indexOf('function Fr({snap:e'),html.indexOf('function Ir(e)'));
- assert.ok(renderer.includes("children:[M.jsx(HwpStageBackdrop,{snap:e,liveOutput},'service-background'),...t.objects.filter"));
- assert.ok(renderer.includes('background:t.kind===`current`&&e.background?`transparent`'));
-});
