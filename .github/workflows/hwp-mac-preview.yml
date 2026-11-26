@@ -1,0 +1,56 @@
+name: HWP Mac preview installer
+on:
+  push:
+    branches: [hwp-mac-desktop]
+    paths:
+      - 'desktop/mac/**'
+      - '.github/workflows/hwp-mac-preview.yml'
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: hwp-mac-preview
+  cancel-in-progress: false
+jobs:
+  build:
+    # This repository is public, so standard GitHub-hosted runners are free.
+    runs-on: macos-15
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: desktop/mac
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Build universal HWP preview
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+          HWP_PREVIEW_UNIVERSAL: '1'
+        run: |
+          set -euo pipefail
+          npm install --no-audit --no-fund
+          npm run check
+          npm run dist:preview
+          test -s dist-preview/HWP.dmg
+          hdiutil verify dist-preview/HWP.dmg
+          app_path="$(find dist-preview -maxdepth 2 -name HWP.app -type d -print -quit)"
+          test -n "$app_path"
+          lipo "$app_path/Contents/MacOS/HWP" -verify_arch x86_64 arm64
+          test -s "$app_path/Contents/Resources/icon.icns"
+      - name: Upload preview installer
+        uses: actions/upload-artifact@v4
+        with:
+          name: HWP-Mac-Preview
+          path: desktop/mac/dist-preview/HWP.dmg
+          if-no-files-found: error
+          retention-days: 1
+      - name: Publish downloadable HWP preview
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gh release create "hwp-mac-preview-${GITHUB_RUN_NUMBER}" dist-preview/HWP.dmg --target "$GITHUB_SHA" --title "HWP for Mac — Preview" --notes "Universal Intel and Apple Silicon test installer. Ad-hoc signed, not Apple notarized. Native automatic updates are disabled in this preview; web content uses the production HWP site. Not intended for live service use until tested." --prerelease --latest=false

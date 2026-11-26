@@ -1,0 +1,98 @@
+name: HWP macOS release
+on:
+  workflow_dispatch:
+  push:
+    branches: [hwp-mac-desktop]
+    paths:
+      - 'desktop/mac/**'
+      - '.github/workflows/hwp-mac-release.yml'
+permissions:
+  contents: write
+concurrency:
+  group: hwp-mac-release
+  cancel-in-progress: false
+jobs:
+  release:
+    if: github.ref == 'refs/heads/hwp-mac-desktop'
+    # Public repository: same standard free macOS runner as the existing preview build.
+    runs-on: macos-15
+    timeout-minutes: 60
+    defaults:
+      run:
+        working-directory: desktop/mac
+    steps:
+      - name: Validate signing configuration before build
+        env:
+          CSC_LINK: ${{ secrets.HWP_MAC_CSC_LINK }}
+          CSC_KEY_PASSWORD: ${{ secrets.HWP_MAC_CSC_KEY_PASSWORD }}
+          APPLE_ID: ${{ secrets.HWP_MAC_APPLE_ID }}
+          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.HWP_MAC_APPLE_APP_SPECIFIC_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.HWP_MAC_APPLE_TEAM_ID }}
+          ELECTRON_BUILDER_UPDATE_SIGN_KEY: ${{ secrets.HWP_MAC_UPDATE_SIGN_KEY }}
+        run: |
+          set -euo pipefail
+          missing=0
+          for name in CSC_LINK CSC_KEY_PASSWORD APPLE_ID APPLE_APP_SPECIFIC_PASSWORD APPLE_TEAM_ID ELECTRON_BUILDER_UPDATE_SIGN_KEY; do
+            if [[ -z "${!name}" ]]; then echo "::error::Missing signing configuration: $name"; missing=1; fi
+          done
+          if [[ "$missing" == 1 ]]; then echo 'Configure the HWP Mac repository Actions secrets before publishing a signed release.' >> "$GITHUB_STEP_SUMMARY"; exit 1; fi
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Install and check desktop source
+        run: |
+          npm install --no-audit --no-fund
+          npm run check
+      - name: Set monotonically increasing release version
+        run: npm version "0.2.${GITHUB_RUN_NUMBER}" --no-git-tag-version
+      - name: Build signed universal Mac installer and update archive
+        env:
+          CSC_LINK: ${{ secrets.HWP_MAC_CSC_LINK }}
+          CSC_KEY_PASSWORD: ${{ secrets.HWP_MAC_CSC_KEY_PASSWORD }}
+          APPLE_ID: ${{ secrets.HWP_MAC_APPLE_ID }}
+          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.HWP_MAC_APPLE_APP_SPECIFIC_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.HWP_MAC_APPLE_TEAM_ID }}
+          ELECTRON_BUILDER_UPDATE_SIGN_KEY: ${{ secrets.HWP_MAC_UPDATE_SIGN_KEY }}
+        run: |
+          set -euo pipefail
+          for name in CSC_LINK CSC_KEY_PASSWORD APPLE_ID APPLE_APP_SPECIFIC_PASSWORD APPLE_TEAM_ID ELECTRON_BUILDER_UPDATE_SIGN_KEY; do
+            if [[ -z "${!name}" ]]; then echo "::error::Missing signing secret: $name"; exit 1; fi
+          done
+          npm run dist:mac
+      - name: Verify Apple signature, notarization, and update artifacts
+        env:
+          APPLE_ID: ${{ secrets.HWP_MAC_APPLE_ID }}
+          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.HWP_MAC_APPLE_APP_SPECIFIC_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.HWP_MAC_APPLE_TEAM_ID }}
+        run: |
+          set -euo pipefail
+          app_path="$(find dist -maxdepth 2 -name '*.app' -type d -print -quit)"
+          [[ -n "$app_path" ]]
+          codesign --verify --deep --strict --verbose=2 "$app_path"
+          xcrun stapler validate "$app_path"
+          spctl --assess --type execute --verbose=2 "$app_path"
+          dmg_path="$(find dist -maxdepth 1 -name '*.dmg' -type f -print -quit)"
+          [[ -n "$dmg_path" ]]
+          codesign --verify --verbose=2 "$dmg_path"
+          xcrun notarytool submit "$dmg_path" --apple-id "$APPLE_ID" --password "$APPLE_APP_SPECIFIC_PASSWORD" --team-id "$APPLE_TEAM_ID" --wait
+          # Do not modify the DMG after its hash has been written into the signed update manifest.
+          # The application inside the DMG has already been stapled and validated above.
+          test -s dist/latest-mac.yml
+          grep -Eq '^signature: .+' dist/latest-mac.yml
+          test -s "$app_path/Contents/Resources/app-update.yml"
+          grep -q '^updateManifestPublicKey:' "$app_path/Contents/Resources/app-update.yml"
+          find dist -maxdepth 1 -name '*.dmg' -print -quit | grep -q .
+          find dist -maxdepth 1 -name '*.zip' -print -quit | grep -q .
+      - name: Publish verified native release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          version="$(node -p "require('./package.json').version")"
+          artifacts=()
+          while IFS= read -r -d '' file; do artifacts+=("$file"); done < <(find dist -maxdepth 1 -type f \( -name '*.dmg' -o -name '*.zip' -o -name '*.blockmap' -o -name 'latest-mac.yml*' \) -print0)
+          gh release create "v$version" "${artifacts[@]}" --target "$GITHUB_SHA" --title "HWP for macOS $version" --notes "Signed universal HWP desktop release. Web features use the current production.sioncdo.com deployment." --draft
+          gh release edit "v$version" --draft=false --latest
