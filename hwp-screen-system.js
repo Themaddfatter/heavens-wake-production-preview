@@ -8,7 +8,41 @@ const status=()=>({displays:displays(),enabled:{...enabled},assignments:{...assi
 function save(){try{localStorage.setItem('hwp-screen-assignments-v3',JSON.stringify(assignments))}catch{}}
 function notify(){const value=status();listeners.forEach(fn=>fn(value));return value}
 let localAudience=null,permissionNotice=null;
-function audienceFailure(reason){enabled.audience=false;signalAudienceClosed();notify();if(permissionNotice)permissionNotice.remove();const box=document.createElement('div');permissionNotice=box;box.setAttribute('role','alert');Object.assign(box.style,{position:'fixed',top:'70px',right:'16px',maxWidth:'420px',zIndex:'2147483647',padding:'16px',borderRadius:'10px',background:'var(--bg-2,#222)',color:'var(--text,#fff)',border:'1px solid var(--line,#888)',boxShadow:'0 4px 20px #0006'});const text=document.createElement('div');text.textContent=reason+' Allow Window management, Pop-ups and Automatic fullscreen for production.sioncdo.com in Chrome site settings, then turn Audience on again. No action is required on the Audience screen.';const dismiss=document.createElement('button');dismiss.textContent='Dismiss';dismiss.type='button';dismiss.onclick=()=>{box.remove();permissionNotice=null};box.append(text,dismiss);document.body.append(box)}
+function audienceBrowserHelp(ua,es=false){
+ const edge=/Edg\//i.test(ua),opera=/OPR\//i.test(ua),brave=!!navigator.brave,vivaldi=/Vivaldi\//i.test(ua),chrome=/Chrome\//i.test(ua),firefox=/Firefox\//i.test(ua),safari=/Safari\//i.test(ua)&&!chrome;
+ const mobile=/Android|iPhone|iPad/i.test(ua)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+ const name=edge?'Microsoft Edge':opera?'Opera':brave?'Brave':vivaldi?'Vivaldi':chrome?'Google Chrome':firefox?'Firefox':safari?'Safari':es?'tu navegador':'your browser';
+ const scheme=edge?'edge':opera?'opera':brave?'brave':vivaldi?'vivaldi':'chrome';
+ if(!mobile&&(chrome||edge||opera||brave||vivaldi)){
+  const site=location.origin;
+  return {name,steps:es?[
+   'En la barra de direcciones, haz clic en el icono de información del sitio (a la izquierda de '+location.hostname+').',
+   edge?'Abre Permisos para este sitio.':'Abre Configuración de sitios.',
+   'Cambia Administración de ventanas, Ventanas emergentes y redirecciones, y Pantalla completa automática a Permitir, solo para este sitio.',
+   'Si no ves una opción, copia la dirección de configuración de abajo en una nueva pestaña. Añade '+site+' a los sitios permitidos.',
+   'Vuelve a HWP, recarga la página y activa Pantalla de audiencia.'
+  ]:[
+   'Click the site information / sliders icon immediately to the left of '+location.hostname+' in the address bar.',
+   edge?'Choose Permissions for this site.':'Choose Site settings.',
+   'Set Window management, Pop-ups and redirects, and Automatic fullscreen to Allow for this site only.',
+   'If a setting is missing, copy the settings address below into a new tab. Add '+site+' to the allowed sites.',
+   'Return to HWP, reload the page, then turn Audience on again.'
+  ],addresses:[scheme+'://settings/content/siteDetails?site='+encodeURIComponent(site)],alternate:scheme+'://settings/content/automaticFullScreen'};
+ }
+ return {name,steps:es?['Este navegador no ofrece los permisos necesarios para controlar automáticamente una pantalla externa de forma fiable.','Abre HWP en Chrome o Edge de escritorio, o usa la aplicación HWP de escritorio.']:['This browser does not provide the permissions needed for reliable automatic fullscreen on a separate display.','Open HWP in desktop Chrome or Edge, or use the HWP desktop application.'],addresses:[]};
+}
+function audienceFailure(reason){
+ enabled.audience=false;signalAudienceClosed();notify();if(permissionNotice)permissionNotice.remove();
+ const es=document.documentElement.lang==='es',help=audienceBrowserHelp(navigator.userAgent,es),box=document.createElement('section');permissionNotice=box;box.setAttribute('role','alert');
+ Object.assign(box.style,{position:'fixed',top:'70px',right:'16px',width:'min(480px,calc(100vw - 32px))',maxHeight:'calc(100vh - 90px)',overflow:'auto',boxSizing:'border-box',zIndex:'2147483647',padding:'18px',borderRadius:'12px',background:'var(--bg-2,#222)',color:'var(--text,#fff)',border:'1px solid var(--line,#888)',boxShadow:'0 4px 20px #0006',fontSize:'14px',lineHeight:'1.5'});
+ const add=(tag,value,parent=box)=>{const el=document.createElement(tag);el.textContent=value;parent.append(el);return el};
+ const title=add('strong',es?'Configurar pantalla de audiencia en '+help.name:'Set up Audience fullscreen in '+help.name);title.style.fontSize='17px';
+ add('p',es?'No se pudo abrir la pantalla de audiencia automáticamente.':reason.replace(/^Chrome /,help.name+' '));
+ const steps=add('ol','');steps.style.paddingLeft='22px';help.steps.forEach(step=>{const li=add('li',step,steps);li.style.marginBottom='7px'});
+ if(help.addresses.length){for(const address of [...help.addresses,help.alternate].filter(Boolean)){const row=add('div','');Object.assign(row.style,{display:'flex',alignItems:'center',gap:'6px',marginBottom:'8px'});const field=document.createElement('input');field.readOnly=true;field.value=address;field.setAttribute('aria-label',es?'Dirección de configuración':'Settings address');Object.assign(field.style,{minWidth:'0',flex:'1',padding:'6px',color:'inherit',background:'var(--bg-3,#333)',border:'1px solid var(--line,#888)'});field.onclick=()=>field.select();row.append(field);const copy=add('button',es?'Copiar':'Copy',row);copy.type='button';copy.onclick=async()=>{field.select();try{await navigator.clipboard.writeText(address);copy.textContent=es?'Copiado':'Copied'}catch{try{if(document.execCommand('copy'))copy.textContent=es?'Copiado':'Copied'}catch{}}};}}
+ add('p',es?'No es necesario hacer clic en la pantalla de audiencia.':'No action is required on the Audience screen.');
+ const dismiss=add('button',es?'Cerrar':'Dismiss');dismiss.type='button';Object.assign(dismiss.style,{padding:'6px 14px',borderRadius:'6px',border:'1px solid var(--line,#888)',background:'var(--amber,#3276b8)',color:'var(--hwp-accent-ink,#fff)',cursor:'pointer'});dismiss.onclick=()=>{box.remove();permissionNotice=null};document.body.append(box)
+}
 function signalAudienceClosed(){try{const bus=new BroadcastChannel('vesper-show-v1');bus.postMessage({type:'hwp-audience-close'});bus.close()}catch{}}
 function audienceUrl(){const url=new URL(location.href);url.searchParams.set('display','audience');url.searchParams.delete('nativeOutput');url.hash='';return url.href}
 // Keep the fullscreen document stable: navigating a popup after requesting fullscreen
