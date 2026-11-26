@@ -1,5 +1,5 @@
 (()=>{'use strict';
-if(new URLSearchParams(location.search).get('display')==='audience')return;
+if(['audience','stage'].includes(new URLSearchParams(location.search).get('display')))return;
 const roles=['audience','stage'],listeners=new Set(),outputs=new Map();let details=null,enabled={audience:false,stage:false},assignments={};
 try{assignments=JSON.parse(localStorage.getItem('hwp-screen-assignments-v3')||'{}')}catch{}
 const id=d=>[d.label,d.left,d.top,d.width,d.height].join('|');
@@ -62,23 +62,23 @@ function showAudienceHelp(reason='Configure the browser permissions before turni
  add('p',es?'No es necesario hacer clic en la pantalla de audiencia.':'No action is required on the Audience screen.');
  const dismiss=add('button',es?'Cerrar':'Dismiss');dismiss.type='button';Object.assign(dismiss.style,{padding:'6px 14px',borderRadius:'6px',border:'1px solid var(--line,#888)',background:'var(--amber,#3276b8)',color:'var(--hwp-accent-ink,#fff)',cursor:'pointer'});dismiss.onclick=()=>{box.remove();permissionNotice=null};document.body.append(box)
 }
-function showFullscreenRetry(activate){
+function showFullscreenRetry(activate,role='audience'){
  if(permissionNotice)permissionNotice.remove();
  const es=document.documentElement.lang==='es',box=document.createElement('section');permissionNotice=box;box.setAttribute('role','alert');
  Object.assign(box.style,{position:'fixed',top:'70px',right:'16px',width:'min(420px,calc(100vw - 32px))',padding:'16px',borderRadius:'10px',background:'var(--bg-2,#222)',color:'var(--text,#fff)',border:'1px solid var(--line,#888)',zIndex:'2147483647',boxShadow:'0 4px 20px #0006'});
  const text=document.createElement('p');text.textContent=es?'La pantalla ya está detectada. Chrome consumió el permiso del clic al abrir la ventana. Activa la pantalla completa desde este controlador. No pulses nada en el proyector.':'Your display is already detected. The browser did not carry the first click into its new output window. Complete fullscreen from this operator screen; do not click the Audience display.';
  const button=document.createElement('button');button.type='button';button.className='btn';button.textContent=es?'Activar pantalla completa':'Activate Audience fullscreen';button.onclick=activate;
- const link=document.createElement('a');link.href='./hwp-audience-chrome.zip';link.textContent=es?'Obtener extensión de Chrome para HWP':'Get HWP Chrome fullscreen extension';link.style.display='block';link.style.marginTop='10px';box.append(text,button,link);document.body.append(box);try{window.focus()}catch{}
+ const link=document.createElement('a');link.href='./hwp-audience-chrome.zip';link.textContent=es?'Obtener extensión de Chrome para HWP':'Get HWP Chrome fullscreen extension';link.style.display='block';link.style.marginTop='10px';if(role==='stage'){text.textContent=es?'Completa la pantalla completa de escenario desde este controlador.':'Complete Stage fullscreen from this operator screen.';button.textContent=es?'Activar pantalla completa de escenario':'Activate Stage fullscreen';box.append(text,button)}else box.append(text,button,link);document.body.append(box);try{window.focus()}catch{}
 }
 function clearAudienceNotice(){permissionNotice?.remove();permissionNotice=null}
 function signalAudienceClosed(){try{const bus=new BroadcastChannel('vesper-show-v1');bus.postMessage({type:'hwp-audience-close'});bus.close()}catch{}}
 function audienceUrl(){const url=new URL(location.href);url.searchParams.set('display','audience');url.searchParams.delete('nativeOutput');url.hash='';return url.href}
 // Keep the fullscreen document stable: navigating a popup after requesting fullscreen
 // exits fullscreen. The isolated audience iframe is the only visual output.
-function mountAudience(host,url,onClose,targetScreen,onFailure){
+function mountAudience(host,url,onClose,targetScreen,onFailure,role='audience'){
  const doc=host.document,root=doc.documentElement,layer=doc.createElement('div'),frame=doc.createElement('iframe');
  Object.assign(layer.style,{position:'fixed',inset:'0',width:'100%',height:'100%',margin:'0',padding:'0',border:'0',background:'#000',overflow:'hidden',zIndex:'2147483647',display:'grid',placeItems:'center'});
- frame.id='hwp-audience-local-frame';frame.title='Audience output';frame.allow='fullscreen';frame.allowFullscreen=true;frame.src=url;
+ frame.id='hwp-'+role+'-local-frame';frame.title=role==='stage'?'Stage output':'Audience output';frame.allow='fullscreen';frame.allowFullscreen=true;frame.src=url;
  Object.assign(frame.style,{position:'absolute',inset:'0',width:'100%',height:'100%',border:'0',margin:'0',padding:'0',background:'#000',display:'none'});
  layer.append(frame);doc.body.append(layer);
  let closed=false,wasFull=false,requesting=false,delegating=false,visible=true;
@@ -101,7 +101,7 @@ function mountAudience(host,url,onClose,targetScreen,onFailure){
  }
  function message(event){
   if(event.origin!==location.origin)return;
-  if(event.source===frame.contentWindow&&event.data?.type==='hwp-audience-close'){close(true);return}
+  if(event.source===frame.contentWindow&&event.data?.type==='hwp-'+role+'-close'){close(true);return}
   if(host!==window&&event.source===window&&event.data?.type==='hwp-audience-fullscreen-delegated'){delegating=false;enter()}
  }
  function delegate(){
@@ -136,7 +136,19 @@ function openLocalAudience(){
  localAudience=mountAudience(window,audienceUrl(),user=>{localAudience=null;delete document.documentElement.dataset.hwpAudienceLocal;if(user){enabled.audience=false;signalAudienceClosed();notify()}});
  localAudience.enter();
 }
+function signalStageClosed(){try{const bus=new BroadcastChannel('vesper-show-v1');bus.postMessage({type:'hwp-stage-close'});bus.close()}catch{}}
+function openStageOutput(d){
+ const b=d.bounds,url=new URL(location.href);url.searchParams.set('display','stage');url.searchParams.delete('nativeOutput');url.hash='';
+ const win=window.open('about:blank','hwp-output-'+d.id.replace(/[^a-z0-9]/gi,'_'),'popup=yes,left='+b.x+',top='+b.y+',width='+b.width+',height='+b.height);
+ if(!win){enabled.stage=false;signalStageClosed();notify();return null}
+ try{win.moveTo(b.x,b.y);win.resizeTo(b.width,b.height)}catch{}
+ try{const doc=win.document;doc.title='Stage';for(const node of [doc.documentElement,doc.body])Object.assign(node.style,{margin:'0',padding:'0',width:'100%',height:'100%',background:'#000',overflow:'hidden'});
+ const stage=mountAudience(win,url.href,user=>{audienceControllers.delete(d.id);outputs.delete(d.id);if(user){enabled.stage=false;signalStageClosed();notify()}try{win.close()}catch{}},Array.from(details?.screens||[]).find(screen=>id(screen)===d.id),()=>showFullscreenRetry(()=>stage.delegate(),'stage'),'stage');
+ audienceControllers.set(d.id,stage);if(navigator.userActivation?.isActive)stage.delegate();else stage.enter();return win;
+ }catch{try{win.close()}catch{}enabled.stage=false;signalStageClosed();notify();return null}
+}
 function openOutput(d){
+ if(d.role==='stage')return openStageOutput(d);
  const url=new URL(location.href);url.searchParams.set('display',d.role);url.searchParams.delete('nativeOutput');url.hash='';
  const b=d.bounds,initial=b,features='popup=yes,left='+initial.x+',top='+initial.y+',width='+initial.width+',height='+initial.height;
  const win=window.open(d.role==='audience'?'about:blank':url.href,'hwp-output-'+d.id.replace(/[^a-z0-9]/gi,'_'),features);
@@ -165,14 +177,14 @@ function reconcile(){
   const controller=audienceControllers.get(key),stillAssigned=assigned.some(d=>d.id===key&&d.role===entry.role);
   // Audience off blanks the already fullscreen output. Keep the browser window
   // ready so the next Audience click does not consume activation opening it again.
-  if(entry.role==='audience'&&stillAssigned&&!entry.win.closed&&controller?.isFull()){controller.setVisible(enabled.audience);continue}
+  if(roles.includes(entry.role)&&stillAssigned&&!entry.win.closed&&controller?.isFull()){controller.setVisible(enabled[entry.role]);continue}
   if(!wanted.has(key)||wanted.get(key).role!==entry.role||entry.win.closed){controller?.close();try{entry.win.close()}catch{}outputs.delete(key);audienceControllers.delete(key)}
  }
  for(const [key,d] of wanted)if(!outputs.has(key)){const win=openOutput(d);if(win)outputs.set(key,{win,role:d.role})}
  return notify()
 }
 async function connect(){if(!window.getScreenDetails)throw Error('This browser does not support physical display detection. Use the desktop app or a compatible desktop browser.');if(!details){details=await window.getScreenDetails();let timer;details.addEventListener('screenschange',()=>{clearTimeout(timer);timer=setTimeout(reconcile,650)});details.addEventListener('currentscreenchange',notify)}return reconcile()}
-window.hwpBrowserScreens={showAudienceHelp,list:async()=>status(),connect,assign:async(key,role)=>{if(role&&!roles.includes(role))throw Error('Invalid screen role');const d=displays().find(d=>d.id===key);if(!d||d.primary||d.internal)throw Error('Choose an external display');assignments[key]=role||'off';save();return reconcile()},activateAudience:async()=>{if(!details&&window.getScreenDetails&&window.screen?.isExtended){try{await connect()}catch{audienceFailure('Chrome denied access to the extended display.');return status()}}enabled.audience=true;return window.hwpBrowserScreens.openAudience()},openAudience:async()=>{enabled.audience=true;const external=displays().some(d=>!d.primary&&!d.internal&&(d.role==='audience'||!Object.hasOwn(assignments,d.id)));if(external){if(browserHelperReady){const free=displays().find(d=>!d.primary&&!d.internal&&!Object.hasOwn(assignments,d.id));if(!displays().some(d=>d.role==='audience'&&!d.primary&&!d.internal)&&free){assignments[free.id]='audience';save()}const selected=displays().find(d=>d.role==='audience'&&!d.primary&&!d.internal);if(selected)return startHelperOutput(selected)}const result=reconcile();for(const [key,controller] of audienceControllers){if(controller.isFull())controller.setVisible(true);else if(navigator.userActivation?.isActive)controller.delegate()}return result}openLocalAudience();return notify()},enable:async(role,on)=>{enabled[role]=!!on;if(role==='audience'&&!on){closeLocalAudience();clearAudienceNotice();if(browserHelperReady){browserHelperOutput=false;browserHelperTarget=null;void helperSend('close').catch(()=>{})}}return reconcile()},identify:async()=>{for(const d of displays()){const entry=outputs.get(d.id);if(d.role!=='audience'&&entry&&!entry.win.closed)try{const doc=entry.win.document,tag=doc.createElement('div');tag.textContent=d.label+' — '+d.width+' × '+d.height;Object.assign(tag.style,{position:'fixed',inset:'35% 10%',zIndex:2147483647,background:'#124c88',color:'white',display:'grid',placeItems:'center',font:'bold 32px system-ui'});doc.body.append(tag);setTimeout(()=>tag.remove(),2500)}catch{}}return status()},onChanged:fn=>{listeners.add(fn);return()=>listeners.delete(fn)}};
+window.hwpBrowserScreens={showAudienceHelp,list:async()=>status(),connect,assign:async(key,role)=>{if(role&&!roles.includes(role))throw Error('Invalid screen role');const d=displays().find(d=>d.id===key);if(!d||d.primary||d.internal)throw Error('Choose an external display');assignments[key]=role||'off';save();return reconcile()},activateAudience:async()=>{if(!details&&window.getScreenDetails&&window.screen?.isExtended){try{await connect()}catch{audienceFailure('Chrome denied access to the extended display.');return status()}}enabled.audience=true;return window.hwpBrowserScreens.openAudience()},openAudience:async()=>{enabled.audience=true;const external=displays().some(d=>!d.primary&&!d.internal&&(d.role==='audience'||!Object.hasOwn(assignments,d.id)));if(external){if(browserHelperReady){const free=displays().find(d=>!d.primary&&!d.internal&&!Object.hasOwn(assignments,d.id));if(!displays().some(d=>d.role==='audience'&&!d.primary&&!d.internal)&&free){assignments[free.id]='audience';save()}const selected=displays().find(d=>d.role==='audience'&&!d.primary&&!d.internal);if(selected)return startHelperOutput(selected)}const result=reconcile();for(const [key,controller] of audienceControllers){if(outputs.get(key)?.role!=='audience')continue;if(controller.isFull())controller.setVisible(true);else if(navigator.userActivation?.isActive)controller.delegate()}return result}openLocalAudience();return notify()},activateStage:async()=>{if(!details&&window.getScreenDetails&&window.screen?.isExtended){try{await connect()}catch{enabled.stage=false;signalStageClosed();return notify()}}enabled.stage=true;const result=reconcile();if(!displays().some(d=>d.role==='stage'&&!d.primary&&!d.internal)){enabled.stage=false;signalStageClosed();return notify()}for(const [key,controller] of audienceControllers){if(outputs.get(key)?.role!=='stage')continue;if(controller.isFull())controller.setVisible(true);else if(navigator.userActivation?.isActive)controller.delegate()}return result},enable:async(role,on)=>{if(role==='stage'&&on)return window.hwpBrowserScreens.activateStage();enabled[role]=!!on;if(role==='audience'&&!on){closeLocalAudience();clearAudienceNotice();if(browserHelperReady){browserHelperOutput=false;browserHelperTarget=null;void helperSend('close').catch(()=>{})}}return reconcile()},identify:async()=>{for(const d of displays()){const entry=outputs.get(d.id);if(!roles.includes(d.role)&&entry&&!entry.win.closed)try{const doc=entry.win.document,tag=doc.createElement('div');tag.textContent=d.label+' — '+d.width+' × '+d.height;Object.assign(tag.style,{position:'fixed',inset:'35% 10%',zIndex:2147483647,background:'#124c88',color:'white',display:'grid',placeItems:'center',font:'bold 32px system-ui'});doc.body.append(tag);setTimeout(()=>tag.remove(),2500)}catch{}}return status()},onChanged:fn=>{listeners.add(fn);return()=>listeners.delete(fn)}};
 if(window.getScreenDetails&&navigator.permissions)navigator.permissions.query({name:'window-management'}).then(p=>{if(p.state==='granted')connect().catch(()=>{});p.onchange=()=>{if(p.state==='granted')connect().catch(()=>{})}}).catch(()=>{});
 window.addEventListener('pagehide',()=>{for(const controller of audienceControllers.values())controller.close();for(const entry of outputs.values())try{entry.win.close()}catch{}});
 const selector='.toolbar [data-tip], .toolbar [title], .hwp-mobile-head [data-tip], .hwp-mobile-head [title]';let target=null,tip=null;
