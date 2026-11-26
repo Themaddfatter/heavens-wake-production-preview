@@ -1734,7 +1734,10 @@
 .app .service-list .service-row.service-presentation.hwp-presentation-selected,
 .app .service-list .service-row.service-presentation.hwp-presentation-selected:hover {
   background:color-mix(in srgb,var(--amber) 18%,var(--bg-2))!important;
-  box-shadow:inset 0 0 0 2px var(--amber),inset 5px 0 0 var(--amber),0 0 7px color-mix(in srgb,var(--amber) 38%,transparent)!important;
+  /* An inset outline also works inside medleys, whose frame resets box-shadow. */
+  outline:2px solid var(--service-border,#e2a04a)!important;
+  outline-offset:-2px!important;
+  box-shadow:none!important;
 }
 .app .service-list .service-row.service-presentation.hwp-presentation-selected .service-copy strong {
   color:color-mix(in srgb,var(--amber) 60%,var(--text))!important;
