@@ -26,10 +26,33 @@ async function load(){
  loading=true;
  try{await win.loadURL(HOME);if(smoke){const ok=await win.webContents.executeJavaScript("Boolean(document.querySelector('#root'))");app.exit(ok?0:3)}}catch(e){offline(e)}finally{loading=false}
 }
+function attachHangRecovery(window){
+ let hangTimer=null,prompt=null,stalled=false;
+ const clear=()=>{stalled=false;if(hangTimer)clearTimeout(hangTimer);hangTimer=null;prompt?.abort();prompt=null};
+ const recover=async()=>{
+  hangTimer=null;
+  if(!stalled||window.isDestroyed()||quitting||prompt)return;
+  const controller=new AbortController();prompt=controller;
+  try{
+   const {response}=await dialog.showMessageBox(window,{type:'warning',message:'HWS is not responding',detail:'You can keep waiting or recover the editor. Recovery reloads HWS and may lose changes not yet saved to the cloud.',buttons:['Keep Waiting','Recover HWS'],defaultId:0,cancelId:0,signal:controller.signal});
+   if(response===1&&stalled&&!window.isDestroyed()&&!quitting){
+    clear();
+    // Terminate only the stuck renderer, never the entire application.
+    // Its crash event is handled below and the existing session is preserved.
+    window.webContents.forcefullyCrashRenderer();
+    window.webContents.reloadIgnoringCache();
+   }else if(stalled&&!window.isDestroyed()&&!quitting){hangTimer=setTimeout(()=>void recover(),30000)}
+  }catch(error){if(!controller.signal.aborted)console.error('HWS recovery prompt:',error)}
+  finally{if(prompt===controller)prompt=null}
+ };
+ window.on('unresponsive',()=>{if(smoke||stalled||quitting)return;stalled=true;hangTimer=setTimeout(()=>void recover(),8000)});
+ window.on('responsive',clear);window.on('closed',clear);
+}
 function createWindow(){
  win=new BrowserWindow({width:1440,height:900,minWidth:720,minHeight:520,title:'HWS',show:!smoke,backgroundColor:'#ffffff',webPreferences:prefs});
+ attachHangRecovery(win);
  win.on('closed',()=>{win=null});
- win.webContents.on('render-process-gone',(_e,details)=>{if(!quitting&&details.reason!=='clean-exit')offline(details.reason)});
+ win.webContents.on('render-process-gone',(_e,details)=>{if(!quitting&&!['clean-exit','killed'].includes(details.reason))offline(details.reason)});
  void load();
 }
 async function confirmReload(){
