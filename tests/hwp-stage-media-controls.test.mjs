@@ -283,6 +283,25 @@ test('Explicit livestream song template retains full-canvas geometry and font si
  assert.equal(useBoxes(slide,{...layout,mode:'off'}),false);
 });
 
+test('Shared HWP cue updates live output without changing local session or account settings',()=>{
+ const start=html.indexOf('function hwpSharedLiveCue('),end=html.indexOf('// The cloud cue is shared',start);
+ const {hwpSharedLiveCue,hwpApplySharedLiveCue}=new Function('Ce','Wt','hwpWorshipReceiverService','hwpLookupPresentation',html.slice(start,end)+';return {hwpSharedLiveCue,hwpApplySharedLiveCue}')(
+  p=>p.slides.map(slide=>({slide})),(state,pid,index)=>({...state,session:{activePresentationId:pid},live:{...state.live,presentationId:pid,slideId:state.doc.presentations.find(p=>p.id===pid).slides[index].id,cueIndex:index}}),()=>null,()=>null
+ );
+ const session={activePresentationId:'local-editor',selectedSlideIds:['local-slide'],playlistId:'local-service',editorTextOutput:'stage'};
+ const doc={presentations:[{id:'song',slides:[{id:'verse',enabled:true},{id:'chorus',enabled:true}]}],settings:{appearance:{accent:'#123456'}}};
+ const state={doc,session,live:{slideId:null,audienceOn:true,stageOn:false}};
+ const cue={presentationId:'song',slideId:'chorus',cueIndex:1,hwpScheduleId:'shared-service',hwpServiceItemId:'shared-item',lookupTarget:null};
+ const next=hwpApplySharedLiveCue(state,cue);
+ assert.equal(next.session,session);
+ assert.equal(next.doc,doc);
+ assert.equal(next.live.audienceOn,true);
+ assert.deepEqual(hwpSharedLiveCue(next),cue);
+ assert.equal(hwpApplySharedLiveCue(state,{...cue,slideId:'missing'}),state);
+ const cleared=hwpApplySharedLiveCue(next,{slideId:null});
+ assert.equal(cleared.live.slideId,null);
+ assert.equal(cleared.session,session);
+});
 test('Text box controls are wired to the livestream camera preview only',()=>{
  for(const marker of ['hwp-stream-text-box-release','function HwpStreamTextHandles','function HwpStreamTextProperties','Edit independent livestream text boxes','onPointerDown:ev=>start(ev,role,true)','textBoxes:[...(old.textBoxes||[])','hwpUseStreamTextBoxes(snapshot.slide,resolved)','exampleSlide=l.useMemo'])includes(marker,marker);
  const output=html.slice(html.indexOf('function HwpCameraComposite('),html.indexOf('function HwpLayoutEditorPreview('));
