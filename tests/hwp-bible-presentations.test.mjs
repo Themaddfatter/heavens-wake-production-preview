@@ -234,3 +234,33 @@ test("slide edit right click has main slide view copy paste delete label tag and
  assert.ok(film.includes('setFilmMenu({slideId:i.id,x:event.clientX,y:event.clientY})'));
  assert.ok(film.includes('filmMenu&&(0,M.jsx)(HwpEditorSlideContextMenu'));
 });
+
+
+test("multi-select context actions preserve selected targets and batch undo",()=>{
+ const start=html.indexOf("function hwpBatch("),end=html.indexOf("function qt(e,t){switch(t.type)",start);
+ assert.ok(start>0&&end>start);
+ const scope=createContext({});
+ runInContext(html.slice(start,end),scope);
+ assert.deepEqual(Array.from(scope.hwpContextSelection(["a","b"],"b")),["a","b"]);
+ assert.deepEqual(Array.from(scope.hwpContextSelection(["a","b"],"c")),["c"]);
+ assert.deepEqual(Array.from(scope.hwpContextToggle(["a"],"c",["a","b","c"],{shiftKey:true})),["a","b","c"]);
+ assert.deepEqual(Array.from(scope.hwpContextToggle(["a","b"],"b",["a","b","c"],{metaKey:true})),["a"]);
+ let action;scope.hwpBatch(a=>action=a,[{type:"delete-presentation",id:"a"},{type:"delete-presentation",id:"b"}]);
+ assert.equal(action.history,"push");
+ assert.deepEqual(Array.from(action.actions,a=>a.id),["a","b"]);
+ const reducerStart=html.indexOf('case"hwp-batch-context":',end);
+ const reducerEnd=html.indexOf('case"hwp-slide-menu-color":',reducerStart);
+ const deletionStart=html.indexOf('case'+String.fromCharCode(96)+'delete-presentation'+String.fromCharCode(96)+':',reducerEnd);
+ const deletionEnd=html.indexOf('case'+String.fromCharCode(96)+'duplicate-presentation'+String.fromCharCode(96)+':',deletionStart);
+ const reducer=createContext({hwpServiceOrganize:items=>items});
+ runInContext('function qt(e,t){switch(t.type){'+html.slice(reducerStart,reducerEnd)+html.slice(deletionStart,deletionEnd)+'default:return e}}',reducer);
+ const state={doc:{presentations:[{id:"a"},{id:"b"},{id:"keep"}],playlists:[{items:[{id:"ra",presentationId:"a"},{id:"rb",presentationId:"b"},{id:"rk",presentationId:"keep"}]}]},session:{activePresentationId:"a",selectedSlideIds:[]},live:{presentationId:"b",slideId:"s",cueIndex:0}};
+ const result=reducer.qt(state,action);
+ assert.deepEqual(Array.from(result.doc.presentations,p=>p.id),["keep"]);
+ assert.deepEqual(Array.from(result.doc.playlists[0].items,row=>row.id),["rk"]);
+ assert.equal(result.live.presentationId,null);
+ assert.equal(state.doc.presentations.length,3);
+ assert.ok(html.includes('hwpPresentationClipboard=selectedPresentationRows().map'));
+ assert.ok(html.includes('hwpSlideBatchOptions')||html.includes('HwpSlideBatchOptions'));
+ assert.ok(html.includes('hwpContextToggle(e.session.selectedSlideIds,i.id,hwpEditorOrderedSlides'));
+});
