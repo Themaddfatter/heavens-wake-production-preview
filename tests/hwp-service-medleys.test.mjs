@@ -262,7 +262,7 @@ test("medley glow has persisted appearance setting and applies to both views",()
  assert.equal(ctx.hwpMedleyGlow("invalid"),"#29ff70");
  assert.equal(ctx.hwpMedleyGlowStyle("#b624ff")["--hwp-medley-glow"],"#b624ff");
  assert.equal(ctx.hwpMedleyGlowStyle("#b624ff")["--hwp-medley-glow-soft"],"#b624ff99");
- assert.equal(html.split("style:hwpMedleyGlowStyle(e.doc.settings.appearance.medleyGlow)").length-1,2);
+ assert.equal(html.split("style:hwpMedleyGlowStyle(e.doc.settings.appearance.medleyGlow,e.doc.settings.appearance.medleyGlowIntensity)").length-1,2);
  assert.ok(html.includes("Medley glow color"));
  assert.ok(html.includes("medleyGlow:e.target.value"));
  assert.ok(css.includes("border:4px solid var(--hwp-medley-glow,#29ff70)"));
@@ -424,3 +424,5 @@ test('presentation selection and on-output status are distinct and stable for re
  assert.doesNotMatch(css,/\.all-service-presentation\.hwp-presentation-selected/);
  assert.match(source,/hwp-access\.css\?v=[^"\s]*selection-v2/);
 });
+
+test("medley intensity preserves border and allows no glow",()=>{assert.equal(ctx.hwpMedleyGlowStyle("#29ff70",0)["--hwp-medley-shadow"],"none");assert.equal(ctx.hwpMedleyGlowStyle("#29ff70",100)["--hwp-medley-glow-soft"],"#29ff7099");assert.equal(ctx.hwpMedleyGlowStyle("#29ff70",200)["--hwp-medley-glow"],"#29ff70");assert.ok(html.includes("hwp-pane-resize-left"));assert.ok(html.includes("hwp-pane-resize-right"));});
