@@ -714,7 +714,7 @@ test('Text inspector formats a selected range without modifying the rest of the 
  assert.equal(all.runs[1].hwpStyle.fontSize,undefined);assert.equal(all.runs[1].bold,undefined);assert.equal(all.runs[1].hwpStyle.color,'#f00');
  assert.equal(rangePatch(object,{start:4,end:4},{color:'#000'}),null);
  assert.ok(html.includes('hwpSelectionForObject(object)'));assert.ok(html.includes('hwpTextDomRange(el,hwpSavedTextSelection)'));
- assert.ok(html.includes('hwpClearTextSelection()},onInput:'));assert.ok(html.includes('hwpRunEffects(e,effectId)'));
+ assert.ok(html.includes('textMenu.current?.();hwpClearTextSelection()},onContextMenu:'));assert.ok(html.includes('textMenu.current=hwpOpenEditorTextMenu(event,i.current,commit,notify)},onInput:'));assert.ok(html.includes('if(un())e.preventDefault();return}textMenu.current?.();hwpClearTextSelection()'));assert.ok(html.includes('hwpRunEffects(e,effectId)'));
  assert.ok(css.includes('::highlight(hwp-editor-selection)'));
 });
 
