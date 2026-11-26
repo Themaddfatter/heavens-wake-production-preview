@@ -263,8 +263,28 @@ test('Independent livestream text boxes preserve original audience and stage sli
  assert.equal(hwpStreamBoxBounds({x:90,y:95,w:50,h:20}).x,50);
  assert.equal(hwpStreamBoxBounds({x:90,y:95,w:50,h:20}).y,80);
 });
+test('Explicit livestream song template retains full-canvas geometry and font size in camera overlay',()=>{
+ const start=html.indexOf('function hwpStreamTextRoles('),end=html.indexOf('function hwpStreamEditorSlide(',start);
+ const {hwpStreamTextObjects}=new Function(screenHelpers+html.slice(start,end)+';return {hwpStreamTextObjects}')();
+ const lyrics={kind:'text',id:'lyrics',binding:'lyrics',text:'Actual song',x:100,y:100,width:1720,height:600,textStyle:{fontSize:48},hwpTextLinks:{livestream:false},hwpTextScreens:{livestream:{text:'Actual song',runs:[],x:100,y:750,width:1720,height:280,textStyle:{fontSize:110,color:'#ffffff'},scaleToFit:false}}};
+ const slide={width:1920,height:1080,objects:[lyrics]};
+ const layout={mode:'text',slideX:6,slideY:62,slideW:72,slideH:38,customText:true,textSize:25,textBoxes:[{key:'lyrics#1',fontSize:30}]};
+ const [output]=hwpStreamTextObjects(slide,layout);
+ assert.equal(output.textStyle.fontSize,110);
+ assert.ok(Math.abs(output.x-100)<1e-6);
+ assert.ok(Math.abs(output.y-750)<1e-6);
+ assert.ok(Math.abs(output.width-1720)<1e-6);
+ assert.equal(output.scaleToFit,false);
+ assert.equal(lyrics.textStyle.fontSize,48);
+ const from=html.indexOf('function hwpUseStreamTextBoxes('),to=html.indexOf('function HwpCameraComposite(',from);
+ const useBoxes=new Function(html.slice(from,to)+';return hwpUseStreamTextBoxes')();
+ assert.equal(useBoxes(slide,layout),true);
+ assert.equal(useBoxes({objects:[]},layout),false);
+ assert.equal(useBoxes(slide,{...layout,mode:'off'}),false);
+});
+
 test('Text box controls are wired to the livestream camera preview only',()=>{
- for(const marker of ['hwp-stream-text-box-release','function HwpStreamTextHandles','function HwpStreamTextProperties','Edit independent livestream text boxes','onPointerDown:ev=>start(ev,role,true)','textBoxes:[...(old.textBoxes||[])','resolved.independentTextBoxes&&resolved.mode===','exampleSlide=l.useMemo'])includes(marker,marker);
+ for(const marker of ['hwp-stream-text-box-release','function HwpStreamTextHandles','function HwpStreamTextProperties','Edit independent livestream text boxes','onPointerDown:ev=>start(ev,role,true)','textBoxes:[...(old.textBoxes||[])','hwpUseStreamTextBoxes(snapshot.slide,resolved)','exampleSlide=l.useMemo'])includes(marker,marker);
  const output=html.slice(html.indexOf('function HwpCameraComposite('),html.indexOf('function HwpLayoutEditorPreview('));
  assert.ok(output.includes('HwpStreamTextOverlay'));
  const audience=html.slice(html.indexOf('function tr({snap:e'),html.indexOf('function nr(',html.indexOf('function tr({snap:e')));
