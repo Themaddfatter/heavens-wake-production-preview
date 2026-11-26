@@ -7,7 +7,7 @@
   "main": "main.cjs",
   "scripts": {
     "start": "electron .",
-    "check": "node --check main.cjs && node --check build-preview.cjs && node --check prepare-icon.cjs && node --check display-manager.cjs && node --check preload.cjs && node --test display-manager.test.cjs && node --test permissions.test.cjs",
+    "check": "node --check main.cjs && node --check build-preview.cjs && node --check prepare-icon.cjs && node --check display-manager.cjs && node --check preload.cjs && node --check audience-output.cjs && node --test display-manager.test.cjs && node --test permissions.test.cjs",
     "dist:mac": "npm run prepare:icon && electron-builder --mac --universal --publish never",
     "dist:preview": "npm run prepare:icon && node build-preview.cjs",
     "prepare:icon": "node prepare-icon.cjs"
@@ -27,7 +27,8 @@
       "main.cjs",
       "package.json",
       "display-manager.cjs",
-      "preload.cjs"
+      "preload.cjs",
+      "audience-output.cjs"
     ],
     "directories": {
       "output": "dist"
