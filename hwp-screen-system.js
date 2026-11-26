@@ -16,18 +16,17 @@ function audienceBrowserHelp(ua,es=false){
  if(!mobile&&(chrome||edge||opera||brave||vivaldi)){
   const site=location.origin;
   return {name,steps:es?[
-   'En la barra de direcciones, haz clic en el icono de información del sitio (a la izquierda de '+location.hostname+').',
-   edge?'Abre Permisos para este sitio.':'Abre Configuración de sitios.',
-   'Cambia Administración de ventanas, Ventanas emergentes y redirecciones, y Pantalla completa automática a Permitir, solo para este sitio.',
-   'Si no ves una opción, copia la dirección de configuración de abajo en una nueva pestaña. Añade '+site+' a los sitios permitidos.',
-   'Vuelve a HWP, recarga la página y activa Pantalla de audiencia.'
+   'En HWP, abre Configuración → Pantallas y pulsa Detect Displays (Detectar pantallas), o el botón de abajo.',
+   'Si el navegador pregunta si HWP puede administrar ventanas en tus pantallas, selecciona Permitir. Si no aparece una pregunta, puede que el permiso ya esté concedido, bloqueado o no disponible.',
+   'Si se bloquean las ventanas emergentes, abre Configuración de sitios desde el icono a la izquierda de '+location.hostname+' y permite las ventanas emergentes para este sitio.',
+   'Vuelve a HWP y activa Pantalla de audiencia. Si no entra en pantalla completa, utiliza HWP de escritorio. No cambies configuraciones que no aparecen en tu navegador.'
   ]:[
-   'Click the site information / sliders icon immediately to the left of '+location.hostname+' in the address bar.',
-   edge?'Choose Permissions for this site.':'Choose Site settings.',
-   'Set Window management, Pop-ups and redirects, and Automatic fullscreen to Allow for this site only.',
-   'If a setting is missing, copy the settings address below into a new tab. Add '+site+' to the allowed sites.',
-   'Return to HWP, reload the page, then turn Audience on again.'
-  ],addresses:[scheme+'://settings/content/siteDetails?site='+encodeURIComponent(site),scheme+'://settings/content/windowManagement',scheme+'://settings/content/popups'],alternate:scheme+'://settings/content/automaticFullScreen'};
+   'In HWP, open Settings → Screens and click Detect Displays, or use the button below.',
+   'If the browser asks whether HWP may manage windows on your displays, choose Allow. If no prompt appears, the permission may already be granted, blocked or unavailable.',
+   'If pop-ups are blocked, open Site settings using the icon to the left of '+location.hostname+' and allow Pop-ups and redirects for this site.',
+   'Return to HWP and turn Audience on. If fullscreen is still denied, use the HWP desktop app. Do not look for settings that your browser does not offer.'
+  ],addresses:[scheme+'://settings/content/siteDetails?site='+encodeURIComponent(site),scheme+'://settings/content/popups'],canDetect:true};
+
  }
  return {name,steps:es?['Este navegador no ofrece los permisos necesarios para controlar automáticamente una pantalla externa de forma fiable.','Abre HWP en Chrome o Edge de escritorio, o usa la aplicación HWP de escritorio.']:['This browser does not provide the permissions needed for reliable automatic fullscreen on a separate display.','Open HWP in desktop Chrome or Edge, or use the HWP desktop application.'],addresses:[]};
 }
@@ -41,7 +40,8 @@ function showAudienceHelp(reason='Configure the browser permissions before turni
  add('p',es?'No se pudo abrir la pantalla de audiencia automáticamente.':reason.replace(/^Chrome /,help.name+' '));
  const steps=add('ol','');steps.style.paddingLeft='22px';help.steps.forEach(step=>{const li=add('li',step,steps);li.style.marginBottom='7px'});
  if(help.addresses.length){for(const address of [...help.addresses,help.alternate].filter(Boolean)){const row=add('div','');Object.assign(row.style,{display:'flex',alignItems:'center',gap:'6px',marginBottom:'8px'});const field=document.createElement('input');field.readOnly=true;field.value=address;field.setAttribute('aria-label',es?'Dirección de configuración':'Settings address');Object.assign(field.style,{minWidth:'0',flex:'1',padding:'6px',color:'inherit',background:'var(--bg-3,#333)',border:'1px solid var(--line,#888)'});field.onclick=()=>field.select();row.append(field);const copy=add('button',es?'Copiar':'Copy',row);copy.type='button';copy.onclick=async()=>{field.select();try{await navigator.clipboard.writeText(address);copy.textContent=es?'Copiado':'Copied'}catch{try{if(document.execCommand('copy'))copy.textContent=es?'Copiado':'Copied'}catch{}}};}}
- add('p',es?'Si la opción de pantalla completa automática no existe o está bloqueada por el administrador, utiliza la aplicación de escritorio de HWP.':'If Automatic fullscreen is unavailable or managed by your administrator, use the HWP desktop application for reliable automatic output.');
+ if(help.canDetect&&typeof window.getScreenDetails==='function'){const detect=add('button',es?'Detectar pantallas':'Detect Displays');detect.type='button';detect.onclick=async()=>{try{await connect();detect.textContent=es?'Pantallas detectadas':'Displays detected'}catch(e){detect.textContent=es?'Permiso no disponible':'Display permission unavailable';detect.title=e.message}};}
+ add('p',es?'La pantalla completa automática sin interacción está restringida por Chrome a aplicaciones web aisladas y sitios autorizados mediante políticas administrativas. HWP es un sitio web normal. Para una salida automática fiable sin pulsar en la pantalla de audiencia, utiliza HWP de escritorio.':'Chrome restricts gesture-free Automatic fullscreen primarily to Isolated Web Apps and sites authorized by enterprise policy. HWP is a regular website. For reliable automatic output without clicking the Audience screen, use the HWP desktop app.');
  add('p',es?'No es necesario hacer clic en la pantalla de audiencia.':'No action is required on the Audience screen.');
  const dismiss=add('button',es?'Cerrar':'Dismiss');dismiss.type='button';Object.assign(dismiss.style,{padding:'6px 14px',borderRadius:'6px',border:'1px solid var(--line,#888)',background:'var(--amber,#3276b8)',color:'var(--hwp-accent-ink,#fff)',cursor:'pointer'});dismiss.onclick=()=>{box.remove();permissionNotice=null};document.body.append(box)
 }
