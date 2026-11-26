@@ -1663,7 +1663,7 @@
    Empty workspace-specific slots remain reserved; overlays do not occupy tracks. */
 .app > .toolbar {
   display:grid;
-  grid-template-columns:100px 42px 74px 164px minmax(0,1fr) 268px minmax(0,1fr) 42px 42px 104px 44px 44px 44px;
+  grid-template-columns:100px 42px 74px 164px minmax(0,1fr) max-content minmax(0,1fr) 42px 42px 104px 44px 44px 44px;
   grid-template-rows:minmax(0,1fr);
   column-gap:6px;
   row-gap:0;
@@ -1685,11 +1685,11 @@
 .app > .toolbar > .hwp-production-modes {grid-column:4;justify-self:start;margin:0!important}
 .app > .toolbar > .modes {
   grid-column:6;position:relative;left:auto;top:auto;transform:none;
-  display:grid;grid-template-columns:repeat(4,minmax(0,1fr));
-  width:100%;min-width:0;gap:2px;box-sizing:border-box;
+  display:inline-flex;flex-wrap:nowrap;align-items:center;
+  width:max-content;min-width:max-content;gap:2px;box-sizing:border-box;
 }
-.app > .toolbar > .modes > button {width:100%;min-width:0;box-sizing:border-box;white-space:nowrap;padding:6px 3px;justify-content:center}
-.app[data-mode="mixer"] > .toolbar > .modes {visibility:hidden;pointer-events:none}
+.app > .toolbar > .modes > button {flex:0 0 auto;width:max-content;min-width:max-content;box-sizing:border-box;white-space:nowrap;padding:6px 14px;justify-content:center}
+.app[data-mode="mixer"] > .toolbar > .modes {visibility:visible;pointer-events:auto}
 .app > .toolbar > .spacer {display:none}
 .app > .toolbar > [aria-label="Audience screen"] {grid-column:8}
 .app > .toolbar > [aria-label="Stage screen"] {grid-column:9}
@@ -1699,11 +1699,12 @@
 .app > .toolbar > .hwp-template-icon {grid-column:12}
 .app > .toolbar > .settings-gear {grid-column:13}
 .app > .toolbar > :is(.iconbtn,.screen-btn) > svg {flex:none}
-/* Narrow windows use the same slots and order, with horizontal access rather
-   than wrapping or moving buttons when a workspace or status changes. */
+/* The middle group grows to the actual button labels. Keep the outer slots fixed;
+   scroll horizontally whenever their combined intrinsic width exceeds the window. */
+.app > .toolbar {overflow-x:auto;overflow-y:hidden;scrollbar-width:thin}
 @media(max-width:1080px) {
   .app > .toolbar {
-    grid-template-columns:84px 38px 74px 124px minmax(0,1fr) 244px minmax(0,1fr) 38px 38px 104px 40px 44px 44px;
+    grid-template-columns:84px 38px 74px 124px minmax(0,1fr) max-content minmax(0,1fr) 38px 38px 104px 40px 44px 44px;
     column-gap:4px;padding-inline:6px;
   }
   .app > .toolbar > [aria-label="Search library"],

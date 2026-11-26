@@ -599,8 +599,13 @@ test('HWP header keeps permanent slots across workspace and status changes',()=>
  }
  assert.ok(fixed.includes('grid-column:3;width:74px'));
  assert.ok(fixed.includes('grid-column:6;position:relative'));
- assert.ok(fixed.includes('repeat(4,minmax(0,1fr))'));
- assert.ok(fixed.includes('visibility:hidden;pointer-events:none'));
+ assert.ok(fixed.includes('minmax(0,1fr) max-content minmax(0,1fr)'));
+ assert.ok(fixed.includes('display:inline-flex;flex-wrap:nowrap;align-items:center'));
+ assert.ok(fixed.includes('flex:0 0 auto;width:max-content;min-width:max-content'));
+ assert.ok(fixed.includes('white-space:nowrap;padding:6px 14px'));
+ assert.ok(fixed.includes('visibility:visible;pointer-events:auto'));
+ assert.ok(!html.includes('grid-auto-columns:calc((100% - 8px)/5)'));
+ assert.ok(html.includes('hww-logo-v1-dynamic-center-v1'));
  assert.ok(html.includes('hwp-access.css?v=hwp-fixed-header-v1'));
 });
 
