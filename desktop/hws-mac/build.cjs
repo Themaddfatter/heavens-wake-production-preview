@@ -6,6 +6,8 @@ const path=require('node:path');
 const pkg=require('./package.json');
 if(process.platform!=='darwin')throw Error('macOS build host required');
 const signed=process.env.HWS_SIGNED==='1';
+// An empty CSC_LINK is treated as a certificate path by electron-builder.
+if(!signed)for(const name of ['CSC_LINK','CSC_KEY_PASSWORD','APPLE_ID','APPLE_APP_SPECIFIC_PASSWORD','APPLE_TEAM_ID','CSC_NAME','CSC_INSTALLER_LINK','CSC_INSTALLER_KEY_PASSWORD'])delete process.env[name];
 const dir=path.join(__dirname,'build'), icons=path.join(dir,'HWS.iconset'), source=path.join(dir,'official.png');
 fs.mkdirSync(icons,{recursive:true});
 execFileSync('/usr/bin/curl',['--fail','--silent','--show-error','--location','--retry','3','https://sermon.sioncdo.com/hws-icon-512-white.png','-o',source]);

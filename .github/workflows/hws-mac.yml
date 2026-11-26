@@ -48,7 +48,11 @@ jobs:
           npm install --no-audit --no-fund
           npm run check
           npm version "0.2.${GITHUB_RUN_NUMBER}" --no-git-tag-version
+          if [[ "$HWS_SIGNED" == 0 ]]; then
+            unset CSC_LINK CSC_KEY_PASSWORD APPLE_ID APPLE_APP_SPECIFIC_PASSWORD APPLE_TEAM_ID
+          fi
           npm run dist
+          test -n "$(find dist -maxdepth 1 -name '*.dmg' -type f -print -quit)"
       - name: Verify installer and binary
         run: |
           set -euo pipefail
@@ -59,6 +63,7 @@ jobs:
           dmg="$(find dist -maxdepth 1 -name '*.dmg' -print -quit)"
           test -n "$dmg"
           hdiutil verify "$dmg"
+          python3 -c 'import subprocess,sys; subprocess.run([sys.argv[1],"--hws-smoke-test"],check=True,timeout=60)' "$app_path/Contents/MacOS/HWS"
           if [[ "$HWS_SIGNED" == 1 ]]; then
             codesign --verify --deep --strict "$app_path"
             xcrun stapler validate "$app_path"
