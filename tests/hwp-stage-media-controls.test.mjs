@@ -325,6 +325,28 @@ test('Visual camera editor supports source resizing, cropping, and independent s
  const style=new Function(html.slice(from,to)+';return hwpLiveViewStyle')();
  assert.equal(style(source).left,'-25%');assert.equal(style(source).width,'150%');
 });
+test('Zoomed camera sources are not clamped to the output size and recordings use the same crop',()=>{
+ const from=html.indexOf('function hwpLiveViewStyle('),to=html.indexOf('function hwpLiveLayoutFor(',from);
+ const style=new Function(html.slice(from,to)+';return hwpLiveViewStyle')();
+ const zoomed={fit:'cover',sourceFrame:{x:-50,y:-50,w:200,h:200}};
+ const result=style(zoomed);
+ assert.equal(result.width,'200%');
+ assert.equal(result.height,'200%');
+ assert.equal(result.maxWidth,'none');
+ assert.equal(result.maxHeight,'none');
+ assert.equal(result.left,'-50%');
+ assert.equal(result.top,'-50%');
+ assert.equal(style({zoom:2}).transform,'rotate(0deg) scale(2,2)');
+ const start=html.indexOf('function hwpDrawRecordingCamera('),end=html.indexOf('function Ti(',start);
+ const draw=new Function(html.slice(start,end)+';return hwpDrawRecordingCamera')();
+ const calls=[],ctx=Object.fromEntries(['save','beginPath','rect','clip','translate','rotate','scale','drawImage','restore'].map(key=>[key,(...args)=>calls.push([key,...args])]));
+ const camera={videoWidth:1920,videoHeight:1080};
+ draw(ctx,camera,zoomed,{},1920,1080);
+ assert.deepEqual(calls.find(c=>c[0]==='translate'),['translate',960,540]);
+ assert.deepEqual(calls.find(c=>c[0]==='drawImage'),['drawImage',camera,-1920,-1080,3840,2160]);
+ assert.deepEqual(calls.find(c=>c[0]==='rect'),['rect',0,0,1920,1080]);
+ assert.ok(html.includes('hwpProgramView=item;si()'));
+});
 test('Visual workspace uses shared live composition and independent object inspector',()=>{
  for(const marker of ['hwp-visual-editor-release','function HwpVisualCameraCanvas','function HwpVisualHandles','function HwpVisualLayoutHandles','function HwpVisualInspector','function HwpVisualCustomOverlay','hwp-visual-columns','onLayerChange:patchLayout','+ Text','+ Shape','+ Media'])includes(marker,marker);
  assert.ok(html.includes('M.jsx(HwpFullscreenButton,{}),!productionOnly&&M.jsx(\x60button\x60,{className:F(\x60iconbtn hwp-template-icon\x60'));
