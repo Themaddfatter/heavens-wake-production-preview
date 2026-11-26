@@ -5,13 +5,14 @@ const path = require('node:path');
 const roles = new Set(['audience','stage']);
 function createDisplayManager({app,home,securePrefs,getOperator}) {
  const file=path.join(app.getPath('userData'),'screen-assignments.json');
- let assignments={}; try{const stored=JSON.parse(fs.readFileSync(file,'utf8'));for(const [id,role] of Object.entries(stored))if(/^[-]?\d+$/.test(id)&&roles.has(role))assignments[id]=role;}catch{}
+ let assignments={}; try{const stored=JSON.parse(fs.readFileSync(file,'utf8'));for(const [id,role] of Object.entries(stored))if(/^[-]?\d+$/.test(id)&&(roles.has(role)||role==='off'))assignments[id]=role;}catch{}
  const enabled={audience:false,stage:false},windows=new Map(),identifiers=new Set();
- function displays(){const primary=screen.getPrimaryDisplay().id;return screen.getAllDisplays().map(d=>({id:String(d.id),label:d.label||('Display '+d.id),width:d.size.width,height:d.size.height,scaleFactor:d.scaleFactor,bounds:d.bounds,primary:d.id===primary,internal:!!d.internal,role:assignments[String(d.id)]||''}));}
+ function displays(){const primary=screen.getPrimaryDisplay().id;return screen.getAllDisplays().map(d=>({id:String(d.id),label:d.label||('Display '+d.id),width:d.size.width,height:d.size.height,scaleFactor:d.scaleFactor,bounds:d.bounds,primary:d.id===primary,internal:!!d.internal,role:roles.has(assignments[String(d.id)])?assignments[String(d.id)]:''}));}
  function status(){return {displays:displays(),assignments:{...assignments},enabled:{...enabled}};}
  function save(){fs.mkdirSync(path.dirname(file),{recursive:true});fs.writeFileSync(file+'.tmp',JSON.stringify(assignments));fs.renameSync(file+'.tmp',file);}
  function close(id){const entry=windows.get(id);windows.delete(id);if(entry&&!entry.win.isDestroyed())entry.win.destroy();}
- function reconcile(){const current=displays(),wanted=new Map(current.filter(d=>d.role&&enabled[d.role]&&!d.primary&&!d.internal).map(d=>[d.id,d]));
+ function autoAssign(){let dirty=false;const available=displays().filter(d=>!d.primary&&!d.internal&&!Object.hasOwn(assignments,d.id));for(const role of ['audience','stage']){if(!enabled[role]||Object.values(assignments).includes(role)||!available.length)continue;assignments[available.shift().id]=role;dirty=true;}if(dirty)save();}
+ function reconcile(){autoAssign();const current=displays(),wanted=new Map(current.filter(d=>d.role&&enabled[d.role]&&!d.primary&&!d.internal).map(d=>[d.id,d]));
   for(const [id,entry] of windows)if(!wanted.has(id)||wanted.get(id).role!==entry.role)close(id);
   for(const [id,d] of wanted){const existing=windows.get(id);if(existing){if(JSON.stringify(existing.bounds)!==JSON.stringify(d.bounds)){existing.win.setBounds(d.bounds);existing.bounds=d.bounds;}continue;}
    const win=new BrowserWindow({...d.bounds,frame:false,show:false,backgroundColor:'#000000',skipTaskbar:true,focusable:false,fullscreenable:false,hasShadow:false,webPreferences:securePrefs});
@@ -25,7 +26,7 @@ function createDisplayManager({app,home,securePrefs,getOperator}) {
  }
  function notify(){const op=getOperator();if(op&&!op.isDestroyed())op.webContents.send('hwp:screens:changed',status());}
  function changed(){reconcile();notify();}
- function assign(id,role){id=String(id);const display=displays().find(d=>d.id===id);if(role!==''&&!roles.has(role))throw Error('Invalid screen role');if(!display||display.primary||display.internal)throw Error('Select an external extended display.');if(role)assignments[id]=role;else delete assignments[id];save();changed();return status();}
+ function assign(id,role){id=String(id);const display=displays().find(d=>d.id===id);if(role!==''&&!roles.has(role))throw Error('Invalid screen role');if(!display||display.primary||display.internal)throw Error('Select an external extended display.');if(role)assignments[id]=role;else assignments[id]='off';save();changed();return status();}
  function setEnabled(role,on){if(!roles.has(role)||typeof on!=='boolean')throw Error('Invalid output');if(enabled[role]!==on){enabled[role]=on;changed();}return status();}
  function identify(){for(const w of identifiers)if(!w.isDestroyed())w.destroy();identifiers.clear();for(const [index,d] of displays().entries()){
   const win=new BrowserWindow({x:d.bounds.x+Math.max(0,Math.floor((d.width-260)/2)),y:d.bounds.y+Math.max(0,Math.floor((d.height-140)/2)),width:Math.min(260,d.width),height:Math.min(140,d.height),frame:false,show:false,focusable:false,skipTaskbar:true,backgroundColor:'#124c88',webPreferences:securePrefs});
