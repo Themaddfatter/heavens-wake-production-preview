@@ -376,7 +376,7 @@ test('Visual workspace uses shared live composition and independent object inspe
  for(const marker of ['hwp-visual-editor-release','function HwpVisualCameraCanvas','function HwpVisualHandles','function HwpVisualLayoutHandles','function HwpVisualInspector','function HwpVisualCustomOverlay','hwp-visual-columns','onLayerChange:patchLayout','+ Text','+ Shape','+ Media'])includes(marker,marker);
  assert.ok(html.includes('M.jsx(HwpFullscreenButton,{}),!productionOnly&&M.jsx(\x60button\x60,{className:F(\x60iconbtn hwp-template-icon\x60'));
  assert.ok(html.includes('document.fullscreenElement)await document.exitFullscreen()'));
- assert.ok(html.includes('HwpFullscreenButton,{}),(0,M.jsx)(\x60button\x60,{onClick:()=>x().postMessage'));
+ const audience=html.slice(html.indexOf('function HwpAudienceSurface('),html.indexOf('function Vr(){let e=zr'));assert.ok(audience.includes('Turn off audience screen'));assert.ok(audience.includes('fillOutput:true'));assert.ok(!audience.includes('HwpFullscreenButton'));assert.ok(!audience.includes('aud-bar'));
 });
 
 test('Presenter layer list is top-first and drag ordering preserves bottom-first rendering',()=>{
