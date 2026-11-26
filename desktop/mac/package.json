@@ -1,13 +1,13 @@
 {
   "name": "heavens-wake-production-desktop",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "private": true,
   "description": "Heaven's Wake Production for macOS",
   "author": "Zion House of Prayer",
   "main": "main.cjs",
   "scripts": {
     "start": "electron .",
-    "check": "node --check main.cjs && node --check build-preview.cjs && node --check prepare-icon.cjs && node --check display-manager.cjs && node --check preload.cjs && node --test display-manager.test.cjs",
+    "check": "node --check main.cjs && node --check build-preview.cjs && node --check prepare-icon.cjs && node --check display-manager.cjs && node --check preload.cjs && node --test display-manager.test.cjs && node --test permissions.test.cjs",
     "dist:mac": "npm run prepare:icon && electron-builder --mac --universal --publish never",
     "dist:preview": "npm run prepare:icon && node build-preview.cjs",
     "prepare:icon": "node prepare-icon.cjs"

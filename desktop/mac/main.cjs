@@ -13,11 +13,15 @@ function isHwp(url) { try { return new URL(url).origin === ORIGIN; } catch { ret
 function isExternalHttps(url) { try { return new URL(url).protocol === 'https:'; } catch { return false; } }
 function configureSession() {
   const allowed = new Set(['media','fullscreen','speaker-selection']);
-  session.defaultSession.setPermissionRequestHandler((contents, permission, callback, details) => {
-    callback(isHwp(contents.getURL()) && isHwp(details.requestingUrl || contents.getURL()) && allowed.has(permission));
+  const operatorPermission=(contents,permission,origin,details={})=>{
+    if(!contents||!isHwp(contents.getURL())||!isHwp(origin)||details.requestingUrl&&!isHwp(details.requestingUrl))return false;
+    if(permission==='window-management')return contents===mainWindow?.webContents&&details.isMainFrame!==false;
+    return allowed.has(permission);
+  };
+  session.defaultSession.setPermissionRequestHandler((contents, permission, callback, details={}) => {
+    callback(operatorPermission(contents,permission,details.requestingUrl||contents.getURL(),details));
   });
-  session.defaultSession.setPermissionCheckHandler((contents, permission, origin, details) =>
-    !!contents && isHwp(contents.getURL()) && isHwp(origin) && (!details.requestingUrl || isHwp(details.requestingUrl)) && allowed.has(permission));
+  session.defaultSession.setPermissionCheckHandler((contents,permission,origin,details={})=>operatorPermission(contents,permission,origin,details));
 }
 function protect(contents) {
   contents.on('will-navigate', (event, url) => { if (!isHwp(url)) event.preventDefault(); });
@@ -31,6 +35,7 @@ function protect(contents) {
 }
 function createWindow() {
   mainWindow = new BrowserWindow({width:1440,height:900,minWidth:850,minHeight:560,title:"HWP",show:false,webPreferences:{...securePrefs,preload:path.join(__dirname,"preload.cjs")}});
+  mainWindow.webContents.on('preload-error',(_event,file,error)=>console.error('HWP native display preload failed:',file,error));
   mainWindow.once('ready-to-show', () => mainWindow?.show());
   mainWindow.on('closed', () => { displayManager?.closeAll(); mainWindow = null; });
   mainWindow.loadURL(HOME).catch(error => { console.error(error); mainWindow?.show(); });
