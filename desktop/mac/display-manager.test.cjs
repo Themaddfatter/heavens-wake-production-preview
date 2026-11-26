@@ -8,7 +8,7 @@ test('a disconnected saved display cannot block the next connected projector; di
  const screen={getPrimaryDisplay:()=>attached[0],getDisplayMatching:()=>attached[0],getAllDisplays:()=>attached,on:(k,f)=>events[k]=f};
  const mockFs={readFileSync:()=>JSON.stringify({'99':'audience'}),mkdirSync(){},writeFileSync(_p,v){written=v},renameSync(){}};
  const module={exports:{}},requireMock=n=>n==='electron'?{BrowserWindow:Win,screen,ipcMain:{handle:(k,f)=>handlers[k]=f}}:n==='node:fs'?mockFs:require(n);
- const scheduled=[];vm.runInNewContext(source,{module,require:requireMock,URL,console,setTimeout:fn=>{scheduled.push(fn);return scheduled.length},clearTimeout(){}});
+ const scheduled=[];vm.runInNewContext(source,{module,require:requireMock,__dirname,URL,console,setTimeout:fn=>{scheduled.push(fn);return scheduled.length},clearTimeout(){}});
  const manager=module.exports.createDisplayManager({app:{getPath:()=>'/tmp'},home:'https://production.sioncdo.com/',securePrefs:{},getOperator:()=>op});
  const event={sender:op.webContents,senderFrame:op.webContents.mainFrame};
  handlers['hwp:screens:enable'](event,'audience',true);assert.equal(opened.length,0);
