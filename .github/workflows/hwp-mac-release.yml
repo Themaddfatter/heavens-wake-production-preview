@@ -81,7 +81,9 @@ jobs:
           # Do not modify the DMG after its hash has been written into the signed update manifest.
           # The application inside the DMG has already been stapled and validated above.
           test -s dist/latest-mac.yml
-          test -s dist/latest-mac.yml.sig
+          grep -Eq '^signature: .+' dist/latest-mac.yml
+          test -s "$app_path/Contents/Resources/app-update.yml"
+          grep -q '^updateManifestPublicKey:' "$app_path/Contents/Resources/app-update.yml"
           find dist -maxdepth 1 -name '*.dmg' -print -quit | grep -q .
           find dist -maxdepth 1 -name '*.zip' -print -quit | grep -q .
       - name: Publish verified native release
