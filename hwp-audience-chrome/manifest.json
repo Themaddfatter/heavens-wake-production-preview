@@ -1,0 +1,26 @@
+{
+  "manifest_version": 3,
+  "name": "Heaven's Wake Audience Fullscreen",
+  "version": "1.0.0",
+  "description": "Fullscreen the HWP Audience browser window on the selected display without changing the operator window.",
+  "permissions": [
+    "storage"
+  ],
+  "host_permissions": [
+    "https://production.sioncdo.com/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://production.sioncdo.com/*"
+      ],
+      "js": [
+        "bridge.js"
+      ],
+      "run_at": "document_start"
+    }
+  ]
+}
