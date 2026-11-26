@@ -1,9 +1,12 @@
 'use strict';
 const { app, BrowserWindow, Menu, dialog, shell, session } = require('electron');
+const path = require('node:path');
+const { createDisplayManager } = require('./display-manager.cjs');
 const { autoUpdater } = require('electron-updater');
 const { hwpPreview = false } = require('./package.json');
 const HOME = 'https://production.sioncdo.com/';
 const ORIGIN = new URL(HOME).origin;
+let displayManager;
 let mainWindow, ready = false, checking = false, timer, updateMenu, quitting = false;
 const securePrefs = { nodeIntegration: false, contextIsolation: true, sandbox: true, webSecurity: true, webviewTag: false, allowRunningInsecureContent: false };
 function isHwp(url) { try { return new URL(url).origin === ORIGIN; } catch { return false; } }
@@ -27,9 +30,9 @@ function protect(contents) {
   });
 }
 function createWindow() {
-  mainWindow = new BrowserWindow({width:1440,height:900,minWidth:850,minHeight:560,title:"HWP",show:false,webPreferences:securePrefs});
+  mainWindow = new BrowserWindow({width:1440,height:900,minWidth:850,minHeight:560,title:"HWP",show:false,webPreferences:{...securePrefs,preload:path.join(__dirname,"preload.cjs")}});
   mainWindow.once('ready-to-show', () => mainWindow?.show());
-  mainWindow.on('closed', () => { mainWindow = null; });
+  mainWindow.on('closed', () => { displayManager?.closeAll(); mainWindow = null; });
   mainWindow.loadURL(HOME).catch(error => { console.error(error); mainWindow?.show(); });
 }
 function confirmReload() {
@@ -85,6 +88,6 @@ if (!app.requestSingleInstanceLock()) { app.quit(); }
 else {
   app.on('web-contents-created', (_event, contents) => protect(contents));
   app.on('second-instance', () => { if (mainWindow) { if (mainWindow.isMinimized()) mainWindow.restore(); mainWindow.focus(); } });
-  app.whenReady().then(() => { configureSession(); createMenu(); createWindow(); configureUpdater(); app.on('activate',()=>{if(!mainWindow && !quitting) createWindow();}); });
-  app.on('before-quit', () => { quitting = true; if (timer) clearInterval(timer); });
+  app.whenReady().then(() => { configureSession(); displayManager=createDisplayManager({app,home:HOME,securePrefs,getOperator:()=>mainWindow}); createMenu(); createWindow(); configureUpdater(); app.on('activate',()=>{if(!mainWindow && !quitting) createWindow();}); });
+  app.on('before-quit', () => { quitting = true; displayManager?.closeAll(); if (timer) clearInterval(timer); });
 }
